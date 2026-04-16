@@ -1,0 +1,53 @@
+{
+  "name": "catastrogps-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for European cadastral and territorial data — CatastroGPS",
+  "author": "CatastroGPS <soporte@catastrogps.es>",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "catastrogps-mcp": "./build/index.js"
+  },
+  "files": [
+    "build/**/*"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node build/index.js",
+    "start:sse": "node build/sse.js",
+    "test": "node --experimental-vm-modules node_modules/.bin/vitest run",
+    "test:watch": "node --experimental-vm-modules node_modules/.bin/vitest",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "mcp",
+    "cadastral",
+    "catastro",
+    "gps",
+    "territorial",
+    "europe",
+    "parcel",
+    "solar",
+    "agriculture",
+    "real-estate"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheHiddenPanda/catastrogps-mcp"
+  },
+  "homepage": "https://catastrogps.es/developers/mcp"
+}
