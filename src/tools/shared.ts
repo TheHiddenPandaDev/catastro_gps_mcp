@@ -1,6 +1,6 @@
 import { CatastroGPSApiError } from "../client/catastrogps-api.js";
 
-const log = (msg: string) => console.error(`[catastrogps-mcp] ${msg}`);
+const log = (msg: string) => console.error(`[catastro-gps-mcp] ${msg}`);
 
 export function handleToolError(error: unknown): {
   content: Array<{ type: "text"; text: string }>;

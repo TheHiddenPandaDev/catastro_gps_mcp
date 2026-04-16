@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * CatastroGPS MCP Server — SSE transport
+ * Catastro GPS MCP Server — SSE transport
  *
  * HTTP server for web-based MCP clients and remote agents.
  * Exposes SSE endpoint at /sse and message endpoint at /message.
@@ -14,7 +14,7 @@ import { createServer as createHttpServer } from "node:http";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { createServer, loadConfig } from "./server.js";
 
-const log = (msg: string) => console.error(`[catastrogps-mcp] ${msg}`);
+const log = (msg: string) => console.error(`[catastro-gps-mcp] ${msg}`);
 
 async function main(): Promise<void> {
   const config = loadConfig();
@@ -40,7 +40,7 @@ async function main(): Promise<void> {
     // Health check
     if (url.pathname === "/health") {
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "ok", server: "catastrogps-mcp", version: "1.0.0" }));
+      res.end(JSON.stringify({ status: "ok", server: "catastro-gps-mcp", version: "1.0.0" }));
       return;
     }
 
@@ -89,6 +89,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error) => {
-  console.error(`[catastrogps-mcp] Fatal error: ${error}`);
+  console.error(`[catastro-gps-mcp] Fatal error: ${error}`);
   process.exit(1);
 });

@@ -35,7 +35,7 @@ export function loadConfig(): ServerConfig {
   const apiKey = process.env.CATASTROGPS_API_KEY;
   if (!apiKey) {
     console.error(
-      "[catastrogps-mcp] ERROR: CATASTROGPS_API_KEY environment variable is required.\n" +
+      "[catastro-gps-mcp] ERROR: CATASTROGPS_API_KEY environment variable is required.\n" +
         "Get your API key at https://catastrogps.es/api",
     );
     process.exit(1);

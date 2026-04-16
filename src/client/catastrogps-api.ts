@@ -54,7 +54,7 @@ export class CatastroGPSClient {
         headers: {
           "X-API-Key": this.apiKey,
           "Accept": "application/json",
-          "User-Agent": "catastrogps-mcp/1.0.0",
+          "User-Agent": "catastro-gps-mcp/1.0.1",
         },
         signal: controller.signal,
       });
@@ -96,7 +96,7 @@ export class CatastroGPSClient {
           "X-API-Key": this.apiKey,
           "Content-Type": "application/json",
           "Accept": "application/json",
-          "User-Agent": "catastrogps-mcp/1.0.0",
+          "User-Agent": "catastro-gps-mcp/1.0.1",
         },
         body: JSON.stringify(body),
         signal: controller.signal,

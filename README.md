@@ -1,4 +1,4 @@
-# catastrogps-mcp
+# catastro-gps-mcp
 
 MCP server for European cadastral and territorial data. Access parcel information, solar potential, agricultural data, market prices, and investment scores across Spain, Portugal, France, Italy, and Germany.
 

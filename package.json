@@ -1,12 +1,12 @@
 {
-  "name": "catastrogps-mcp",
+  "name": "catastro-gps-mcp",
   "version": "1.0.1",
-  "description": "MCP server for European cadastral and territorial data — CatastroGPS",
-  "author": "CatastroGPS <soporte@catastrogps.es>",
+  "description": "MCP server for European cadastral and territorial data — Catastro GPS",
+  "author": "Catastro GPS <soporte@catastrogps.es>",
   "license": "MIT",
   "type": "module",
   "bin": {
-    "catastrogps-mcp": "./build/index.js"
+    "catastro-gps-mcp": "./build/index.js"
   },
   "files": [
     "build/**/*"
