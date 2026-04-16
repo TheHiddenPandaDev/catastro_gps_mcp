@@ -15,7 +15,7 @@ Add to your `claude_desktop_config.json`:
   "mcpServers": {
     "catastrogps": {
       "command": "npx",
-      "args": ["-y", "catastrogps-mcp"],
+      "args": ["-y", "catastro-gps-mcp"],
       "env": {
         "CATASTROGPS_API_KEY": "pk_live_YOUR_KEY_HERE"
       }
@@ -27,7 +27,7 @@ Add to your `claude_desktop_config.json`:
 ### Claude Code
 
 ```bash
-claude mcp add catastrogps -- npx -y catastrogps-mcp
+claude mcp add catastrogps -- npx -y catastro-gps-mcp
 ```
 
 Then set the environment variable `CATASTROGPS_API_KEY=pk_live_YOUR_KEY_HERE`.

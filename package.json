@@ -1,6 +1,6 @@
 {
   "name": "catastro-gps-mcp",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "MCP server for European cadastral and territorial data — Catastro GPS",
   "author": "Catastro GPS <soporte@catastrogps.es>",
   "license": "MIT",
