@@ -33,7 +33,7 @@
       "environmentVariables": [
         {
           "name": "CATASTROGPS_API_KEY",
-          "description": "Catastro GPS API key. Free tier: 100 calls/month at https://www.catastrogps.es/developers",
+          "description": "Catastro GPS API key. Free tier: 250 calls/month; failed lookups are free at https://www.catastrogps.es/developers",
           "isRequired": true,
           "isSecret": true,
           "format": "string"

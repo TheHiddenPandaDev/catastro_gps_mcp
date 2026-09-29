@@ -8,7 +8,7 @@ startCommand:
       apiKey:
         type: string
         title: API key
-        description: Catastro GPS API key. Free tier with 100 calls/month at https://www.catastrogps.es/developers
+        description: Catastro GPS API key. Free tier with 250 calls/month (failed lookups are free) at https://www.catastrogps.es/developers
       timeoutMs:
         type: number
         title: Timeout (ms)

@@ -41,7 +41,7 @@ export function loadConfig(): ServerConfig {
   if (!apiKey) {
     console.error(
       "[catastro-gps-mcp] ERROR: CATASTROGPS_API_KEY environment variable is required.\n" +
-        "Get a free key (100 calls/month) at https://catastrogps.es/developers",
+        "Get a free key (250 calls/month, failed lookups are free) at https://catastrogps.es/developers",
     );
     process.exit(1);
   }

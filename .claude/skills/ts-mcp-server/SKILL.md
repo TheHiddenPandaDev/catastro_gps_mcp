@@ -152,7 +152,7 @@ export function validateParcelList(parcels: string[], max = 5): string | null {
 ## Rate Limiting Rules
 
 - Rate limit per API key, not per user
-- Check plan limits: Free 100/mo, Developer 5k, Startup 15k, Growth 50k, Enterprise unlimited
+- Check plan limits: Free 250/mo, Developer 5k, Startup 15k, Growth 50k, Enterprise unlimited
 - Return `429` with `{"code": "RATE_LIMIT_EXCEEDED", "plan": "free", "limit": 100}` when exceeded
 - Never expose other users' usage data
 

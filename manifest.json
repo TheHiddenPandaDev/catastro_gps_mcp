@@ -4,7 +4,7 @@
   "display_name": "Catastro GPS",
   "version": "1.2.0",
   "description": "Cadastral parcels in 31 European countries and regions: reference, coordinates, Spanish address, geometry, solar, agriculture, market, score and comparison.",
-  "long_description": "One API key for official cadastral data across 29 European countries plus the Basque Country and Navarre. Look up parcels by reference or coordinates, turn a Spanish postal address into a cadastral reference, get parcel outlines as GeoJSON, estimate solar and agricultural potential, read aggregated market prices (France, Italy, Germany), score and compare parcels, and follow how a parcel changes over time. Free tier: 100 calls per month.",
+  "long_description": "One API key for official cadastral data across 29 European countries plus the Basque Country and Navarre. Look up parcels by reference or coordinates, turn a Spanish postal address into a cadastral reference, get parcel outlines as GeoJSON, estimate solar and agricultural potential, read aggregated market prices (France, Italy, Germany), score and compare parcels, and follow how a parcel changes over time. Free tier: 250 calls per month, and failed lookups are not charged.",
   "author": {
     "name": "The Hidden Panda",
     "email": "soporte@catastrogps.es",
@@ -46,7 +46,7 @@
     "api_key": {
       "type": "string",
       "title": "API key",
-      "description": "Get a free key (100 calls/month) at https://www.catastrogps.es/developers",
+      "description": "Get a free key (250 calls/month, failed lookups are free) at https://www.catastrogps.es/developers",
       "sensitive": true,
       "required": true
     },

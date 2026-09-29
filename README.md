@@ -10,7 +10,7 @@ Ask your agent for a parcel by its cadastral reference, by a point on the map or
 - **The country is optional.** It is detected from the reference format or from the point. A few references are valid in more than one country (some German and Portuguese numbers look alike): pass `country` to be explicit.
 - **Free-text Spanish addresses.** `"Calle Mallorca 213, Barcelona"` becomes a cadastral reference.
 - **Geometry included.** Parcel outlines as GeoJSON or `[lat, lng]` rings, with centroid and area.
-- **Free tier for good.** 100 calls a month at no cost, no card.
+- **Free tier for good.** 250 calls a month at no cost, no card. Failed lookups are not charged.
 
 Get a key at **[catastrogps.es/developers](https://www.catastrogps.es/developers)**.
 
