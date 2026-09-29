@@ -12,7 +12,7 @@ Ask your agent for a parcel by its cadastral reference, by a point on the map or
 - **Geometry included.** Parcel outlines as GeoJSON or `[lat, lng]` rings, with centroid and area.
 - **Free tier for good.** 250 calls a month at no cost, no card. Failed lookups are not charged.
 
-Get a key at **[catastrogps.es/developers](https://www.catastrogps.es/developers)**.
+Get a key at **[parcelgps.com/developers](https://www.parcelgps.com/developers)**.
 
 ## Install
 
@@ -144,7 +144,7 @@ Errors come back as a code plus a sentence the agent can act on, for example:
 ```text
 CNV_COVERAGE: That reference or point is in a country that is not covered yet.
 SERVICE_UNAVAILABLE: The official cadastre for this country is not responding. Try again in a few minutes.
-KEY_AUTH_004: Monthly quota exhausted. Upgrade at https://catastrogps.es/developers
+KEY_AUTH_004: Monthly quota exhausted. Upgrade at https://www.parcelgps.com/developers
 ```
 
 ## Pricing
@@ -153,13 +153,13 @@ The same key works for this server, the REST API and the SDKs ([`catastrogps`](h
 
 | Plan | Price | Calls / month |
 |------|-------|---------------|
-| Free | €0, forever | 100 |
+| Free | €0, forever | 250 |
 | Developer | €19 / month | 5,000 |
 | Startup | €49 / month | 15,000 |
 | Growth | €99 / month | 50,000 |
 | Enterprise | Contact us | Custom |
 
-Details and sign-up: [catastrogps.es/developers](https://www.catastrogps.es/developers).
+Details and sign-up: [parcelgps.com/developers](https://www.parcelgps.com/developers).
 
 ## Configuration
 

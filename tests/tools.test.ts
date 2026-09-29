@@ -471,7 +471,7 @@ describe("MCP tools", () => {
     const result = await client.callTool({ name: "get_investment_score", arguments: { reference: "R", country: "FR" } });
 
     expect(result.isError).toBe(true);
-    expect(toolText(result)).toContain("catastrogps.es/developers");
+    expect(toolText(result)).toContain("parcelgps.com/developers");
   });
 
   it("turns quota exhaustion into an upgrade hint", async () => {
@@ -480,6 +480,6 @@ describe("MCP tools", () => {
     const result = await client.callTool({ name: "get_parcel", arguments: { reference: "R" } });
 
     expect(result.isError).toBe(true);
-    expect(toolText(result)).toContain("catastrogps.es/developers");
+    expect(toolText(result)).toContain("parcelgps.com/developers");
   });
 });
