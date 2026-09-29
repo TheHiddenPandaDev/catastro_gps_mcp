@@ -50,7 +50,7 @@ describe("loadConfig", () => {
 
     expect(() => loadConfig()).toThrow("exit");
     expect(exit).toHaveBeenCalledWith(1);
-    expect(stderr).toHaveBeenCalledWith(expect.stringContaining("catastrogps.es/developers"));
+    expect(stderr).toHaveBeenCalledWith(expect.stringContaining("parcelgps.com/developers"));
   });
 });
 

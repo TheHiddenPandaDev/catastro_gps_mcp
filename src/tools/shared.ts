@@ -2,7 +2,7 @@ import { CatastroGPSApiError } from "../client/catastrogps-api.js";
 
 const log = (msg: string) => console.error(`[catastro-gps-mcp] ${msg}`);
 
-const PRICING_URL = "https://catastrogps.es/developers";
+const PRICING_URL = "https://www.parcelgps.com/developers";
 
 const FRIENDLY_MESSAGES: Record<string, string> = {
   KEY_AUTH_001: "Invalid API key format. Check CATASTROGPS_API_KEY.",

@@ -12,7 +12,7 @@ describe("handleToolError", () => {
   });
 
   it.each([
-    ["KEY_AUTH_004", "catastrogps.es/developers"],
+    ["KEY_AUTH_004", "parcelgps.com/developers"],
     ["UNAUTHORIZED", "API key"],
     ["NOT_FOUND", "country code"],
     ["CNV_AMBIGUOUS", "candidate"],
