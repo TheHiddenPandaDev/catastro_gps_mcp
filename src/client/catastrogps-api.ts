@@ -21,6 +21,7 @@ export class CatastroGPSApiError extends Error {
     message: string,
     public readonly status: number,
     public readonly details?: unknown,
+    public readonly resetsAt?: string,
   ) {
     super(message);
     this.name = "CatastroGPSApiError";
@@ -77,6 +78,7 @@ export class CatastroGPSClient {
           errorBody.error || errorBody.message || `API returned ${response.status}`,
           response.status,
           errorBody.data ?? errorBody.parsed,
+          response.headers.get("X-RateLimit-Reset") ?? undefined,
         );
       }
 

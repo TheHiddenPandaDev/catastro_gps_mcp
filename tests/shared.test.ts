@@ -27,6 +27,28 @@ describe("handleToolError", () => {
     expect(result.content[0].text).toContain("raw");
   });
 
+  it.each([
+    [502, "having trouble"],
+    [503, "not charged"],
+    [429, "Slow down"],
+    [401, "API key"],
+  ])("explains HTTP_%s bodies the API did not write", (status, fragment) => {
+    const result = handleToolError(new CatastroGPSApiError(`HTTP_${status}`, `API returned ${status}`, status));
+    expect(result.content[0].text).toContain(fragment);
+  });
+
+  it("explains network failures", () => {
+    const result = handleToolError(new CatastroGPSApiError("MCP_NETWORK", "Network error: ECONNREFUSED", 0));
+    expect(result.content[0].text).toContain("CATASTROGPS_API_URL");
+  });
+
+  it("tells when an exhausted quota comes back", () => {
+    const result = handleToolError(
+      new CatastroGPSApiError("KEY_AUTH_004", "Cuota mensual agotada (250/250)", 429, undefined, "2026-10-01T00:00:00Z"),
+    );
+    expect(result.content[0].text).toContain("Quota resets at 2026-10-01T00:00:00Z.");
+  });
+
   it("keeps the API message for unmapped codes", () => {
     const result = handleToolError(new CatastroGPSApiError("CNV_999", "algo raro", 400));
     expect(result.content[0].text).toBe("CNV_999: algo raro");

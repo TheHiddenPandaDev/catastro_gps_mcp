@@ -130,6 +130,18 @@ describe("CatastroGPSClient", () => {
     expect(error.status).toBe(502);
   });
 
+  it("keeps the quota reset date of a 429", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ success: false, code: "KEY_AUTH_004", error: "Cuota mensual agotada" }), {
+        status: 429,
+        headers: { "Content-Type": "application/json", "X-RateLimit-Reset": "2026-10-01T00:00:00Z" },
+      }),
+    );
+
+    const error = (await client.getPolygon("X").catch((e: unknown) => e)) as CatastroGPSApiError;
+    expect(error.resetsAt).toBe("2026-10-01T00:00:00Z");
+  });
+
   it("reports timeouts as MCP_TIMEOUT", async () => {
     fetchMock.mockRejectedValueOnce(Object.assign(new Error("aborted"), { name: "AbortError" }));
 

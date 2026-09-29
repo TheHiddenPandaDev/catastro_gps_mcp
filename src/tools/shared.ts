@@ -22,7 +22,17 @@ const FRIENDLY_MESSAGES: Record<string, string> = {
   SERVICE_UNAVAILABLE: "The official cadastre for this country is not responding. Try again in a few minutes.",
   INTERNAL_ERROR: "Internal server error. Try again later.",
   MCP_TIMEOUT: "The request timed out. Official cadastres can be slow; try again or raise CATASTROGPS_TIMEOUT.",
+  MCP_NETWORK: "Could not reach the CatastroGPS API. Check your connection or CATASTROGPS_API_URL.",
 };
+
+export function friendlyMessageFor(code: string, status: number): string | undefined {
+  const byCode = FRIENDLY_MESSAGES[code];
+  if (byCode) return byCode;
+  if (status === 401 || status === 403) return FRIENDLY_MESSAGES.UNAUTHORIZED;
+  if (status === 429) return FRIENDLY_MESSAGES.RATE_LIMIT_EXCEEDED;
+  if (status >= 500) return "The CatastroGPS API is having trouble right now. Try again in a few minutes; failed calls are not charged.";
+  return undefined;
+}
 
 type ToolResult = {
   content: Array<{ type: "text"; text: string }>;
@@ -43,8 +53,9 @@ export function errorResult(code: string, message: string, details?: unknown): T
 export function handleToolError(error: unknown): ToolResult & { isError: true } {
   if (error instanceof CatastroGPSApiError) {
     log(`API error: ${error.code} (${error.status})`);
-    const friendly = FRIENDLY_MESSAGES[error.code];
-    const message = friendly ? `${friendly} (${error.message})` : error.message;
+    const friendly = friendlyMessageFor(error.code, error.status);
+    const base = friendly ? `${friendly} (${error.message})` : error.message;
+    const message = error.resetsAt ? `${base} Quota resets at ${error.resetsAt}.` : base;
     return errorResult(error.code, message, error.details);
   }
 
