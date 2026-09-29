@@ -8,7 +8,7 @@ import { registerGetAgriculture } from "./tools/get-agriculture.js";
 import { SERVER_VERSION } from "./version.js";
 import type { ServerConfig } from "./types/index.js";
 
-export const DEFAULT_API_URL = "https://api.catastrogps.es";
+export const DEFAULT_API_URL = "https://api.parcelgps.com";
 export const DEFAULT_TIMEOUT_MS = 20000;
 
 export function createServer(config: ServerConfig): McpServer {

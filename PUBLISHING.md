@@ -9,7 +9,7 @@ Sigue el orden: cada paso depende del anterior.
 | 0 | Decidir namespace | nada | leer §0 | 2 min |
 | 1 | npm | `catastro-gps-mcp@1.1.0` y `catastrogps@1.0.0` | cuenta npm con 2FA | 5 min |
 | 2 | PyPI | `catastrogps==1.0.0` | cuenta PyPI con 2FA + token | 10 min |
-| 3 | Registro oficial MCP | `es.catastrogps/catastro-gps` | DNS de catastrogps.es (o GitHub) | 15 min |
+| 3 | Registro oficial MCP | `com.parcelgps/catastro-gps` | DNS de parcelgps.com (o GitHub) | 15 min |
 | 4 | Glama | ficha reclamada | GitHub | 5 min |
 | 5 | Smithery | bundle MCPB | cuenta Smithery | 10 min |
 | 6 | PulseMCP | nada (se alimenta del registro) | — | 0 |
@@ -21,14 +21,14 @@ Sigue el orden: cada paso depende del anterior.
 
 El nombre del servidor en el registro va grabado en `package.json` (`mcpName`) y en
 `server.json` (`name`), y **tienen que coincidir**. Está puesto
-`es.catastrogps/catastro-gps` (verificación por DNS). La alternativa es
+`com.parcelgps/catastro-gps` (verificación por DNS). La alternativa es
 `io.github.TheHiddenPandaDev/catastro-gps` (verificación por GitHub).
 
 | | Dominio `es.catastrogps/…` | GitHub `io.github.TheHiddenPandaDev/…` |
 |---|---|---|
 | Lo que ve el cliente | La marca, igual que Predio (`com.prediohq/catastro`) | El nombre de la organización de GitHub, que no es la marca |
-| Qué hay que hacer | Un registro TXT en la raíz de `catastrogps.es` + una clave privada guardada | `mcp-publisher login github` y ya |
-| Requisito | Acceso al DNS de catastrogps.es; OpenSSL 3 (`brew install openssl@3`) | Ser **Owner** de la org TheHiddenPandaDev (lo eres: rol `admin`) |
+| Qué hay que hacer | Un registro TXT en la raíz de `parcelgps.com` + una clave privada guardada | `mcp-publisher login github` y ya |
+| Requisito | Acceso al DNS de parcelgps.com (cdmon); OpenSSL 3 (`brew install openssl@3`) | Ser **Owner** de la org TheHiddenPandaDev (lo eres: rol `admin`) |
 | Riesgo | Si se pierde la clave, se genera otra y se cambia el TXT | Ninguno; se puede migrar al dominio más adelante (nombre nuevo) |
 | CI futuro | La clave privada va como secreto | Token de GitHub con `read:org` |
 
@@ -108,26 +108,26 @@ mcp-publisher --help
 brew install openssl@3
 OPENSSL=/opt/homebrew/opt/openssl@3/bin/openssl
 mkdir -p ~/.mcp-registry && cd ~/.mcp-registry
-$OPENSSL genpkey -algorithm Ed25519 -out catastrogps-es.pem
-PUBLIC_KEY="$($OPENSSL pkey -in catastrogps-es.pem -pubout -outform DER | tail -c 32 | base64)"
-echo "catastrogps.es. IN TXT \"v=MCPv1; k=ed25519; p=${PUBLIC_KEY}\""
+$OPENSSL genpkey -algorithm Ed25519 -out parcelgps-com.pem
+PUBLIC_KEY="$($OPENSSL pkey -in parcelgps-com.pem -pubout -outform DER | tail -c 32 | base64)"
+echo "parcelgps.com. IN TXT \"v=MCPv1; k=ed25519; p=${PUBLIC_KEY}\""
 ```
 
-1. Crea ese TXT **en la raíz** de `catastrogps.es`. El DNS está en **Vercel**
-   (`ns1.vercel-dns.com`, comprobado el 29-sep-2026): Vercel → Domains → catastrogps.es →
-   DNS Records → Add, *Name* vacío (raíz), *Type* TXT, *Value* lo que va entre comillas
-   (`v=MCPv1; k=ed25519; p=…`). No en `_mcp.catastrogps.es`: tiene que ser la raíz. Ya hay
-   TXT de SPF, DMARC y Google: no se tocan, se añade uno más.
-2. Espera a que se vea: `dig +short TXT catastrogps.es` debe listar el `v=MCPv1`.
-3. Guarda `catastrogps-es.pem` en tu gestor de contraseñas. No va a ningún repo.
+1. Crea ese TXT **en la raíz** de `parcelgps.com`. El DNS está en **cdmon**
+   (`ns1.cdmon.net`, comprobado el 29-sep-2026): panel de cdmon → Dominios → parcelgps.com →
+   Gestión DNS → Añadir registro, *Nombre* vacío o `@` (raíz), *Tipo* TXT, *Valor* lo que va
+   entre comillas (`v=MCPv1; k=ed25519; p=…`). No en `_mcp.parcelgps.com`: tiene que ser la
+   raíz. Si ya hay otros TXT (SPF, verificaciones), no se tocan: se añade uno más.
+2. Espera a que se vea: `dig +short TXT parcelgps.com` debe listar el `v=MCPv1`.
+3. Guarda `parcelgps-com.pem` en tu gestor de contraseñas. No va a ningún repo.
 
 ```bash
 cd ~/Documents/development/thp/catastrato/mcp
-PRIVATE_KEY="$($OPENSSL pkey -in ~/.mcp-registry/catastrogps-es.pem -noout -text | grep -A3 "priv:" | tail -n +2 | tr -d ' :\n')"
-mcp-publisher login dns --domain catastrogps.es --private-key "${PRIVATE_KEY}"
+PRIVATE_KEY="$($OPENSSL pkey -in ~/.mcp-registry/parcelgps-com.pem -noout -text | grep -A3 "priv:" | tail -n +2 | tr -d ' :\n')"
+mcp-publisher login dns --domain parcelgps.com --private-key "${PRIVATE_KEY}"
 mcp-publisher validate
 mcp-publisher publish
-curl -s "https://registry.modelcontextprotocol.io/v0.1/servers?search=es.catastrogps"
+curl -s "https://registry.modelcontextprotocol.io/v0.1/servers?search=com.parcelgps"
 ```
 
 ### 3b. Con GitHub (si no hay DNS)

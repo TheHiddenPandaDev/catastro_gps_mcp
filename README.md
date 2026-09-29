@@ -1,6 +1,6 @@
 # Catastro GPS MCP server
 
-<!-- mcp-name: es.catastrogps/catastro-gps -->
+<!-- mcp-name: com.parcelgps/catastro-gps -->
 
 Official cadastral parcels for AI agents, across **29 European countries plus the Basque Country and Navarre** (31 country and region codes), with one API key.
 
@@ -152,7 +152,7 @@ Details and sign-up: [catastrogps.es/developers](https://www.catastrogps.es/deve
 |----------|----------|---------|-------------|
 | `CATASTROGPS_API_KEY` | Yes | | Your API key |
 | `CATASTROGPS_TIMEOUT` | No | `20000` | Request timeout in ms. Official cadastres can be slow |
-| `CATASTROGPS_API_URL` | No | `https://api.catastrogps.es` | API base URL |
+| `CATASTROGPS_API_URL` | No | `https://api.parcelgps.com` | API base URL |
 
 ## Development
 

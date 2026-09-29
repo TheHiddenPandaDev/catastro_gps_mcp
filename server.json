@@ -1,6 +1,6 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "es.catastrogps/catastro-gps",
+  "name": "com.parcelgps/catastro-gps",
   "title": "Catastro GPS",
   "description": "Cadastral parcels in 31 European countries and regions: reference, coordinates, address, geometry",
   "websiteUrl": "https://www.catastrogps.es/developers",
@@ -50,7 +50,7 @@
           "description": "API base URL",
           "isRequired": false,
           "format": "string",
-          "default": "https://api.catastrogps.es"
+          "default": "https://api.parcelgps.com"
         }
       ]
     }
