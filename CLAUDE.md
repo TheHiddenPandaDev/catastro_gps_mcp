@@ -24,18 +24,23 @@ mcp/
     client/
       catastrogps-api.ts       → Cliente HTTP hacia el backend Go
     tools/
-      get-parcel.ts            → Tool: datos básicos de parcela
-      get-solar.ts             → Tool: potencial solar
-      get-agriculture.ts       → Tool: datos agrícolas
-      get-market.ts            → Tool: datos de mercado
-      get-score.ts             → Tool: score de inversión
-      get-value-history.ts     → Tool: historial de valor
-      compare-parcels.ts       → Tool: comparar parcelas
-      shared.ts                → Utilidades compartidas entre tools
+      get-parcel.ts            → Tool: parcela por referencia o coordenadas (31 códigos)
+      search-address.ts        → Tool: dirección española en texto libre → referencia
+      get-boundaries.ts        → Tool: geometría (GeoJSON / anillo), centroide, área
+      get-solar.ts             → Tool: potencial solar (ES/PV/NA/PT/FR/IT/DE)
+      get-agriculture.ts       → Tool: datos agrícolas (ES/PV/NA/PT/FR/IT/DE)
+      get-market.ts, get-score.ts, get-value-history.ts, compare-parcels.ts
+                               → NO registradas: el backend las sirve solo con JWT Pro
+      shared.ts                → Errores y utilidades compartidas
+    version.ts                 → Versión única (package.json, server.json, manifest.json, smithery.yaml la repiten; un test lo vigila)
     types/
       index.ts                 → Tipos TypeScript
   build/                       → Salida compilada
   tests/                       → Tests
+  server.json                  → Registro oficial MCP (mcp-publisher)
+  manifest.json                → Bundle MCPB (Claude Desktop, Smithery)
+  smithery.yaml                → Lanzador stdio para Smithery/Glama
+  PUBLISHING.md                → Checklist de publicación para Dani
   package.json
   tsconfig.json
 ```
@@ -45,26 +50,33 @@ mcp/
 | Capa | Tecnología |
 |------|-----------|
 | Runtime | Node.js + TypeScript |
-| SDK | `@anthropic-ai/mcp-sdk` |
-| Transporte | stdio (local) + SSE/HTTP (remoto) |
+| SDK | `@modelcontextprotocol/sdk` |
+| Transporte | stdio (publicado). `sse.ts` existe pero NO está desplegado y usa la key del servidor para todos |
 | Cliente HTTP | Fetch nativo |
 | Auth | API key en header `X-API-Key` |
 
-## Tools disponibles
+## Tools disponibles (1.1.0)
 
-| Tool | Descripción |
-|------|------------|
-| `get_parcel` | Datos básicos de parcela por referencia catastral |
-| `get_solar_potential` | Potencial solar (orientación, irradiancia, estimación kWh) |
-| `get_agriculture` | Datos agrícolas (cultivo, SIGPAC, clima, suelo) |
-| `get_market_data` | Datos de mercado (precio €/m², tendencia, comparables) |
-| `get_investment_score` | Score cualitativo de inversión (factores, no fórmula) |
-| `get_value_history` | Historial de valor catastral |
-| `compare_parcels` | Comparar hasta 5 parcelas lado a lado |
+| Tool | Endpoint backend | Países |
+|------|------------------|--------|
+| `get_parcel` | `GET /api/catastro/:ref` · `GET /api/search/coordinates` | 31 códigos (`wiredCountries`); UK solo coordenadas (Escocia) |
+| `search_address` | `POST /api/search/address/parse` `{direccion}` | España régimen común |
+| `get_boundaries` | `GET /api/catastro/:ref/polygon` | 30 (todos menos UK) |
+| `get_solar_potential` | `GET /api/catastro/:ref/solar` | ES, PV, NA, PT, FR, IT, DE |
+| `get_agriculture` | `GET /api/catastro/:ref/agro` | ES, PV, NA, PT, FR, IT, DE |
+
+`market`, `score`, `value-history` y `compare` van por `RegisterProRoutes` (JWT + Pro): con API key
+dan 401. Por eso no se registran. Para exponerlas, el backend tiene que montarlas con
+`apiKeyMiddleware, optionalAuthMiddleware, proOrApiKey` como `RegisterApiProRoutes`.
+
+Coordenadas: siempre `GET /api/search/coordinates`. El `POST` antiguo solo despacha 8 países y
+manda el resto a España.
 
 ## Países soportados
 
-ES (España), PV (País Vasco), NA (Navarra), PT (Portugal), FR (Francia), IT (Italia), DE (Alemania — solo NRW).
+Espejo de `wiredCountries` en `backend/internal/conversion/infrastructure/http/resolve_controller.go`
+(`tests/types.test.ts` lo compara). Si cambia allí, cambia en `src/types/index.ts` y en la tabla
+del README.
 
 ## Pricing MCP
 

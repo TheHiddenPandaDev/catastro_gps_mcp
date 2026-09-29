@@ -1,24 +1,30 @@
-# catastro-gps-mcp
+# Catastro GPS MCP server
 
-MCP server for European cadastral and territorial data. Access parcel information, solar potential, agricultural data, market prices, and investment scores across Spain, Portugal, France, Italy, and Germany.
+<!-- mcp-name: es.catastrogps/catastro-gps -->
 
-**The first MCP server for European cadastral data.**
+Official cadastral parcels for AI agents, across **29 European countries plus the Basque Country and Navarre** (31 country and region codes), with one API key.
 
-## Quick Start
+Ask your agent for a parcel by its cadastral reference, by a point on the map or, in Spain, by a postal address typed as free text. It gets back the reference, location, area, land use and the parcel outline, and it can estimate solar and agricultural potential for parcels in Spain, Portugal, France, Italy and Germany.
+
+- **31 codes, one call shape.** `ES`, `PT`, `FR`, `IT`, `DE`, `PL`, `NL`, `CH`… and the two Spanish foral cadastres (`PV`, `NA`) that the central Catastro does not serve.
+- **The country is optional.** It is detected from the reference format or from the point. A few references are valid in more than one country (some German and Portuguese numbers look alike): pass `country` to be explicit.
+- **Free-text Spanish addresses.** `"Calle Mallorca 213, Barcelona"` becomes a cadastral reference.
+- **Geometry included.** Parcel outlines as GeoJSON or `[lat, lng]` rings, with centroid and area.
+- **Free tier for good.** 100 calls a month at no cost, no card.
+
+Get a key at **[catastrogps.es/developers](https://www.catastrogps.es/developers)**.
+
+## Install
 
 ### Claude Desktop
-
-Add to your `claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
-    "catastrogps": {
+    "catastro-gps": {
       "command": "npx",
       "args": ["-y", "catastro-gps-mcp"],
-      "env": {
-        "CATASTROGPS_API_KEY": "pk_live_YOUR_KEY_HERE"
-      }
+      "env": { "CATASTROGPS_API_KEY": "pk_live_your_key_here" }
     }
   }
 }
@@ -27,104 +33,135 @@ Add to your `claude_desktop_config.json`:
 ### Claude Code
 
 ```bash
-claude mcp add catastrogps -- npx -y catastro-gps-mcp
+claude mcp add catastro-gps --env CATASTROGPS_API_KEY=pk_live_your_key_here -- npx -y catastro-gps-mcp
 ```
 
-Then set the environment variable `CATASTROGPS_API_KEY=pk_live_YOUR_KEY_HERE`.
+### Cursor, Windsurf, VS Code and other MCP clients
 
-### SSE (Remote / Web Agents)
-
-```json
-{
-  "mcpServers": {
-    "catastrogps": {
-      "url": "https://mcp.catastrogps.es/sse",
-      "headers": {
-        "X-API-Key": "pk_live_YOUR_KEY_HERE"
-      }
-    }
-  }
-}
-```
-
-## Get an API Key
-
-1. Sign up at [catastrogps.es](https://catastrogps.es)
-2. Go to **Settings > API Keys**
-3. Create a new key
-4. Copy the `pk_live_xxx` key (shown only once)
+Use the same `npx -y catastro-gps-mcp` command with `CATASTROGPS_API_KEY` in the environment.
 
 ## Tools
 
-| Tool | Description | Cost |
-|------|-------------|------|
-| `get_parcel` | Get cadastral data by reference or GPS coordinates | 1 call |
-| `get_solar_potential` | Solar energy potential (PVGIS) | 1 call |
-| `get_agriculture` | Land use, NDVI, crop prices | 1 call |
-| `get_market_data` | Real estate transactions and prices | 1 call |
-| `get_investment_score` | Investment score 1-10 | 1 call |
-| `get_value_history` | Historical cadastral value | 1 call |
-| `compare_parcels` | Compare 2-3 parcels side by side | 2 calls |
+| Tool | What it does | Countries |
+|------|--------------|-----------|
+| `get_parcel` | Parcel by cadastral reference **or** WGS84 coordinates: reference, location, address, municipality, area, land use, outline | All 31 codes (UK: coordinates only) |
+| `search_address` | Spanish postal address in free text → cadastral reference | Spain, central Catastro |
+| `get_boundaries` | Parcel outline as GeoJSON / `[lat, lng]` ring, centroid and area | 30 codes (all but UK) |
+| `get_solar_potential` | PVGIS photovoltaic estimate: kWp, kWh/year, savings, payback, CO₂, tilt | ES, PV, NA, PT, FR, IT, DE |
+| `get_agriculture` | Land use, main crop, NDVI and a reference crop price (SIGPAC detail in Spain) | ES, PV, NA, PT, FR, IT, DE |
 
-## Supported Countries
+Every tool call is one API call against your monthly quota, including calls that end in "not found".
 
-| Code | Country | Source |
-|------|---------|--------|
-| `ES` | Spain | Catastro Nacional (SOAP) |
-| `PV` | Basque Country | WFS INSPIRE (3 provinces) |
-| `NA` | Navarra | WFS IDENA |
-| `PT` | Portugal | OGC API DGT |
-| `FR` | France | Geoplateforme IGN + DVF |
-| `IT` | Italy | WFS Agenzia Entrate |
-| `DE` | Germany (NRW) | WFS NRW ALKIS |
+## Coverage
 
-## Example Usage
+What each code answers today. "Partial" means the official source does not cover the whole territory.
 
-Ask Claude:
+| Code | Country / region | By reference | By coordinates | Geometry | Notes |
+|------|------------------|:---:|:---:|:---:|-------|
+| `ES` | Spain (central Catastro) | ✅ | ✅ | ✅ | Free-text address search too |
+| `PV` | Basque Country (Álava, Bizkaia, Gipuzkoa) | ✅ | ✅ | ✅ | Foral cadastres, separate from the central Catastro |
+| `NA` | Navarre | ✅ | ✅ | ✅ | Foral cadastre |
+| `PT` | Portugal | Partial | ✅ | Partial | Digital cadastre does not cover the whole country |
+| `FR` | France | ✅ | ✅ | ✅ | |
+| `IT` | Italy | ✅ | ✅ | ✅ | |
+| `DE` | Germany | Partial | Partial | Partial | Every Land except Bavaria |
+| `AT` | Austria | ✅ | ✅ | ✅ | |
+| `CH` | Switzerland | ✅ | ✅ | ✅ | E-GRID references |
+| `LI` | Liechtenstein | ✅ | ✅ | ✅ | |
+| `BE` | Belgium | ✅ | ✅ | ✅ | |
+| `NL` | Netherlands | ✅ | ✅ | ✅ | |
+| `LU` | Luxembourg | ✅ | ✅ | ✅ | |
+| `PL` | Poland | ✅ | ✅ | ✅ | TERYT parcel IDs |
+| `CZ` | Czechia | ✅ | ✅ | ✅ | |
+| `SK` | Slovakia | ✅ | ✅ | ✅ | |
+| `SI` | Slovenia | ✅ | ✅ | ✅ | |
+| `HR` | Croatia | ✅ | ✅ | ✅ | |
+| `BG` | Bulgaria | ✅ | ✅ | ✅ | |
+| `GR` | Greece | ✅ | ✅ | ✅ | |
+| `CY` | Cyprus | ✅ | ✅ | ✅ | |
+| `DK` | Denmark | ✅ | ✅ | ✅ | |
+| `SE` | Sweden | ✅ | ✅ | ✅ | Agricultural blocks (Jordbruksverket), not property units |
+| `NO` | Norway | ✅ | ✅ | ✅ | |
+| `FI` | Finland | ✅ | ✅ | ✅ | |
+| `IS` | Iceland | ✅ | ✅ | ✅ | |
+| `EE` | Estonia | ✅ | ✅ | ✅ | |
+| `LV` | Latvia | ✅ | ✅ | ✅ | |
+| `LT` | Lithuania | ✅ | ✅ | ✅ | |
+| `IE` | Ireland | ✅ | ✅ | ✅ | |
+| `UK` | United Kingdom | — | Scotland | Scotland | Registers of Scotland; England, Wales and Northern Ireland not yet |
 
-> "What's the solar potential of parcel 9872323VK2897S0001WX in Spain?"
+Data comes live from each country's official cadastre or INSPIRE service, so availability follows theirs: some national services are slow, and the server raises a clear `SERVICE_UNAVAILABLE` when one is down. Outside the table, a point or reference answers `CNV_COVERAGE`.
 
-> "Compare these two parcels: 9872323VK2897S0001WX in Spain and 750560000AB0001 in France"
+Official registry documents (Spanish *nota simple*, Italian *visura*, Portuguese *certidão permanente* and others) can be ordered at [catastrogps.es](https://www.catastrogps.es). They are not exposed through the API or this server yet.
 
-> "Find the parcel at coordinates 40.4165, -3.7038 in Spain and give me its investment score"
+## Examples
+
+Ask your agent:
+
+> Find the cadastral parcel at Calle Mallorca 213, Barcelona, and give me its area and outline.
+
+> What is the parcel at 52.2297, 21.0122? What's its area?
+
+> Look up the Polish parcel 146510_8.0502.1/3 and tell me its area.
+
+> Compare the solar potential of these two rural parcels in Navarre and Portugal.
+
+What a `get_parcel` call returns (shortened; values are illustrative):
+
+```json
+{
+  "reference": "9872023VH5797S0001WX",
+  "country": "ES",
+  "latitude": 40.4165,
+  "longitude": -3.7038,
+  "address": "CL MAYOR 1",
+  "municipality": "MADRID",
+  "province": "MADRID",
+  "area_m2": 512,
+  "land_use": "Residencial",
+  "outline_lat_lng": [[40.41662, -3.70391], [40.41671, -3.70362], "..."],
+  "google_maps_url": "https://maps.google.com/?q=40.4165,-3.7038"
+}
+```
+
+Errors come back as a code plus a sentence the agent can act on, for example:
+
+```text
+CNV_COVERAGE: That reference or point is in a country that is not covered yet.
+SERVICE_UNAVAILABLE: The official cadastre for this country is not responding. Try again in a few minutes.
+KEY_AUTH_004: Monthly quota exhausted. Upgrade at https://catastrogps.es/developers
+```
 
 ## Pricing
 
-| Tier | Price | Calls/month |
-|------|-------|-------------|
-| Free | 0€ | 100 |
-| Developer | 19€/mo | 5,000 |
-| Startup | 49€/mo | 15,000 |
-| Growth | 99€/mo | 50,000 |
-| Enterprise | Contact | Unlimited + SLA |
-| Overage | 0.01€/call | Beyond tier limit |
+The same key works for this server, the REST API and the SDKs ([`catastrogps`](https://www.npmjs.com/package/catastrogps) on npm and PyPI).
 
-## Environment Variables
+| Plan | Price | Calls / month |
+|------|-------|---------------|
+| Free | €0, forever | 100 |
+| Developer | €19 / month | 5,000 |
+| Startup | €49 / month | 15,000 |
+| Growth | €99 / month | 50,000 |
+| Enterprise | Contact us | Custom |
+
+Details and sign-up: [catastrogps.es/developers](https://www.catastrogps.es/developers).
+
+## Configuration
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `CATASTROGPS_API_KEY` | Yes | — | Your API key (`pk_live_xxx`) |
-| `CATASTROGPS_API_URL` | No | `https://api.catastrogps.es` | Backend API URL |
-| `CATASTROGPS_TIMEOUT` | No | `10000` | Request timeout (ms) |
-| `MCP_PORT` | No | `3001` | SSE server port |
+| `CATASTROGPS_API_KEY` | Yes | | Your API key |
+| `CATASTROGPS_TIMEOUT` | No | `20000` | Request timeout in ms. Official cadastres can be slow |
+| `CATASTROGPS_API_URL` | No | `https://api.catastrogps.es` | API base URL |
 
 ## Development
 
 ```bash
-# Install dependencies
 npm install
-
-# Build
-npm run build
-
-# Run locally (stdio)
-CATASTROGPS_API_KEY=pk_test_xxx node build/index.js
-
-# Run SSE server
-CATASTROGPS_API_KEY=pk_test_xxx node build/sse.js
-
-# Run tests
+npm run lint
 npm test
+npm run build
+CATASTROGPS_API_KEY=pk_live_xxx node build/index.js
 ```
 
 ## License
