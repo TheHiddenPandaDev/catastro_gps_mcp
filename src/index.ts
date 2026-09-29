@@ -1,15 +1,4 @@
 #!/usr/bin/env node
-
-/**
- * Catastro GPS MCP Server — stdio transport
- *
- * Entry point for Claude Desktop, Claude Code, and other MCP clients
- * that use the stdio transport (JSON-RPC over stdin/stdout).
- *
- * Usage:
- *   CATASTROGPS_API_KEY=pk_live_xxx npx catastro-gps-mcp
- */
-
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { createServer, loadConfig } from "./server.js";
 

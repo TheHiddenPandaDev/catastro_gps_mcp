@@ -1,25 +1,30 @@
 {
   "name": "catastro-gps-mcp",
-  "version": "1.0.2",
-  "description": "MCP server for European cadastral and territorial data — Catastro GPS",
-  "author": "Catastro GPS <soporte@catastrogps.es>",
+  "version": "1.1.0",
+  "mcpName": "es.catastrogps/catastro-gps",
+  "description": "MCP server for cadastral parcels in 31 European countries and regions: reference, coordinates, Spanish free-text address, geometry, solar and agriculture",
+  "author": "The Hidden Panda <soporte@catastrogps.es>",
   "license": "MIT",
   "type": "module",
   "bin": {
     "catastro-gps-mcp": "./build/index.js"
   },
   "files": [
-    "build/**/*"
+    "build/**/*.js",
+    "build/**/*.d.ts",
+    "README.md",
+    "LICENSE",
+    "server.json"
   ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node build/index.js",
     "start:sse": "node build/sse.js",
-    "test": "node --experimental-vm-modules node_modules/.bin/vitest run",
-    "test:watch": "node --experimental-vm-modules node_modules/.bin/vitest",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "tsc --noEmit",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run lint && npm test && npm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.0",
@@ -35,19 +40,34 @@
   },
   "keywords": [
     "mcp",
+    "model-context-protocol",
+    "mcp-server",
+    "cadastre",
     "cadastral",
     "catastro",
-    "gps",
-    "territorial",
-    "europe",
+    "cadastre-api",
+    "land-registry",
     "parcel",
+    "parcels",
+    "gis",
+    "geojson",
+    "europe",
+    "spain",
+    "portugal",
+    "france",
+    "italy",
+    "germany",
     "solar",
     "agriculture",
-    "real-estate"
+    "real-estate",
+    "proptech"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/TheHiddenPandaDev/catastro_gps_mcp"
+    "url": "git+https://github.com/TheHiddenPandaDev/catastro_gps_mcp.git"
   },
-  "homepage": "https://catastrogps.es/developers"
+  "bugs": {
+    "url": "https://github.com/TheHiddenPandaDev/catastro_gps_mcp/issues"
+  },
+  "homepage": "https://www.catastrogps.es/developers"
 }

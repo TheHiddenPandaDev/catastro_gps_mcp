@@ -1,0 +1,12 @@
+src/
+tests/
+*.mcpb
+*.tgz
+.env
+.env.example
+.claude/
+CLAUDE.md
+PUBLISHING.md
+tsconfig.json
+build/**/*.map
+build/**/*.d.ts

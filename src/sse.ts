@@ -1,30 +1,17 @@
 #!/usr/bin/env node
-
-/**
- * Catastro GPS MCP Server — SSE transport
- *
- * HTTP server for web-based MCP clients and remote agents.
- * Exposes SSE endpoint at /sse and message endpoint at /message.
- *
- * Usage:
- *   CATASTROGPS_API_KEY=pk_live_xxx MCP_PORT=3001 node build/sse.js
- */
-
 import { createServer as createHttpServer } from "node:http";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { createServer, loadConfig } from "./server.js";
+import { SERVER_NAME, SERVER_VERSION } from "./version.js";
 
 const log = (msg: string) => console.error(`[catastro-gps-mcp] ${msg}`);
 
 async function main(): Promise<void> {
   const config = loadConfig();
   const port = parseInt(process.env.MCP_PORT || "3001", 10);
-
-  // Track active transports by session
   const transports = new Map<string, SSEServerTransport>();
 
   const httpServer = createHttpServer(async (req, res) => {
-    // CORS headers
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-API-Key");
@@ -36,15 +23,11 @@ async function main(): Promise<void> {
     }
 
     const url = new URL(req.url || "/", `http://localhost:${port}`);
-
-    // Health check
     if (url.pathname === "/health") {
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "ok", server: "catastro-gps-mcp", version: "1.0.0" }));
+      res.end(JSON.stringify({ status: "ok", server: SERVER_NAME, version: SERVER_VERSION }));
       return;
     }
-
-    // SSE connection endpoint
     if (url.pathname === "/sse" && req.method === "GET") {
       const transport = new SSEServerTransport("/message", res);
       const sessionId = transport.sessionId;
@@ -60,8 +43,6 @@ async function main(): Promise<void> {
       await server.connect(transport);
       return;
     }
-
-    // Message endpoint for SSE transport
     if (url.pathname === "/message" && req.method === "POST") {
       const sessionId = url.searchParams.get("sessionId");
       if (!sessionId || !transports.has(sessionId)) {
@@ -74,8 +55,6 @@ async function main(): Promise<void> {
       await transport.handlePostMessage(req, res);
       return;
     }
-
-    // 404 for everything else
     res.writeHead(404, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Not found" }));
   });

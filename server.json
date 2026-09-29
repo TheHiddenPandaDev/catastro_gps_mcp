@@ -1,0 +1,58 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "es.catastrogps/catastro-gps",
+  "title": "Catastro GPS",
+  "description": "Cadastral parcels in 31 European countries and regions: reference, coordinates, address, geometry",
+  "websiteUrl": "https://www.catastrogps.es/developers",
+  "repository": {
+    "url": "https://github.com/TheHiddenPandaDev/catastro_gps_mcp",
+    "source": "github"
+  },
+  "icons": [
+    {
+      "src": "https://www.catastrogps.es/images/logo/favicon-512.png",
+      "mimeType": "image/png",
+      "sizes": ["512x512"]
+    },
+    {
+      "src": "https://www.catastrogps.es/images/logo/favicon.svg",
+      "mimeType": "image/svg+xml",
+      "sizes": ["any"]
+    }
+  ],
+  "version": "1.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "catastro-gps-mcp",
+      "version": "1.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "CATASTROGPS_API_KEY",
+          "description": "Catastro GPS API key. Free tier: 100 calls/month at https://www.catastrogps.es/developers",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "CATASTROGPS_TIMEOUT",
+          "description": "Request timeout in milliseconds (official cadastres can be slow)",
+          "isRequired": false,
+          "format": "number",
+          "default": "20000"
+        },
+        {
+          "name": "CATASTROGPS_API_URL",
+          "description": "API base URL",
+          "isRequired": false,
+          "format": "string",
+          "default": "https://api.catastrogps.es"
+        }
+      ]
+    }
+  ]
+}

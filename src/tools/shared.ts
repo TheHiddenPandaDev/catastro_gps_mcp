@@ -2,42 +2,58 @@ import { CatastroGPSApiError } from "../client/catastrogps-api.js";
 
 const log = (msg: string) => console.error(`[catastro-gps-mcp] ${msg}`);
 
-export function handleToolError(error: unknown): {
+const PRICING_URL = "https://catastrogps.es/developers";
+
+const FRIENDLY_MESSAGES: Record<string, string> = {
+  KEY_AUTH_001: "Invalid API key format. Check CATASTROGPS_API_KEY.",
+  KEY_AUTH_002: "Unknown API key. Check CATASTROGPS_API_KEY.",
+  KEY_AUTH_003: "Invalid API key. Check CATASTROGPS_API_KEY.",
+  KEY_AUTH_004: `Monthly quota exhausted. Upgrade at ${PRICING_URL}`,
+  KEY_AUTH_005: "The API could not verify your organization. Try again later.",
+  KEY_RATE_001: "Too many requests. Slow down and retry.",
+  RATE_LIMIT_EXCEEDED: "Too many requests. Slow down and retry.",
+  UNAUTHORIZED: `Missing or invalid API key. Get one at ${PRICING_URL}`,
+  PRO_REQUIRED: "This endpoint is not available with an API key yet.",
+  NOT_FOUND: "Nothing found. Check the reference (or address) and the country code.",
+  VALIDATION_ERROR: "Invalid input. Check the reference format for this country.",
+  CNV_COVERAGE: "That reference or point is in a country that is not covered yet.",
+  CNV_AMBIGUOUS: "The reference matches several countries. Call again with one of the candidate country codes.",
+  CNV_PLACE_NAME: "That looks like a place name, not a cadastral reference. Use coordinates or search_address instead.",
+  SERVICE_UNAVAILABLE: "The official cadastre for this country is not responding. Try again in a few minutes.",
+  INTERNAL_ERROR: "Internal server error. Try again later.",
+  MCP_TIMEOUT: "The request timed out. Official cadastres can be slow; try again or raise CATASTROGPS_TIMEOUT.",
+};
+
+type ToolResult = {
   content: Array<{ type: "text"; text: string }>;
-  isError: true;
-} {
+  isError?: true;
+};
+
+export function jsonResult(value: unknown): ToolResult {
+  return { content: [{ type: "text" as const, text: JSON.stringify(value, null, 2) }] };
+}
+
+export function errorResult(code: string, message: string, details?: unknown): ToolResult & { isError: true } {
+  const text = details === undefined
+    ? `${code}: ${message}`
+    : `${code}: ${message}\n${JSON.stringify(details, null, 2)}`;
+  return { content: [{ type: "text" as const, text }], isError: true };
+}
+
+export function handleToolError(error: unknown): ToolResult & { isError: true } {
   if (error instanceof CatastroGPSApiError) {
-    log(`API error: ${error.code} — ${error.message} (${error.status})`);
-
-    // Map backend error codes to user-friendly messages
-    const messages: Record<string, string> = {
-      DAILY_LIMIT_REACHED: "Daily search limit reached. Upgrade your plan at https://catastrogps.es/precios",
-      KEY_AUTH_001: "Invalid API key format.",
-      KEY_AUTH_002: "Invalid API key. Check your CATASTROGPS_API_KEY.",
-      KEY_AUTH_003: "Invalid API key. Check your CATASTROGPS_API_KEY.",
-      KEY_AUTH_004: "Monthly quota exceeded. Upgrade at https://catastrogps.es/developers",
-      KEY_AUTH_005: "Error verifying API key organization.",
-      UNAUTHORIZED: "Invalid or missing API key. Get one at https://catastrogps.es/developers",
-      NOT_FOUND: "Parcel not found. Check the reference code and country.",
-      VALIDATION_ERROR: "Invalid input. Check the reference format for this country.",
-      SERVICE_UNAVAILABLE: "The cadastral service for this country is temporarily unavailable. Try again in a few minutes.",
-      FORBIDDEN: "Access denied. This feature may require a paid plan.",
-      INTERNAL_ERROR: "Internal server error. Try again later.",
-    };
-
-    const friendlyMessage = messages[error.code] || error.message;
-
-    return {
-      content: [{ type: "text" as const, text: `${error.code}: ${friendlyMessage}` }],
-      isError: true,
-    };
+    log(`API error: ${error.code} (${error.status})`);
+    const friendly = FRIENDLY_MESSAGES[error.code];
+    const message = friendly ? `${friendly} (${error.message})` : error.message;
+    return errorResult(error.code, message, error.details);
   }
 
   log(`Unexpected error: ${error instanceof Error ? error.message : String(error)}`);
-  return {
-    content: [
-      { type: "text" as const, text: "MCP_999: An unexpected error occurred. Please try again." },
-    ],
-    isError: true,
-  };
+  return errorResult("MCP_999", "An unexpected error occurred. Please try again.");
+}
+
+export function compact<T extends Record<string, unknown>>(value: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, v]) => v !== undefined && v !== null && v !== ""),
+  ) as Partial<T>;
 }

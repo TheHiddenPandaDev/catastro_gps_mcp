@@ -1,40 +1,31 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CatastroGPSClient } from "../client/catastrogps-api.js";
-import { SUPPORTED_COUNTRIES } from "../types/index.js";
-import { handleToolError } from "./shared.js";
+import { ENRICHMENT_COUNTRIES } from "../types/index.js";
+import { handleToolError, jsonResult } from "./shared.js";
 
 export function registerGetAgriculture(server: McpServer, client: CatastroGPSClient): void {
   server.registerTool(
     "get_agriculture",
     {
-      title: "Get Agriculture Data",
+      title: "Get Agricultural Data",
       description:
-        "Get agricultural data for a parcel: land use classification, NDVI vegetation index, " +
-        "and reference crop prices in the area. Sources: SIGPAC (ES), RPG (FR), COS (PT), " +
-        "CLC (IT), ALKIS (DE).",
+        "Agricultural context for a rural parcel: land use and main crop from the agricultural " +
+        "parcel registry (SIGPAC in Spain, with slope, altitude and irrigation), vegetation index " +
+        "(NDVI) and a reference crop price when available. Richest in Spain; also Portugal, France, " +
+        "Italy and Germany. Field names are returned in Spanish, as the API sends them.",
       inputSchema: {
-        reference: z.string().describe("Cadastral reference code"),
+        reference: z.string().min(1).describe("Official cadastral reference of a rural parcel"),
         country: z
-          .enum(SUPPORTED_COUNTRIES)
-          .describe("Country code: ES, PT, FR, IT, DE, PV, NA"),
+          .enum(ENRICHMENT_COUNTRIES)
+          .optional()
+          .describe("Optional country code: ES, PV, NA, PT, FR, IT or DE. Omit to auto-detect."),
       },
     },
     async ({ reference, country }) => {
       try {
-        const response = await client.getAgriculture(reference, country);
-        const data = response.data;
-
-        const result = {
-          uso_suelo: data.uso_suelo || null,
-          ndvi: data.ndvi || null,
-          cultivos: data.cultivos || [],
-          precios_cultivo: data.precios_cultivo || [],
-        };
-
-        return {
-          content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
-        };
+        const { data } = await client.getAgriculture(reference, country);
+        return jsonResult({ reference, country: country ?? null, agriculture: data.agro ?? data });
       } catch (error) {
         return handleToolError(error);
       }

@@ -1,422 +1,155 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { CatastroGPSClient, CatastroGPSApiError } from "../src/client/catastrogps-api.js";
-
-const mockFetch = vi.fn();
-vi.stubGlobal("fetch", mockFetch);
-
-function mockResponse(data: unknown, status = 200): Response {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    json: () => Promise.resolve(data),
-    headers: new Headers(),
-    redirected: false,
-    statusText: status === 200 ? "OK" : "Error",
-    type: "basic",
-    url: "",
-    clone: () => mockResponse(data, status),
-    body: null,
-    bodyUsed: false,
-    arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
-    blob: () => Promise.resolve(new Blob()),
-    formData: () => Promise.resolve(new FormData()),
-    text: () => Promise.resolve(JSON.stringify(data)),
-    bytes: () => Promise.resolve(new Uint8Array()),
-  } as Response;
-}
-
-const TEST_CONFIG = {
-  apiKey: "pk_test_client123",
-  apiUrl: "https://api.catastrogps.es",
-  timeout: 10000,
-};
+import { USER_AGENT } from "../src/version.js";
+import { TEST_CONFIG, installFetchMock, jsonResponse, lastRequest } from "./helpers.js";
 
 describe("CatastroGPSClient", () => {
+  let fetchMock: ReturnType<typeof installFetchMock>;
   let client: CatastroGPSClient;
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    fetchMock = installFetchMock();
     client = new CatastroGPSClient(TEST_CONFIG);
   });
 
-  describe("constructor", () => {
-    it("should store config correctly", async () => {
-      // Verify by making a request and checking the headers/URL
-      mockFetch.mockResolvedValueOnce(
-        mockResponse({ referencia_catastral: "X", latitud: 0, longitud: 0 }),
-      );
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
 
-      await client.getParcelByReference("REF", "ES");
+  it("sends the API key and the versioned user agent on every call", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: {} }));
+    await client.getParcelByReference("9872023VH5797S0001WX");
 
-      const callUrl = mockFetch.mock.calls[0][0] as string;
-      expect(callUrl).toContain("https://api.catastrogps.es");
+    const req = lastRequest(fetchMock);
+    expect(req.headers["X-API-Key"]).toBe(TEST_CONFIG.apiKey);
+    expect(req.headers["User-Agent"]).toBe(USER_AGENT);
+  });
 
-      const options = mockFetch.mock.calls[0][1];
-      expect(options.headers["X-API-Key"]).toBe("pk_test_client123");
-    });
+  it("looks up a reference without forcing a country so the API can detect it", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: {} }));
+    await client.getParcelByReference("9872023VH5797S0001WX");
 
-    it("should strip trailing slash from apiUrl", async () => {
-      const clientWithSlash = new CatastroGPSClient({
-        apiKey: "pk_test_xxx",
-        apiUrl: "https://api.catastrogps.es/",
-        timeout: 5000,
-      });
+    const req = lastRequest(fetchMock);
+    expect(req.method).toBe("GET");
+    expect(req.url.pathname).toBe("/api/catastro/9872023VH5797S0001WX");
+    expect(req.url.searchParams.has("country")).toBe(false);
+  });
 
-      mockFetch.mockResolvedValueOnce(
-        mockResponse({ referencia_catastral: "X", latitud: 0, longitud: 0 }),
-      );
+  it("encodes references with slashes and spaces", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: {} }));
+    await client.getParcelByReference("146510_8.0502.1 / 3", "PL");
 
-      await clientWithSlash.getParcelByReference("REF", "ES");
+    const req = lastRequest(fetchMock);
+    expect(req.url.pathname).toBe("/api/catastro/146510_8.0502.1%20%2F%203");
+    expect(req.url.searchParams.get("country")).toBe("PL");
+  });
 
-      const callUrl = mockFetch.mock.calls[0][0] as string;
-      // Should not have double slashes
-      expect(callUrl).not.toContain("es//convert");
+  it("uses the GET coordinates endpoint that covers every wired country", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: {} }));
+    await client.getParcelByCoordinates(52.23, 21.012, "PL");
+
+    const req = lastRequest(fetchMock);
+    expect(req.method).toBe("GET");
+    expect(req.url.pathname).toBe("/api/search/coordinates");
+    expect(req.url.searchParams.get("lat")).toBe("52.23");
+    expect(req.url.searchParams.get("lng")).toBe("21.012");
+    expect(req.url.searchParams.get("country")).toBe("PL");
+  });
+
+  it("posts free-text addresses to the parser endpoint in the field the API expects", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: {} }));
+    await client.searchAddress("Calle Mallorca 213, Barcelona");
+
+    const req = lastRequest(fetchMock);
+    expect(req.method).toBe("POST");
+    expect(req.url.pathname).toBe("/api/search/address/parse");
+    expect(req.headers["Content-Type"]).toBe("application/json");
+    expect(req.body).toEqual({ direccion: "Calle Mallorca 213, Barcelona" });
+  });
+
+  it.each([
+    ["getPolygon", "/polygon"],
+    ["getSolarPotential", "/solar"],
+    ["getAgriculture", "/agro"],
+    ["getMarketData", "/market"],
+    ["getInvestmentScore", "/score"],
+    ["getValueHistory", "/value-history"],
+  ] as const)("%s calls the real backend path %s", async (method, suffix) => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: {} }));
+    await client[method]("REF1", "ES");
+
+    expect(lastRequest(fetchMock).url.pathname).toBe(`/api/catastro/REF1${suffix}`);
+  });
+
+  it("sends compare requests in the backend's snake_case shape", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: {} }));
+    await client.compareParcels([
+      { reference: "A", country: "ES" },
+      { reference: "B", country: "FR" },
+    ]);
+
+    const req = lastRequest(fetchMock);
+    expect(req.url.pathname).toBe("/api/catastro/compare");
+    expect(req.body).toEqual({
+      parcelas: [
+        { ref_catastral: "A", country: "ES" },
+        { ref_catastral: "B", country: "FR" },
+      ],
     });
   });
 
-  describe("request() headers", () => {
-    it("should send X-API-Key header", async () => {
-      mockFetch.mockResolvedValueOnce(
-        mockResponse({ referencia_catastral: "X", latitud: 0, longitud: 0 }),
-      );
+  it("turns API errors into typed errors that keep the code, status and details", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(
+        { success: false, code: "CNV_AMBIGUOUS", error: "Varios países", data: { candidates: [{ country: "DE" }, { country: "PT" }] } },
+        300,
+      ),
+    );
 
-      await client.getParcelByReference("REF", "ES");
-
-      const headers = mockFetch.mock.calls[0][1].headers;
-      expect(headers["X-API-Key"]).toBe("pk_test_client123");
-    });
-
-    it("should send User-Agent header", async () => {
-      mockFetch.mockResolvedValueOnce(
-        mockResponse({ referencia_catastral: "X", latitud: 0, longitud: 0 }),
-      );
-
-      await client.getParcelByReference("REF", "ES");
-
-      const headers = mockFetch.mock.calls[0][1].headers;
-      expect(headers["User-Agent"]).toBe("catastrogps-mcp/1.0.0");
-    });
-
-    it("should send Accept: application/json header", async () => {
-      mockFetch.mockResolvedValueOnce(
-        mockResponse({ referencia_catastral: "X", latitud: 0, longitud: 0 }),
-      );
-
-      await client.getParcelByReference("REF", "ES");
-
-      const headers = mockFetch.mock.calls[0][1].headers;
-      expect(headers["Accept"]).toBe("application/json");
-    });
-
-    it("should use GET method for request()", async () => {
-      mockFetch.mockResolvedValueOnce(
-        mockResponse({ referencia_catastral: "X", latitud: 0, longitud: 0 }),
-      );
-
-      await client.getParcelByReference("REF", "ES");
-
-      expect(mockFetch.mock.calls[0][1].method).toBe("GET");
-    });
+    const error = await client.getParcelByReference("05102200100005").catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(CatastroGPSApiError);
+    expect(error).toMatchObject({ code: "CNV_AMBIGUOUS", status: 300, message: "Varios países" });
+    expect((error as CatastroGPSApiError).details).toEqual({ candidates: [{ country: "DE" }, { country: "PT" }] });
   });
 
-  describe("request() error handling", () => {
-    it("should handle timeout via AbortController", async () => {
-      mockFetch.mockImplementationOnce(() => {
-        const error = new Error("The operation was aborted");
-        error.name = "AbortError";
-        return Promise.reject(error);
-      });
+  it("keeps what the address parser understood when it cannot find the address", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ success: false, error: "No se pudo determinar la provincia", parsed: { NombreVia: "MAYOR" } }, 404),
+    );
 
-      await expect(
-        client.getParcelByReference("REF", "ES"),
-      ).rejects.toThrow(CatastroGPSApiError);
-
-      try {
-        mockFetch.mockImplementationOnce(() => {
-          const error = new Error("The operation was aborted");
-          error.name = "AbortError";
-          return Promise.reject(error);
-        });
-        await client.getParcelByReference("REF", "ES");
-      } catch (e) {
-        const err = e as CatastroGPSApiError;
-        expect(err.code).toBe("MCP_TIMEOUT");
-        expect(err.status).toBe(408);
-      }
-    });
-
-    it("should handle network errors (ECONNREFUSED)", async () => {
-      mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
-
-      await expect(
-        client.getParcelByReference("REF", "ES"),
-      ).rejects.toThrow(CatastroGPSApiError);
-
-      try {
-        mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
-        await client.getParcelByReference("REF", "ES");
-      } catch (e) {
-        const err = e as CatastroGPSApiError;
-        expect(err.code).toBe("MCP_NETWORK");
-        expect(err.status).toBe(0);
-        expect(err.message).toContain("ECONNREFUSED");
-      }
-    });
-
-    it("should handle non-Error thrown values as network errors", async () => {
-      mockFetch.mockRejectedValueOnce("string rejection");
-
-      await expect(
-        client.getParcelByReference("REF", "ES"),
-      ).rejects.toThrow(CatastroGPSApiError);
-    });
-
-    it("should pass AbortController signal to fetch", async () => {
-      mockFetch.mockResolvedValueOnce(
-        mockResponse({ referencia_catastral: "X", latitud: 0, longitud: 0 }),
-      );
-
-      await client.getParcelByReference("REF", "ES");
-
-      const options = mockFetch.mock.calls[0][1];
-      expect(options.signal).toBeDefined();
-      expect(options.signal).toBeInstanceOf(AbortSignal);
-    });
+    const error = (await client.searchAddress("Calle Mayor").catch((e: unknown) => e)) as CatastroGPSApiError;
+    expect(error.code).toBe("HTTP_404");
+    expect(error.details).toEqual({ NombreVia: "MAYOR" });
   });
 
-  describe("post() method", () => {
-    it("should use POST method", async () => {
-      mockFetch.mockResolvedValueOnce(
-        mockResponse({ parcels: [] }),
-      );
+  it("falls back to an HTTP code when the error body is not JSON", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("gateway down", { status: 502 }));
 
-      await client.compareParcels([
-        { reference: "REF1", country: "ES" },
-        { reference: "REF2", country: "FR" },
-      ]);
-
-      expect(mockFetch.mock.calls[0][1].method).toBe("POST");
-    });
-
-    it("should send Content-Type: application/json for POST", async () => {
-      mockFetch.mockResolvedValueOnce(
-        mockResponse({ parcels: [] }),
-      );
-
-      await client.compareParcels([
-        { reference: "REF1", country: "ES" },
-        { reference: "REF2", country: "FR" },
-      ]);
-
-      const headers = mockFetch.mock.calls[0][1].headers;
-      expect(headers["Content-Type"]).toBe("application/json");
-    });
-
-    it("should send JSON body for POST", async () => {
-      mockFetch.mockResolvedValueOnce(
-        mockResponse({ parcels: [] }),
-      );
-
-      const parcels = [
-        { reference: "REF1", country: "ES" },
-        { reference: "REF2", country: "FR" },
-      ];
-
-      await client.compareParcels(parcels);
-
-      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
-      expect(body).toEqual({ parcels });
-    });
-
-    it("should handle POST errors the same as GET errors", async () => {
-      mockFetch.mockResolvedValueOnce(
-        mockResponse({ error: "not_found", message: "Parcel not found" }, 404),
-      );
-
-      await expect(
-        client.compareParcels([
-          { reference: "INVALID", country: "ES" },
-          { reference: "INVALID2", country: "ES" },
-        ]),
-      ).rejects.toThrow(CatastroGPSApiError);
-    });
+    const error = (await client.getPolygon("X").catch((e: unknown) => e)) as CatastroGPSApiError;
+    expect(error.code).toBe("HTTP_502");
+    expect(error.status).toBe(502);
   });
 
-  describe("CatastroGPSApiError.fromResponse()", () => {
-    it("should parse error response with all fields", async () => {
-      mockFetch.mockResolvedValueOnce(
-        mockResponse(
-          { error: "not_found", message: "Parcel not found in ES cadastre" },
-          404,
-        ),
-      );
+  it("reports timeouts as MCP_TIMEOUT", async () => {
+    fetchMock.mockRejectedValueOnce(Object.assign(new Error("aborted"), { name: "AbortError" }));
 
-      try {
-        await client.getParcelByReference("INVALID", "ES");
-      } catch (e) {
-        const err = e as CatastroGPSApiError;
-        expect(err).toBeInstanceOf(CatastroGPSApiError);
-        expect(err.code).toBe("not_found");
-        expect(err.message).toBe("Parcel not found in ES cadastre");
-        expect(err.status).toBe(404);
-        expect(err.name).toBe("CatastroGPSApiError");
-      }
-    });
-
-    it("should handle response with missing error field", async () => {
-      mockFetch.mockResolvedValueOnce(
-        mockResponse({}, 500),
-      );
-
-      try {
-        await client.getParcelByReference("REF", "ES");
-      } catch (e) {
-        const err = e as CatastroGPSApiError;
-        expect(err.code).toBe("HTTP_500");
-        expect(err.message).toBe("API returned 500");
-        expect(err.status).toBe(500);
-      }
-    });
-
-    it("should handle response with unparseable JSON body", async () => {
-      // Create a response where json() throws
-      const badResponse = {
-        ok: false,
-        status: 502,
-        json: () => Promise.reject(new Error("invalid json")),
-        headers: new Headers(),
-        redirected: false,
-        statusText: "Bad Gateway",
-        type: "basic",
-        url: "",
-        clone: () => badResponse,
-        body: null,
-        bodyUsed: false,
-        arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
-        blob: () => Promise.resolve(new Blob()),
-        formData: () => Promise.resolve(new FormData()),
-        text: () => Promise.resolve("not json"),
-        bytes: () => Promise.resolve(new Uint8Array()),
-      } as Response;
-
-      mockFetch.mockResolvedValueOnce(badResponse);
-
-      try {
-        await client.getParcelByReference("REF", "ES");
-      } catch (e) {
-        const err = e as CatastroGPSApiError;
-        // Falls back to HTTP_{status} when JSON parsing fails
-        expect(err.code).toBe("HTTP_502");
-        expect(err.status).toBe(502);
-      }
-    });
+    const error = (await client.getSolarPotential("X").catch((e: unknown) => e)) as CatastroGPSApiError;
+    expect(error.code).toBe("MCP_TIMEOUT");
   });
 
-  describe("URL building for each public method", () => {
-    beforeEach(() => {
-      mockFetch.mockResolvedValue(
-        mockResponse({
-          referencia_catastral: "X",
-          latitud: 0,
-          longitud: 0,
-          reference: "X",
-          annual_radiation_kwh_m2: 0,
-          optimal_angle_deg: 0,
-          estimated_production_kwh_year: 0,
-          monthly_radiation: [],
-          data_source: "",
-          land_use: { code: "", description: "", source: "" },
-          ndvi: { current: 0, trend: "", data_quality: "" },
-          crop_prices: [],
-          country: "ES",
-          granularity: "",
-          transactions: [],
-          zone_average_price_m2: 0,
-          score: 5,
-          rating: "",
-          factors: {},
-          data_quality: "",
-          history: [],
-          note: "",
-          parcels: [],
-        }),
-      );
-    });
+  it("reports network failures as MCP_NETWORK", async () => {
+    fetchMock.mockRejectedValueOnce(new TypeError("fetch failed"));
 
-    it("getParcelByReference() builds /convert URL with reference and country", async () => {
-      await client.getParcelByReference("9872323VK2897S0001WX", "ES");
+    const error = (await client.getAgriculture("X").catch((e: unknown) => e)) as CatastroGPSApiError;
+    expect(error.code).toBe("MCP_NETWORK");
+    expect(error.message).toContain("fetch failed");
+  });
 
-      const url = mockFetch.mock.calls[0][0] as string;
-      expect(url).toContain("/convert");
-      expect(url).toContain("referencia_catastral=");
-      expect(url).toContain("country=ES");
-    });
+  it("strips a trailing slash from the base URL", async () => {
+    const trailing = new CatastroGPSClient({ ...TEST_CONFIG, apiUrl: "https://api.example.test/" });
+    fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: {} }));
+    await trailing.getParcelByReference("R");
 
-    it("getParcelByCoordinates() builds /convert URL with lat/lng", async () => {
-      await client.getParcelByCoordinates(40.4165, -3.7038, "ES");
-
-      const url = mockFetch.mock.calls[0][0] as string;
-      expect(url).toContain("/convert");
-      expect(url).toContain("lat=40.4165");
-      expect(url).toContain("lng=-3.7038");
-      expect(url).toContain("country=ES");
-    });
-
-    it("getSolarPotential() builds correct URL with encoded reference", async () => {
-      await client.getSolarPotential("9872323VK2897S0001WX", "ES");
-
-      const url = mockFetch.mock.calls[0][0] as string;
-      expect(url).toContain("/api/catastro/9872323VK2897S0001WX/solar");
-      expect(url).toContain("country=ES");
-    });
-
-    it("getAgriculture() builds correct URL", async () => {
-      await client.getAgriculture("9872323VK2897S0001WX", "PT");
-
-      const url = mockFetch.mock.calls[0][0] as string;
-      expect(url).toContain("/api/catastro/9872323VK2897S0001WX/agro");
-      expect(url).toContain("country=PT");
-    });
-
-    it("getMarketData() builds correct URL", async () => {
-      await client.getMarketData("750560000AB0001", "FR");
-
-      const url = mockFetch.mock.calls[0][0] as string;
-      expect(url).toContain("/api/catastro/750560000AB0001/mercado");
-      expect(url).toContain("country=FR");
-    });
-
-    it("getInvestmentScore() builds correct URL", async () => {
-      await client.getInvestmentScore("A0420001", "IT");
-
-      const url = mockFetch.mock.calls[0][0] as string;
-      expect(url).toContain("/api/catastro/A0420001/score");
-      expect(url).toContain("country=IT");
-    });
-
-    it("getValueHistory() builds correct URL", async () => {
-      await client.getValueHistory("05315000200001", "DE");
-
-      const url = mockFetch.mock.calls[0][0] as string;
-      expect(url).toContain("/api/catastro/05315000200001/historico-valor");
-      expect(url).toContain("country=DE");
-    });
-
-    it("compareParcels() builds /api/catastro/comparar URL", async () => {
-      await client.compareParcels([
-        { reference: "REF1", country: "ES" },
-        { reference: "REF2", country: "FR" },
-      ]);
-
-      const url = mockFetch.mock.calls[0][0] as string;
-      expect(url).toContain("/api/catastro/comparar");
-    });
-
-    it("getSolarPotential() encodes special characters in reference", async () => {
-      await client.getSolarPotential("REF/WITH SPACES", "ES");
-
-      const url = mockFetch.mock.calls[0][0] as string;
-      expect(url).toContain("/api/catastro/REF%2FWITH%20SPACES/solar");
-    });
+    expect(lastRequest(fetchMock).url.toString()).toBe("https://api.example.test/api/catastro/R");
   });
 });

@@ -1,403 +1,298 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { CatastroGPSClient, CatastroGPSApiError } from "../src/client/catastrogps-api.js";
-import type {
-  ParcelResponse,
-  SolarResponse,
-  AgroResponse,
-  MarketResponse,
-  ScoreResponse,
-  ValueHistoryResponse,
-  CompareResponse,
-} from "../src/types/index.js";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { SUPPORTED_COUNTRIES } from "../src/types/index.js";
+import { connectClient, installFetchMock, jsonResponse, lastRequest, toolJson, toolText } from "./helpers.js";
 
-// Test RefCats from docs/15-COUNTRY-LAUNCH.md
-const TEST_REFCATS = {
-  ES_MADRID: "9872323VK2897S0001WX",
-  ES_BARCELONA: "0485206DF3808E0016EZ",
-  PT: "U0512N0003200",
-  FR: "750560000AB0001",
-  IT: "A0420001",
-  DE: "05315000200001",
-} as const;
+describe("MCP tools", () => {
+  let fetchMock: ReturnType<typeof installFetchMock>;
+  let client: Client;
 
-const TEST_CONFIG = {
-  apiKey: "pk_test_xxx",
-  apiUrl: "https://api.catastrogps.es",
-  timeout: 10000,
-};
-
-// Mock fetch globally
-const mockFetch = vi.fn();
-vi.stubGlobal("fetch", mockFetch);
-
-function mockResponse(data: unknown, status = 200): Response {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    json: () => Promise.resolve(data),
-    headers: new Headers(),
-    redirected: false,
-    statusText: "OK",
-    type: "basic",
-    url: "",
-    clone: () => mockResponse(data, status),
-    body: null,
-    bodyUsed: false,
-    arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
-    blob: () => Promise.resolve(new Blob()),
-    formData: () => Promise.resolve(new FormData()),
-    text: () => Promise.resolve(JSON.stringify(data)),
-    bytes: () => Promise.resolve(new Uint8Array()),
-  } as Response;
-}
-
-describe("CatastroGPSClient", () => {
-  let client: CatastroGPSClient;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    client = new CatastroGPSClient(TEST_CONFIG);
+  beforeEach(async () => {
+    fetchMock = installFetchMock();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    client = await connectClient();
   });
 
-  describe("getParcelByReference", () => {
-    it("should fetch ES parcel by reference (Madrid)", async () => {
-      const mockData: ParcelResponse = {
-        referencia_catastral: TEST_REFCATS.ES_MADRID,
-        latitud: 40.41650,
-        longitud: -3.70381,
-        direccion: "CALLE MAYOR 1",
-        municipio: "MADRID",
-        provincia: "MADRID",
-        superficie_m2: 89.5,
-        uso_catastral: "Residencial",
-        anyo_construccion: 1985,
-      };
-      mockFetch.mockResolvedValueOnce(mockResponse(mockData));
-
-      const result = await client.getParcelByReference(TEST_REFCATS.ES_MADRID, "ES");
-
-      expect(result.referencia_catastral).toBe(TEST_REFCATS.ES_MADRID);
-      expect(result.latitud).toBe(40.41650);
-      expect(result.longitud).toBe(-3.70381);
-      expect(result.superficie_m2).toBe(89.5);
-
-      const callUrl = mockFetch.mock.calls[0][0] as string;
-      expect(callUrl).toContain("/convert");
-      expect(callUrl).toContain("country=ES");
-      expect(callUrl).toContain(encodeURIComponent(TEST_REFCATS.ES_MADRID));
-    });
-
-    it("should fetch FR parcel by reference (Paris)", async () => {
-      const mockData: ParcelResponse = {
-        referencia_catastral: TEST_REFCATS.FR,
-        latitud: 48.8566,
-        longitud: 2.3522,
-        direccion: "RUE DE RIVOLI",
-        municipio: "PARIS",
-        provincia: "PARIS",
-        superficie_m2: 1234,
-      };
-      mockFetch.mockResolvedValueOnce(mockResponse(mockData));
-
-      const result = await client.getParcelByReference(TEST_REFCATS.FR, "FR");
-
-      expect(result.referencia_catastral).toBe(TEST_REFCATS.FR);
-      expect(result.latitud).toBe(48.8566);
-    });
-
-    it("should fetch PT parcel by reference", async () => {
-      const mockData: ParcelResponse = {
-        referencia_catastral: TEST_REFCATS.PT,
-        latitud: 38.7223,
-        longitud: -9.1393,
-        municipio: "LISBOA",
-      };
-      mockFetch.mockResolvedValueOnce(mockResponse(mockData));
-
-      const result = await client.getParcelByReference(TEST_REFCATS.PT, "PT");
-      expect(result.referencia_catastral).toBe(TEST_REFCATS.PT);
-    });
-
-    it("should fetch IT parcel by reference", async () => {
-      const mockData: ParcelResponse = {
-        referencia_catastral: TEST_REFCATS.IT,
-        latitud: 41.9028,
-        longitud: 12.4964,
-        municipio: "ROMA",
-      };
-      mockFetch.mockResolvedValueOnce(mockResponse(mockData));
-
-      const result = await client.getParcelByReference(TEST_REFCATS.IT, "IT");
-      expect(result.referencia_catastral).toBe(TEST_REFCATS.IT);
-    });
-
-    it("should fetch DE parcel by reference (NRW)", async () => {
-      const mockData: ParcelResponse = {
-        referencia_catastral: TEST_REFCATS.DE,
-        latitud: 51.4556,
-        longitud: 7.0116,
-        municipio: "ESSEN",
-      };
-      mockFetch.mockResolvedValueOnce(mockResponse(mockData));
-
-      const result = await client.getParcelByReference(TEST_REFCATS.DE, "DE");
-      expect(result.referencia_catastral).toBe(TEST_REFCATS.DE);
-    });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
-  describe("getParcelByCoordinates", () => {
-    it("should fetch parcel by GPS coordinates", async () => {
-      const mockData: ParcelResponse = {
-        referencia_catastral: TEST_REFCATS.ES_MADRID,
-        latitud: 40.41650,
-        longitud: -3.70381,
-        municipio: "MADRID",
-      };
-      mockFetch.mockResolvedValueOnce(mockResponse(mockData));
-
-      const result = await client.getParcelByCoordinates(40.41650, -3.70381, "ES");
-      expect(result.referencia_catastral).toBe(TEST_REFCATS.ES_MADRID);
-
-      const callUrl = mockFetch.mock.calls[0][0] as string;
-      expect(callUrl).toContain("lat=40.4165");
-      expect(callUrl).toContain("lng=-3.70381");
-    });
+  it("exposes exactly the tools that work with an API key", async () => {
+    const { tools } = await client.listTools();
+    expect(tools.map((t) => t.name).sort()).toEqual([
+      "get_agriculture",
+      "get_boundaries",
+      "get_parcel",
+      "get_solar_potential",
+      "search_address",
+    ]);
   });
 
-  describe("getSolarPotential", () => {
-    it("should fetch solar data for ES parcel", async () => {
-      const mockData: SolarResponse = {
-        reference: TEST_REFCATS.ES_MADRID,
-        annual_radiation_kwh_m2: 1650.5,
-        optimal_angle_deg: 35,
-        estimated_production_kwh_year: 4800,
-        monthly_radiation: [85, 105, 140, 165, 195, 210, 220, 200, 170, 130, 90, 75],
-        data_source: "PVGIS (JRC European Commission)",
-      };
-      mockFetch.mockResolvedValueOnce(mockResponse(mockData));
+  it("advertises all 31 country codes on get_parcel", async () => {
+    const { tools } = await client.listTools();
+    const getParcel = tools.find((t) => t.name === "get_parcel")!;
+    const country = (getParcel.inputSchema.properties as Record<string, { enum: string[] }>).country;
 
-      const result = await client.getSolarPotential(TEST_REFCATS.ES_MADRID, "ES");
-
-      expect(result.annual_radiation_kwh_m2).toBe(1650.5);
-      expect(result.monthly_radiation).toHaveLength(12);
-      expect(result.data_source).toContain("PVGIS");
-    });
+    expect(SUPPORTED_COUNTRIES).toHaveLength(31);
+    expect(country.enum).toEqual([...SUPPORTED_COUNTRIES]);
+    expect(getParcel.description).toContain("31 codes");
   });
 
-  describe("getAgriculture", () => {
-    it("should fetch agro data for ES parcel", async () => {
-      const mockData: AgroResponse = {
-        reference: TEST_REFCATS.ES_MADRID,
-        land_use: { code: "TA", description: "Tierras arables", source: "SIGPAC" },
-        ndvi: { current: 0.65, trend: "stable", data_quality: "simulated" },
-        crop_prices: [
-          { crop: "Trigo blando", price_eur_ton: 215.0, source: "MAPA" },
-        ],
-      };
-      mockFetch.mockResolvedValueOnce(mockResponse(mockData));
+  it("keeps the United Kingdom out of reference-based tools", async () => {
+    const { tools } = await client.listTools();
+    const boundaries = tools.find((t) => t.name === "get_boundaries")!;
+    const country = (boundaries.inputSchema.properties as Record<string, { enum: string[] }>).country;
 
-      const result = await client.getAgriculture(TEST_REFCATS.ES_MADRID, "ES");
-
-      expect(result.land_use.source).toBe("SIGPAC");
-      expect(result.ndvi.current).toBeGreaterThan(0);
-    });
+    expect(country.enum).toHaveLength(30);
+    expect(country.enum).not.toContain("UK");
   });
 
-  describe("getMarketData", () => {
-    it("should fetch market data for FR parcel (DVF)", async () => {
-      const mockData: MarketResponse = {
-        reference: TEST_REFCATS.FR,
-        country: "FR",
-        granularity: "parcela",
-        transactions: [
-          {
-            date: "2025-06-15",
-            price_eur: 320000,
-            area_m2: 85,
-            price_per_m2: 3764.71,
-            type: "Appartement",
-          },
-        ],
-        zone_average_price_m2: 3500.0,
-        data_source: "DVF (data.gouv.fr)",
-      };
-      mockFetch.mockResolvedValueOnce(mockResponse(mockData));
-
-      const result = await client.getMarketData(TEST_REFCATS.FR, "FR");
-
-      expect(result.granularity).toBe("parcela");
-      expect(result.transactions.length).toBeGreaterThan(0);
-      expect(result.data_source).toContain("DVF");
-    });
-  });
-
-  describe("getInvestmentScore", () => {
-    it("should fetch score for ES parcel", async () => {
-      const mockData: ScoreResponse = {
-        reference: TEST_REFCATS.ES_MADRID,
-        score: 7.2,
-        rating: "Buena inversión",
-        factors: {
-          location: "high",
-          solar_potential: "high",
-          market_trend: "stable",
-          agricultural_value: "medium",
-          data_completeness: "high",
+  describe("get_parcel", () => {
+    it("maps a reference lookup, outline included", async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({
+        success: true,
+        data: {
+          refCatastral: "9872023VH5797S0001WX",
+          pais: "ES",
+          direccion: "CL MAYOR 1",
+          municipio: "MADRID",
+          provincia: "MADRID",
+          latitud: 40.4165,
+          longitud: -3.7038,
+          superficieParcela: 512,
+          uso: "Residencial",
+          anioConstruccion: 1901,
+          googleMapsUrl: "https://maps.google.com/?q=40.4165,-3.7038",
+          poligono: [[40.1, -3.1], [40.2, -3.2], [40.1, -3.1]],
         },
-        data_quality: "Score based on available data.",
-      };
-      mockFetch.mockResolvedValueOnce(mockResponse(mockData));
+      }));
 
-      const result = await client.getInvestmentScore(TEST_REFCATS.ES_MADRID, "ES");
+      const result = await client.callTool({ name: "get_parcel", arguments: { reference: "9872023VH5797S0001WX" } });
+      const body = toolJson(result);
 
-      expect(result.score).toBeGreaterThanOrEqual(1);
-      expect(result.score).toBeLessThanOrEqual(10);
-      expect(result.rating).toBeDefined();
-      // Score should NOT expose formula weights
-      expect(result).not.toHaveProperty("weights");
-      expect(result).not.toHaveProperty("formula");
+      expect(result.isError).toBeFalsy();
+      expect(body).toMatchObject({
+        reference: "9872023VH5797S0001WX",
+        country: "ES",
+        municipality: "MADRID",
+        area_m2: 512,
+        construction_year: 1901,
+      });
+      expect(body.outline_lat_lng).toHaveLength(3);
+      expect(body).not.toHaveProperty("built_area_m2");
+    });
+
+    it("passes the country hint through for foral cadastres", async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: { refCatastral: "X", latitud: 42.8, longitud: -1.6 } }));
+      await client.callTool({ name: "get_parcel", arguments: { reference: "X", country: "NA" } });
+
+      expect(lastRequest(fetchMock).url.searchParams.get("country")).toBe("NA");
+    });
+
+    it("maps a coordinate lookup outside Spain", async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({
+        success: true,
+        data: {
+          referenciaCatastral: "146510_8.0502.1",
+          pais: "PL",
+          municipio: "Warszawa",
+          coordenadas: { latitud: 52.23, longitud: 21.012 },
+          googleMapsUrl: "https://maps.google.com/?q=52.23,21.012",
+        },
+      }));
+
+      const result = await client.callTool({ name: "get_parcel", arguments: { latitude: 52.23, longitude: 21.012 } });
+
+      expect(toolJson(result)).toMatchObject({ reference: "146510_8.0502.1", country: "PL", latitude: 52.23 });
+      expect(lastRequest(fetchMock).url.pathname).toBe("/api/search/coordinates");
+    });
+
+    it("keeps a longitude of zero", async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({
+        success: true,
+        data: { referenciaCatastral: "R", coordenadas: { latitud: 51.48, longitud: 0 }, googleMapsUrl: "u" },
+      }));
+
+      const result = await client.callTool({ name: "get_parcel", arguments: { latitude: 51.48, longitude: 0, country: "UK" } });
+      expect(toolJson(result).longitude).toBe(0);
+    });
+
+    it("asks for input when neither reference nor both coordinates are given", async () => {
+      const result = await client.callTool({ name: "get_parcel", arguments: { latitude: 40 } });
+
+      expect(result.isError).toBe(true);
+      expect(toolText(result)).toContain("MCP_001");
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("refuses UK references before spending a call", async () => {
+      const result = await client.callTool({ name: "get_parcel", arguments: { reference: "ABC", country: "UK" } });
+
+      expect(result.isError).toBe(true);
+      expect(toolText(result)).toContain("coordinates");
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("rejects unknown country codes at the schema", async () => {
+      const result = await client.callTool({ name: "get_parcel", arguments: { reference: "X", country: "US" } });
+
+      expect(result.isError).toBe(true);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("hands ambiguity candidates back to the agent", async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({
+        success: false,
+        code: "CNV_AMBIGUOUS",
+        error: "Esta referencia podría ser de varios países",
+        data: { reference: "05102200100005", candidates: [{ country: "DE" }, { country: "PT" }] },
+      }, 300));
+
+      const result = await client.callTool({ name: "get_parcel", arguments: { reference: "05102200100005" } });
+      const text = toolText(result);
+
+      expect(result.isError).toBe(true);
+      expect(text).toContain("CNV_AMBIGUOUS");
+      expect(text).toContain("\"country\": \"PT\"");
     });
   });
 
-  describe("getValueHistory", () => {
-    it("should fetch value history for ES parcel", async () => {
-      const mockData: ValueHistoryResponse = {
-        reference: TEST_REFCATS.ES_MADRID,
-        history: [
-          { date: "2026-03-01", cadastral_value: 85000, area_m2: 89.5, use: "Residencial" },
-          { date: "2026-01-15", cadastral_value: 84500, area_m2: 89.5, use: "Residencial" },
-        ],
-        note: "El histórico crece con el tiempo.",
-      };
-      mockFetch.mockResolvedValueOnce(mockResponse(mockData));
+  describe("search_address", () => {
+    it("returns the reference and the parsed address", async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({
+        success: true,
+        data: {
+          referenciaCatastral: "0485206DF3808E0016EZ",
+          refCat14: "0485206DF3808E",
+          direccion: "CL MALLORCA 213, BARCELONA",
+          provincia: "BARCELONA",
+          municipio: "BARCELONA",
+          tipoVia: "CL",
+          nombreVia: "MALLORCA",
+          numero: 213,
+        },
+      }));
 
-      const result = await client.getValueHistory(TEST_REFCATS.ES_MADRID, "ES");
+      const result = await client.callTool({ name: "search_address", arguments: { address: "Calle Mallorca 213, Barcelona" } });
 
-      expect(result.history.length).toBeGreaterThan(0);
-      expect(result.history[0].cadastral_value).toBeGreaterThan(0);
+      expect(toolJson(result)).toMatchObject({
+        reference: "0485206DF3808E0016EZ",
+        parcel_reference: "0485206DF3808E",
+        country: "ES",
+        street: "MALLORCA",
+        number: 213,
+        municipality: "BARCELONA",
+      });
+      expect(lastRequest(fetchMock).body).toEqual({ direccion: "Calle Mallorca 213, Barcelona" });
+    });
+
+    it("explains a miss and shows what was understood", async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({
+        success: false,
+        error: "No se pudo determinar la provincia. Añade el código postal o el nombre de la provincia.",
+        parsed: { NombreVia: "MAYOR", Numero: 1 },
+      }, 404));
+
+      const result = await client.callTool({ name: "search_address", arguments: { address: "Calle Mayor 1" } });
+
+      expect(result.isError).toBe(true);
+      expect(toolText(result)).toContain("provincia");
+      expect(toolText(result)).toContain("MAYOR");
+    });
+
+    it("rejects empty input without calling the API", async () => {
+      const result = await client.callTool({ name: "search_address", arguments: { address: "" } });
+
+      expect(result.isError).toBe(true);
+      expect(fetchMock).not.toHaveBeenCalled();
     });
   });
 
-  describe("compareParcels", () => {
-    it("should compare 2 parcels from different countries", async () => {
-      const mockData: CompareResponse = {
-        parcels: [
-          {
-            reference: TEST_REFCATS.ES_MADRID,
-            country: "ES",
-            latitude: 40.41650,
-            longitude: -3.70381,
-            area_m2: 89.5,
-            score: 7.2,
-          },
-          {
-            reference: TEST_REFCATS.FR,
-            country: "FR",
-            latitude: 48.8566,
-            longitude: 2.3522,
-            area_m2: 1234,
-            score: 6.8,
-          },
-        ],
-      };
-      mockFetch.mockResolvedValueOnce(mockResponse(mockData));
+  describe("get_boundaries", () => {
+    it("normalises the Spanish GeoJSON shape", async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({
+        success: true,
+        data: {
+          refcat: "9872023VH5797S",
+          geojson: { type: "Feature", geometry: { type: "Polygon", coordinates: [] } },
+          centroid: { latitude: 40.41, longitude: -3.7 },
+          area: 512,
+        },
+      }));
 
-      const result = await client.compareParcels([
-        { reference: TEST_REFCATS.ES_MADRID, country: "ES" },
-        { reference: TEST_REFCATS.FR, country: "FR" },
-      ]);
+      const body = toolJson(await client.callTool({ name: "get_boundaries", arguments: { reference: "9872023VH5797S" } }));
+      expect(body).toMatchObject({ reference: "9872023VH5797S", latitude: 40.41, longitude: -3.7, area_m2: 512 });
+      expect(body.geojson).toBeDefined();
+    });
 
-      expect(result.parcels).toHaveLength(2);
+    it("normalises the ring shape used by the other countries", async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({
+        success: true,
+        data: { refCatastral: "CZ1", pais: "CZ", latitud: 50.08, longitud: 14.42, superficieParcela: 300, poligono: [[50, 14]] },
+      }));
 
-      // Verify POST was used
-      const fetchCall = mockFetch.mock.calls[0];
-      expect(fetchCall[1].method).toBe("POST");
+      const body = toolJson(await client.callTool({ name: "get_boundaries", arguments: { reference: "CZ1", country: "CZ" } }));
+      expect(body).toMatchObject({ reference: "CZ1", country: "CZ", area_m2: 300, outline_lat_lng: [[50, 14]] });
     });
   });
 
-  describe("error handling", () => {
-    it("should throw CatastroGPSApiError on 404", async () => {
-      mockFetch.mockResolvedValueOnce(
-        mockResponse({ error: "not_found", message: "Parcel not found" }, 404),
-      );
+  describe("get_solar_potential", () => {
+    it("translates the PVGIS estimate to English keys", async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({
+        success: true,
+        data: {
+          kwh_year: 7200,
+          kw_instalables: 5,
+          ahorro_anual_eur: 900,
+          amortizacion_anos: 7.5,
+          co2_evitado_kg: 2100,
+          irradiacion_media: 5.1,
+          nota_solar: 8,
+          orientacion_optima: "Sur",
+          angulo_inclinacion: 33,
+          disponible: true,
+          estado: "ok",
+          fuente: "PVGIS",
+        },
+      }));
 
-      await expect(
-        client.getParcelByReference("INVALID_REF", "ES"),
-      ).rejects.toThrow(CatastroGPSApiError);
-
-      try {
-        mockFetch.mockResolvedValueOnce(
-          mockResponse({ error: "not_found", message: "Parcel not found" }, 404),
-        );
-        await client.getParcelByReference("INVALID_REF", "ES");
-      } catch (error) {
-        expect(error).toBeInstanceOf(CatastroGPSApiError);
-        expect((error as CatastroGPSApiError).code).toBe("not_found");
-        expect((error as CatastroGPSApiError).status).toBe(404);
-      }
+      const body = toolJson(await client.callTool({ name: "get_solar_potential", arguments: { reference: "R", country: "ES" } }));
+      expect(body).toMatchObject({
+        available: true,
+        installable_kwp: 5,
+        production_kwh_year: 7200,
+        payback_years: 7.5,
+        optimal_tilt_deg: 33,
+      });
     });
 
-    it("should throw CatastroGPSApiError on 401 (invalid API key)", async () => {
-      mockFetch.mockResolvedValueOnce(
-        mockResponse({ error: "unauthorized", message: "Invalid API key" }, 401),
-      );
+    it("only accepts the countries the solar endpoint supports", async () => {
+      const result = await client.callTool({ name: "get_solar_potential", arguments: { reference: "R", country: "PL" } });
 
-      await expect(
-        client.getParcelByReference(TEST_REFCATS.ES_MADRID, "ES"),
-      ).rejects.toThrow(CatastroGPSApiError);
-    });
-
-    it("should throw CatastroGPSApiError on 429 (quota exceeded)", async () => {
-      mockFetch.mockResolvedValueOnce(
-        mockResponse(
-          { error: "daily_limit_reached", message: "Daily limit reached" },
-          429,
-        ),
-      );
-
-      await expect(
-        client.getParcelByReference(TEST_REFCATS.ES_MADRID, "ES"),
-      ).rejects.toThrow(CatastroGPSApiError);
-    });
-
-    it("should handle network errors", async () => {
-      mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
-
-      await expect(
-        client.getParcelByReference(TEST_REFCATS.ES_MADRID, "ES"),
-      ).rejects.toThrow(CatastroGPSApiError);
-    });
-
-    it("should handle timeout", async () => {
-      mockFetch.mockImplementationOnce(
-        () => new Promise((_, reject) => {
-          const error = new Error("AbortError");
-          error.name = "AbortError";
-          setTimeout(() => reject(error), 50);
-        }),
-      );
-
-      await expect(
-        client.getParcelByReference(TEST_REFCATS.ES_MADRID, "ES"),
-      ).rejects.toThrow(CatastroGPSApiError);
+      expect(result.isError).toBe(true);
+      expect(fetchMock).not.toHaveBeenCalled();
     });
   });
 
-  describe("API key authentication", () => {
-    it("should send X-API-Key header on every request", async () => {
-      mockFetch.mockResolvedValueOnce(
-        mockResponse({
-          referencia_catastral: TEST_REFCATS.ES_MADRID,
-          latitud: 40.0,
-          longitud: -3.0,
-        }),
-      );
+  describe("get_agriculture", () => {
+    it("unwraps the agro envelope the API returns", async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({
+        success: true,
+        data: { agro: { uso_suelo: "TA", cultivo_principal: "Cebada", ndvi: { valor_medio: 0.61 } } },
+      }));
 
-      await client.getParcelByReference(TEST_REFCATS.ES_MADRID, "ES");
-
-      const headers = mockFetch.mock.calls[0][1].headers as Record<string, string>;
-      expect(headers["X-API-Key"]).toBe("pk_test_xxx");
-      expect(headers["User-Agent"]).toBe("catastrogps-mcp/1.0.0");
+      const body = toolJson(await client.callTool({ name: "get_agriculture", arguments: { reference: "R", country: "ES" } }));
+      expect(body.agriculture).toMatchObject({ uso_suelo: "TA", cultivo_principal: "Cebada" });
     });
+  });
+
+  it("turns quota exhaustion into an upgrade hint", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ success: false, code: "KEY_AUTH_004", error: "Cuota mensual agotada (100/100)" }, 429));
+
+    const result = await client.callTool({ name: "get_parcel", arguments: { reference: "R" } });
+
+    expect(result.isError).toBe(true);
+    expect(toolText(result)).toContain("catastrogps.es/developers");
   });
 });

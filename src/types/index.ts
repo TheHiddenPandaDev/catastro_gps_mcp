@@ -1,8 +1,30 @@
-// Supported country codes
-export const SUPPORTED_COUNTRIES = ["ES", "PT", "FR", "IT", "DE", "PV", "NA"] as const;
+export const SUPPORTED_COUNTRIES = [
+  "ES", "PV", "NA", "PT", "FR", "IT", "DE", "AT", "CH", "LI",
+  "BE", "NL", "LU", "PL", "CZ", "SK", "SI", "HR", "BG", "GR",
+  "CY", "DK", "SE", "NO", "FI", "IS", "EE", "LV", "LT", "IE",
+  "UK",
+] as const;
 export type CountryCode = (typeof SUPPORTED_COUNTRIES)[number];
 
-// API wrapper response — backend always wraps in { success, data, error, code }
+export const COORDINATES_ONLY_COUNTRIES = ["UK"] as const;
+
+export const REFERENCE_COUNTRIES = [
+  "ES", "PV", "NA", "PT", "FR", "IT", "DE", "AT", "CH", "LI",
+  "BE", "NL", "LU", "PL", "CZ", "SK", "SI", "HR", "BG", "GR",
+  "CY", "DK", "SE", "NO", "FI", "IS", "EE", "LV", "LT", "IE",
+] as const;
+export type ReferenceCountryCode = (typeof REFERENCE_COUNTRIES)[number];
+
+export const ENRICHMENT_COUNTRIES = ["ES", "PV", "NA", "PT", "FR", "IT", "DE"] as const;
+export type EnrichmentCountryCode = (typeof ENRICHMENT_COUNTRIES)[number];
+
+export const COUNTRY_CODES_TEXT =
+  "ES Spain, PV Basque Country, NA Navarre, PT Portugal, FR France, IT Italy, DE Germany, " +
+  "AT Austria, CH Switzerland, LI Liechtenstein, BE Belgium, NL Netherlands, LU Luxembourg, " +
+  "PL Poland, CZ Czechia, SK Slovakia, SI Slovenia, HR Croatia, BG Bulgaria, GR Greece, " +
+  "CY Cyprus, DK Denmark, SE Sweden, NO Norway, FI Finland, IS Iceland, EE Estonia, " +
+  "LV Latvia, LT Lithuania, IE Ireland, UK United Kingdom";
+
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
@@ -11,7 +33,6 @@ export interface ApiResponse<T> {
   searchesRemaining?: number;
 }
 
-// Backend Parcel entity (camelCase JSON tags from Go struct)
 export interface ParcelData {
   refCatastral: string;
   pais?: string;
@@ -28,21 +49,53 @@ export interface ParcelData {
   superficieParcela?: number;
   anioConstruccion?: number;
   coefParticipacion?: string;
+  fuenteDatos?: string;
   poligono?: number[][];
   availableFields?: Record<string, boolean>;
 }
 
-// Polygon response
-export interface PolygonData {
-  refCatastral: string;
+export interface CoordinatesSearchData {
+  referenciaCatastral: string;
+  refCatastral?: string;
+  refCat14?: string;
   pais?: string;
-  latitud: number;
-  longitud: number;
+  direccion?: string;
+  codigoPostal?: string;
+  municipio?: string;
+  provincia?: string;
+  tipoInmueble?: string;
+  superficieParcela?: number;
+  coordenadas: { latitud: number; longitud: number };
+  googleMapsUrl: string;
+}
+
+export interface AddressSearchData {
+  referenciaCatastral: string;
+  refCat14?: string;
+  direccion?: string;
+  provincia?: string;
+  municipio?: string;
+  tipoVia?: string;
+  nombreVia?: string;
+  numero?: number;
+  planta?: string;
+  puerta?: string;
+  codigoPostal?: string;
+}
+
+export interface PolygonData {
+  refcat?: string;
+  refCatastral?: string;
+  pais?: string;
+  latitud?: number;
+  longitud?: number;
+  centroid?: { latitude: number; longitude: number };
+  area?: number;
+  superficieParcela?: number;
   poligono?: number[][];
   geojson?: unknown;
 }
 
-// Solar response
 export interface SolarData {
   kwh_year: number;
   kw_instalables: number;
@@ -51,19 +104,18 @@ export interface SolarData {
   co2_evitado_kg: number;
   irradiacion_media: number;
   nota_solar: number;
+  orientacion_optima?: string;
+  angulo_inclinacion?: number;
+  costo_instalacion_eur?: number;
   disponible: boolean;
   estado: string;
+  fuente?: string;
 }
 
-// Agriculture response
 export interface AgroData {
-  uso_suelo?: string;
-  ndvi?: { current: number; trend: string };
-  cultivos?: Array<{ nombre: string; superficie_m2: number }>;
-  precios_cultivo?: Array<{ cultivo: string; precio_eur_ton: number }>;
+  agro?: Record<string, unknown>;
 }
 
-// Market response
 export interface MarketData {
   transacciones?: Array<{
     fecha: string;
@@ -76,14 +128,12 @@ export interface MarketData {
   fuente?: string;
 }
 
-// Score response
 export interface ScoreData {
   score: number;
   rating: string;
   factores: Record<string, string>;
 }
 
-// Value history response
 export interface ValueHistoryData {
   historial: Array<{
     fecha: string;
@@ -94,7 +144,6 @@ export interface ValueHistoryData {
   nota?: string;
 }
 
-// Compare response
 export interface CompareData {
   parcelas: Array<{
     refCatastral: string;
@@ -109,25 +158,15 @@ export interface CompareData {
   }>;
 }
 
-// Coordinates search response
-export interface CoordinatesSearchData {
-  referenciaCatastral: string;
-  refCat14?: string;
-  direccion?: string;
-  municipio?: string;
-  tipoInmueble?: string;
-  coordenadas: { latitud: number; longitud: number };
-  googleMapsUrl: string;
-}
-
-// API error response
 export interface ApiErrorResponse {
   success: false;
-  error: string;
-  code: string;
+  error?: string;
+  message?: string;
+  code?: string;
+  data?: unknown;
+  parsed?: unknown;
 }
 
-// Config
 export interface ServerConfig {
   apiKey: string;
   apiUrl: string;

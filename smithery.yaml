@@ -1,0 +1,28 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    required:
+      - apiKey
+    properties:
+      apiKey:
+        type: string
+        title: API key
+        description: Catastro GPS API key. Free tier with 100 calls/month at https://www.catastrogps.es/developers
+      timeoutMs:
+        type: number
+        title: Timeout (ms)
+        description: Request timeout. Official cadastres can be slow.
+        default: 20000
+  commandFunction: |-
+    (config) => ({
+      command: 'npx',
+      args: ['-y', 'catastro-gps-mcp@1.1.0'],
+      env: {
+        CATASTROGPS_API_KEY: config.apiKey,
+        CATASTROGPS_TIMEOUT: String(config.timeoutMs ?? 20000)
+      }
+    })
+  exampleConfig:
+    apiKey: pk_live_your_key_here
+    timeoutMs: 20000

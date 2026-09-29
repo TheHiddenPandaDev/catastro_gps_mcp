@@ -1,8 +1,8 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CatastroGPSClient } from "../client/catastrogps-api.js";
-import { SUPPORTED_COUNTRIES } from "../types/index.js";
-import { handleToolError } from "./shared.js";
+import { REFERENCE_COUNTRIES } from "../types/index.js";
+import { compact, handleToolError, jsonResult } from "./shared.js";
 
 export function registerGetBoundaries(server: McpServer, client: CatastroGPSClient): void {
   server.registerTool(
@@ -10,33 +10,29 @@ export function registerGetBoundaries(server: McpServer, client: CatastroGPSClie
     {
       title: "Get Parcel Boundaries",
       description:
-        "Get the polygon/GeoJSON boundaries of a cadastral parcel. " +
-        "Returns coordinate arrays for mapping and GIS applications. " +
-        "Supports all 7 countries/regions.",
+        "Get the outline of a cadastral parcel as GeoJSON and/or a [lat, lng] ring, plus its " +
+        "centroid and area, for mapping and GIS work. Accepts references from the same 30 " +
+        "codes as get_parcel (every covered country except the United Kingdom, which is coordinates only).",
       inputSchema: {
-        reference: z.string().describe("Cadastral reference code"),
+        reference: z.string().min(1).describe("Official cadastral reference"),
         country: z
-          .enum(SUPPORTED_COUNTRIES)
-          .describe("Country code: ES, PT, FR, IT, DE, PV, NA"),
+          .enum(REFERENCE_COUNTRIES)
+          .optional()
+          .describe("Optional country code. Omit to auto-detect from the reference format."),
       },
     },
     async ({ reference, country }) => {
       try {
-        const response = await client.getPolygon(reference, country);
-        const d = response.data;
-
-        const result = {
-          reference: d.refCatastral,
+        const { data: d } = await client.getPolygon(reference, country);
+        return jsonResult(compact({
+          reference: d.refCatastral || d.refcat || reference,
           country: d.pais || country,
-          latitude: d.latitud,
-          longitude: d.longitud,
-          polygon: d.poligono || null,
-          geojson: d.geojson || null,
-        };
-
-        return {
-          content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
-        };
+          latitude: d.latitud ?? d.centroid?.latitude,
+          longitude: d.longitud ?? d.centroid?.longitude,
+          area_m2: d.area || d.superficieParcela,
+          outline_lat_lng: d.poligono,
+          geojson: d.geojson,
+        }));
       } catch (error) {
         return handleToolError(error);
       }

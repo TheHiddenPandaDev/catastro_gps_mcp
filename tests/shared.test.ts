@@ -1,142 +1,56 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { CatastroGPSApiError } from "../src/client/catastrogps-api.js";
-import { handleToolError } from "../src/tools/shared.js";
+import { compact, handleToolError, jsonResult } from "../src/tools/shared.js";
 
-// Suppress console.error from handleToolError's log() calls
-vi.spyOn(console, "error").mockImplementation(() => {});
-
-describe("handleToolError()", () => {
-  describe("CatastroGPSApiError mapping", () => {
-    it("should map daily_limit_reached to upgrade message", () => {
-      const error = new CatastroGPSApiError("daily_limit_reached", "Daily limit reached", 429);
-      const result = handleToolError(error);
-
-      expect(result.content[0].text).toContain("daily_limit_reached");
-      expect(result.content[0].text).toContain("Upgrade your plan");
-      expect(result.content[0].text).toContain("catastrogps.es/precios");
-    });
-
-    it("should map rate_limited to slow down message", () => {
-      const error = new CatastroGPSApiError("rate_limited", "Rate limited", 429);
-      const result = handleToolError(error);
-
-      expect(result.content[0].text).toContain("rate_limited");
-      expect(result.content[0].text).toContain("Too many requests");
-    });
-
-    it("should map catastro_unavailable to retry message", () => {
-      const error = new CatastroGPSApiError("catastro_unavailable", "Catastro down", 503);
-      const result = handleToolError(error);
-
-      expect(result.content[0].text).toContain("catastro_unavailable");
-      expect(result.content[0].text).toContain("temporarily unavailable");
-    });
-
-    it("should map not_found to check reference message", () => {
-      const error = new CatastroGPSApiError("not_found", "Not found", 404);
-      const result = handleToolError(error);
-
-      expect(result.content[0].text).toContain("not_found");
-      expect(result.content[0].text).toContain("Parcel not found");
-    });
-
-    it("should map invalid_referencia to format error message", () => {
-      const error = new CatastroGPSApiError("invalid_referencia", "Invalid ref", 400);
-      const result = handleToolError(error);
-
-      expect(result.content[0].text).toContain("invalid_referencia");
-      expect(result.content[0].text).toContain("Invalid cadastral reference format");
-    });
-
-    it("should map pro_required to upgrade message", () => {
-      const error = new CatastroGPSApiError("pro_required", "Pro required", 403);
-      const result = handleToolError(error);
-
-      expect(result.content[0].text).toContain("pro_required");
-      expect(result.content[0].text).toContain("Pro plan");
-    });
-
-    it("should map unauthorized to API key message", () => {
-      const error = new CatastroGPSApiError("unauthorized", "Unauthorized", 401);
-      const result = handleToolError(error);
-
-      expect(result.content[0].text).toContain("unauthorized");
-      expect(result.content[0].text).toContain("Invalid API key");
-      expect(result.content[0].text).toContain("catastrogps.es/developers");
-    });
-
-    it("should use raw message for unknown CatastroGPSApiError codes", () => {
-      const error = new CatastroGPSApiError("some_unknown_error", "Something weird happened", 500);
-      const result = handleToolError(error);
-
-      expect(result.content[0].text).toContain("some_unknown_error");
-      expect(result.content[0].text).toContain("Something weird happened");
-    });
+describe("handleToolError", () => {
+  beforeEach(() => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
-  describe("non-CatastroGPSApiError handling", () => {
-    it("should return MCP_999 for generic Error", () => {
-      const error = new Error("Something broke");
-      const result = handleToolError(error);
-
-      expect(result.content[0].text).toContain("MCP_999");
-      expect(result.content[0].text).toContain("unexpected error");
-    });
-
-    it("should return MCP_999 for string errors", () => {
-      const result = handleToolError("string error");
-
-      expect(result.content[0].text).toContain("MCP_999");
-    });
-
-    it("should return MCP_999 for null/undefined", () => {
-      const resultNull = handleToolError(null);
-      expect(resultNull.content[0].text).toContain("MCP_999");
-
-      const resultUndef = handleToolError(undefined);
-      expect(resultUndef.content[0].text).toContain("MCP_999");
-    });
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
-  describe("return format", () => {
-    it("should always return isError: true for CatastroGPSApiError", () => {
-      const error = new CatastroGPSApiError("not_found", "Not found", 404);
-      const result = handleToolError(error);
-      expect(result.isError).toBe(true);
-    });
+  it.each([
+    ["KEY_AUTH_004", "catastrogps.es/developers"],
+    ["UNAUTHORIZED", "API key"],
+    ["NOT_FOUND", "country code"],
+    ["CNV_AMBIGUOUS", "candidate"],
+    ["SERVICE_UNAVAILABLE", "not responding"],
+    ["MCP_TIMEOUT", "CATASTROGPS_TIMEOUT"],
+  ])("maps %s to a helpful message", (code, fragment) => {
+    const result = handleToolError(new CatastroGPSApiError(code, "raw", 400));
 
-    it("should always return isError: true for generic errors", () => {
-      const result = handleToolError(new Error("fail"));
-      expect(result.isError).toBe(true);
-    });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain(code);
+    expect(result.content[0].text).toContain(fragment);
+    expect(result.content[0].text).toContain("raw");
+  });
 
-    it("should return content as array with single text object for API errors", () => {
-      const error = new CatastroGPSApiError("not_found", "Not found", 404);
-      const result = handleToolError(error);
+  it("keeps the API message for unmapped codes", () => {
+    const result = handleToolError(new CatastroGPSApiError("CNV_999", "algo raro", 400));
+    expect(result.content[0].text).toBe("CNV_999: algo raro");
+  });
 
-      expect(result.content).toHaveLength(1);
-      expect(result.content[0]).toEqual({
-        type: "text",
-        text: expect.any(String),
-      });
-    });
+  it("appends error details as JSON", () => {
+    const result = handleToolError(new CatastroGPSApiError("NOT_FOUND", "x", 404, { parsed: true }));
+    expect(result.content[0].text).toContain("\"parsed\": true");
+  });
 
-    it("should return content as array with single text object for generic errors", () => {
-      const result = handleToolError(new Error("fail"));
+  it("never leaks unexpected error messages", () => {
+    const result = handleToolError(new Error("secret stack"));
+    expect(result.content[0].text).toBe("MCP_999: An unexpected error occurred. Please try again.");
+  });
+});
 
-      expect(result.content).toHaveLength(1);
-      expect(result.content[0]).toEqual({
-        type: "text",
-        text: expect.any(String),
-      });
-    });
+describe("compact", () => {
+  it("drops empty values but keeps zero and false", () => {
+    expect(compact({ a: undefined, b: null, c: "", d: 0, e: false, f: "x" })).toEqual({ d: 0, e: false, f: "x" });
+  });
+});
 
-    it("should format API error as 'code: message'", () => {
-      const error = new CatastroGPSApiError("not_found", "Not found", 404);
-      const result = handleToolError(error);
-
-      // Format is "{code}: {friendly_message}"
-      expect(result.content[0].text).toMatch(/^not_found: /);
-    });
+describe("jsonResult", () => {
+  it("wraps a value as pretty JSON text", () => {
+    expect(jsonResult({ a: 1 })).toEqual({ content: [{ type: "text", text: "{\n  \"a\": 1\n}" }] });
   });
 });

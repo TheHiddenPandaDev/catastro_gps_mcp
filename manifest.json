@@ -1,0 +1,65 @@
+{
+  "manifest_version": "0.3",
+  "name": "catastro-gps-mcp",
+  "display_name": "Catastro GPS",
+  "version": "1.1.0",
+  "description": "Cadastral parcels in 31 European countries and regions: reference, coordinates, Spanish address, geometry, solar and agriculture.",
+  "long_description": "One API key for official cadastral data across 29 European countries plus the Basque Country and Navarre. Look up parcels by reference or coordinates, turn a Spanish postal address into a cadastral reference, get parcel outlines as GeoJSON, and estimate solar and agricultural potential. Free tier: 100 calls per month.",
+  "author": {
+    "name": "The Hidden Panda",
+    "email": "soporte@catastrogps.es",
+    "url": "https://www.catastrogps.es"
+  },
+  "homepage": "https://www.catastrogps.es/developers",
+  "documentation": "https://github.com/TheHiddenPandaDev/catastro_gps_mcp#readme",
+  "support": "https://github.com/TheHiddenPandaDev/catastro_gps_mcp/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheHiddenPandaDev/catastro_gps_mcp"
+  },
+  "license": "MIT",
+  "keywords": ["cadastre", "catastro", "parcel", "gis", "europe", "real-estate", "solar", "agriculture"],
+  "server": {
+    "type": "node",
+    "entry_point": "build/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/build/index.js"],
+      "env": {
+        "CATASTROGPS_API_KEY": "${user_config.api_key}",
+        "CATASTROGPS_TIMEOUT": "${user_config.timeout_ms}"
+      }
+    }
+  },
+  "tools": [
+    { "name": "get_parcel", "description": "Parcel by cadastral reference or coordinates in 31 European country and region codes" },
+    { "name": "search_address", "description": "Spanish free-text address to cadastral reference" },
+    { "name": "get_boundaries", "description": "Parcel outline as GeoJSON, centroid and area" },
+    { "name": "get_solar_potential", "description": "PVGIS photovoltaic estimate for ES, PT, FR, IT and DE parcels" },
+    { "name": "get_agriculture", "description": "Land use, crop, NDVI and prices for rural parcels" }
+  ],
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "API key",
+      "description": "Get a free key (100 calls/month) at https://www.catastrogps.es/developers",
+      "sensitive": true,
+      "required": true
+    },
+    "timeout_ms": {
+      "type": "number",
+      "title": "Timeout (ms)",
+      "description": "Official cadastres can be slow; raise this if you see timeouts",
+      "default": 20000,
+      "min": 5000,
+      "max": 120000,
+      "required": false
+    }
+  },
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  }
+}

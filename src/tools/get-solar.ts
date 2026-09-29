@@ -1,8 +1,8 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CatastroGPSClient } from "../client/catastrogps-api.js";
-import { SUPPORTED_COUNTRIES } from "../types/index.js";
-import { handleToolError } from "./shared.js";
+import { ENRICHMENT_COUNTRIES } from "../types/index.js";
+import { handleToolError, jsonResult } from "./shared.js";
 
 export function registerGetSolar(server: McpServer, client: CatastroGPSClient): void {
   server.registerTool(
@@ -10,35 +10,35 @@ export function registerGetSolar(server: McpServer, client: CatastroGPSClient): 
     {
       title: "Get Solar Potential",
       description:
-        "Calculate solar energy potential for a parcel using PVGIS data (JRC European Commission). " +
-        "Returns annual radiation, optimal panel angle, estimated yearly production, and monthly breakdown.",
+        "Estimate the photovoltaic potential of a parcel from PVGIS (European Commission JRC): " +
+        "installable kWp, yearly production, savings, payback, CO2 avoided, optimal tilt and orientation. " +
+        "Available for Spain (ES, PV, NA), Portugal, France, Italy and Germany.",
       inputSchema: {
-        reference: z.string().describe("Cadastral reference code"),
+        reference: z.string().min(1).describe("Official cadastral reference"),
         country: z
-          .enum(SUPPORTED_COUNTRIES)
-          .describe("Country code: ES, PT, FR, IT, DE, PV, NA"),
+          .enum(ENRICHMENT_COUNTRIES)
+          .optional()
+          .describe("Optional country code: ES, PV, NA, PT, FR, IT or DE. Omit to auto-detect."),
       },
     },
     async ({ reference, country }) => {
       try {
-        const response = await client.getSolarPotential(reference, country);
-        const data = response.data;
-
-        const result = {
-          kwh_year: data.kwh_year,
-          kw_instalables: data.kw_instalables,
-          ahorro_anual_eur: data.ahorro_anual_eur,
-          amortizacion_anos: data.amortizacion_anos,
-          co2_evitado_kg: data.co2_evitado_kg,
-          irradiacion_media: data.irradiacion_media,
-          nota_solar: data.nota_solar,
-          disponible: data.disponible,
-          estado: data.estado,
-        };
-
-        return {
-          content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
-        };
+        const { data: d } = await client.getSolarPotential(reference, country);
+        return jsonResult({
+          available: d.disponible,
+          status: d.estado,
+          installable_kwp: d.kw_instalables,
+          production_kwh_year: d.kwh_year,
+          savings_eur_year: d.ahorro_anual_eur,
+          payback_years: d.amortizacion_anos,
+          installation_cost_eur: d.costo_instalacion_eur ?? null,
+          co2_avoided_kg_year: d.co2_evitado_kg,
+          mean_irradiation: d.irradiacion_media,
+          solar_grade: d.nota_solar,
+          optimal_orientation: d.orientacion_optima ?? null,
+          optimal_tilt_deg: d.angulo_inclinacion ?? null,
+          source: d.fuente ?? "PVGIS",
+        });
       } catch (error) {
         return handleToolError(error);
       }
