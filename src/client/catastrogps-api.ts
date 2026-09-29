@@ -124,15 +124,15 @@ export class CatastroGPSClient {
     return this.send("GET", this.parcelPath(reference, "/agro"), { country });
   }
 
-  async getMarketData(reference: string, country: string): Promise<ApiResponse<MarketData>> {
+  async getMarketData(reference: string, country?: string): Promise<ApiResponse<MarketData>> {
     return this.send("GET", this.parcelPath(reference, "/market"), { country });
   }
 
-  async getInvestmentScore(reference: string, country: string): Promise<ApiResponse<ScoreData>> {
+  async getInvestmentScore(reference: string, country?: string): Promise<ApiResponse<ScoreData>> {
     return this.send("GET", this.parcelPath(reference, "/score"), { country });
   }
 
-  async getValueHistory(reference: string, country: string): Promise<ApiResponse<ValueHistoryData>> {
+  async getValueHistory(reference: string, country?: string): Promise<ApiResponse<ValueHistoryData>> {
     return this.send("GET", this.parcelPath(reference, "/value-history"), { country });
   }
 

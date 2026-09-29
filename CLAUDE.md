@@ -29,8 +29,10 @@ mcp/
       get-boundaries.ts        → Tool: geometría (GeoJSON / anillo), centroide, área
       get-solar.ts             → Tool: potencial solar (ES/PV/NA/PT/FR/IT/DE)
       get-agriculture.ts       → Tool: datos agrícolas (ES/PV/NA/PT/FR/IT/DE)
-      get-market.ts, get-score.ts, get-value-history.ts, compare-parcels.ts
-                               → NO registradas: el backend las sirve solo con JWT Pro
+      get-market.ts            → Tool: mercado agregado (cifras solo FR/IT/DE-NRW)
+      get-score.ts             → Tool: score 0-100 + factores cualitativos
+      get-value-history.ts     → Tool: instantáneas de superficie/uso (ES/PV/NA/PT/FR/IT/DE/AT)
+      compare-parcels.ts       → Tool: 2-3 parcelas (ES/PT/FR/IT/DE)
       shared.ts                → Errores y utilidades compartidas
     version.ts                 → Versión única (package.json, server.json, manifest.json, smithery.yaml la repiten; un test lo vigila)
     types/
@@ -55,7 +57,7 @@ mcp/
 | Cliente HTTP | Fetch nativo |
 | Auth | API key en header `X-API-Key` |
 
-## Tools disponibles (1.1.0)
+## Tools disponibles (1.2.0)
 
 | Tool | Endpoint backend | Países |
 |------|------------------|--------|
@@ -64,10 +66,15 @@ mcp/
 | `get_boundaries` | `GET /api/catastro/:ref/polygon` | 30 (todos menos UK) |
 | `get_solar_potential` | `GET /api/catastro/:ref/solar` | ES, PV, NA, PT, FR, IT, DE |
 | `get_agriculture` | `GET /api/catastro/:ref/agro` | ES, PV, NA, PT, FR, IT, DE |
+| `get_market_data` | `GET /api/catastro/:ref/market` | Cifras: FR (DVF), IT (OMI), DE (BORIS, solo NRW). ES/PV/NA/PT: nota sin cifras |
+| `get_investment_score` | `GET /api/catastro/:ref/score` | ES, PV, NA, PT, FR, IT, DE |
+| `get_value_history` | `GET /api/catastro/:ref/value-history` | ES, PV, NA, PT, FR, IT, DE, AT (donde `GetByRefcat` graba) |
+| `compare_parcels` | `POST /api/catastro/compare` `{parcelas:[{ref_catastral,country}]}` | ES, PT, FR, IT, DE (PV/NA caen al Catastro común y fallan) |
 
-`market`, `score`, `value-history` y `compare` van por `RegisterProRoutes` (JWT + Pro): con API key
-dan 401. Por eso no se registran. Para exponerlas, el backend tiene que montarlas con
-`apiKeyMiddleware, optionalAuthMiddleware, proOrApiKey` como `RegisterApiProRoutes`.
+Las siete rutas de enriquecimiento van por `RegisterApiProRoutes` (`apiKeyMiddleware,
+optionalAuthMiddleware, proOrApiKey`): entran con API key de organización (consume cuota, también
+en los "no encontrado") o con JWT Pro. Desde el backend de sep-2026; antes `market`, `score`,
+`value-history` y `compare` iban por `RegisterProRoutes` y con API key daban 401.
 
 Coordenadas: siempre `GET /api/search/coordinates`. El `POST` antiguo solo despacha 8 países y
 manda el resto a España.

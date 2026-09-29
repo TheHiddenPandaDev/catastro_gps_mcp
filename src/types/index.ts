@@ -18,6 +18,12 @@ export type ReferenceCountryCode = (typeof REFERENCE_COUNTRIES)[number];
 export const ENRICHMENT_COUNTRIES = ["ES", "PV", "NA", "PT", "FR", "IT", "DE"] as const;
 export type EnrichmentCountryCode = (typeof ENRICHMENT_COUNTRIES)[number];
 
+export const VALUE_HISTORY_COUNTRIES = ["ES", "PV", "NA", "PT", "FR", "IT", "DE", "AT"] as const;
+export type ValueHistoryCountryCode = (typeof VALUE_HISTORY_COUNTRIES)[number];
+
+export const COMPARE_COUNTRIES = ["ES", "PT", "FR", "IT", "DE"] as const;
+export type CompareCountryCode = (typeof COMPARE_COUNTRIES)[number];
+
 export const COUNTRY_CODES_TEXT =
   "ES Spain, PV Basque Country, NA Navarre, PT Portugal, FR France, IT Italy, DE Germany, " +
   "AT Austria, CH Switzerland, LI Liechtenstein, BE Belgium, NL Netherlands, LU Luxembourg, " +
@@ -117,45 +123,71 @@ export interface AgroData {
 }
 
 export interface MarketData {
-  transacciones?: Array<{
-    fecha: string;
-    precio_eur: number;
-    superficie_m2: number;
-    precio_m2: number;
-    tipo: string;
-  }>;
-  precio_medio_m2?: number;
+  precio_estimado_eur?: number;
+  precio_m2_eur?: number;
+  num_transacciones?: number;
+  fecha_ultima_transaccion?: string;
+  granularidad?: string;
+  granularidad_display?: string;
   fuente?: string;
+  transacciones_historial?: unknown[];
+  disponible: boolean;
+  estado?: string;
+  mensaje_usuario?: string;
+  data_quality?: string;
+  fecha_actualizacion?: string;
 }
 
 export interface ScoreData {
-  score: number;
-  rating: string;
-  factores: Record<string, string>;
+  score_inversion: {
+    puntuacion: number;
+    clasificacion: string;
+    recomendacion?: string;
+    componentes?: Record<string, number>;
+    factores_riesgo?: string[];
+    factores_oportunidad?: string[];
+  };
+}
+
+export interface ValueHistoryEntry {
+  parcel_ref?: string;
+  country?: string;
+  valor_catastral?: number;
+  superficie?: number;
+  uso?: string;
+  fecha_captura?: string;
+  fuente?: string;
 }
 
 export interface ValueHistoryData {
-  historial: Array<{
-    fecha: string;
-    valor_catastral: number;
-    superficie_m2: number;
-    uso: string;
-  }>;
-  nota?: string;
+  refcat: string;
+  country: string;
+  entries: ValueHistoryEntry[] | null;
+  totalEntries: number;
+  variacionPct: number | null;
+}
+
+export interface CompareItem {
+  ref_catastral: string;
+  country: string;
+  parcela?: Partial<ParcelData>;
+  solar?: Partial<SolarData>;
+  agro?: {
+    es_agricola?: boolean;
+    disponible?: boolean;
+    uso_suelo?: { descripcion?: string; grupo?: string };
+  };
+  score?: {
+    score_global?: number;
+    clasificacion?: string;
+    disponible?: boolean;
+  };
+  error?: string;
 }
 
 export interface CompareData {
-  parcelas: Array<{
-    refCatastral: string;
-    pais: string;
-    latitud: number;
-    longitud: number;
-    superficieParcela?: number;
-    uso?: string;
-    score?: number;
-    solar_kwh?: number;
-    precio_m2?: number;
-  }>;
+  comparacion: CompareItem[];
+  total: number;
 }
 
 export interface ApiErrorResponse {

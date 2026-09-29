@@ -13,7 +13,7 @@ const FRIENDLY_MESSAGES: Record<string, string> = {
   KEY_RATE_001: "Too many requests. Slow down and retry.",
   RATE_LIMIT_EXCEEDED: "Too many requests. Slow down and retry.",
   UNAUTHORIZED: `Missing or invalid API key. Get one at ${PRICING_URL}`,
-  PRO_REQUIRED: "This endpoint is not available with an API key yet.",
+  PRO_REQUIRED: `This endpoint needs a developer API key. Get one at ${PRICING_URL}`,
   NOT_FOUND: "Nothing found. Check the reference (or address) and the country code.",
   VALIDATION_ERROR: "Invalid input. Check the reference format for this country.",
   CNV_COVERAGE: "That reference or point is in a country that is not covered yet.",

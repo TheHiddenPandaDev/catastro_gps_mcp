@@ -4,7 +4,7 @@
 
 Official cadastral parcels for AI agents, across **29 European countries plus the Basque Country and Navarre** (31 country and region codes), with one API key.
 
-Ask your agent for a parcel by its cadastral reference, by a point on the map or, in Spain, by a postal address typed as free text. It gets back the reference, location, area, land use and the parcel outline, and it can estimate solar and agricultural potential for parcels in Spain, Portugal, France, Italy and Germany.
+Ask your agent for a parcel by its cadastral reference, by a point on the map or, in Spain, by a postal address typed as free text. It gets back the reference, location, area, land use and the parcel outline, and it can estimate solar and agricultural potential, read aggregated market prices, score and compare parcels in Spain, Portugal, France, Italy and Germany.
 
 - **31 codes, one call shape.** `ES`, `PT`, `FR`, `IT`, `DE`, `PL`, `NL`, `CH`… and the two Spanish foral cadastres (`PV`, `NA`) that the central Catastro does not serve.
 - **The country is optional.** It is detected from the reference format or from the point. A few references are valid in more than one country (some German and Portuguese numbers look alike): pass `country` to be explicit.
@@ -49,8 +49,19 @@ Use the same `npx -y catastro-gps-mcp` command with `CATASTROGPS_API_KEY` in the
 | `get_boundaries` | Parcel outline as GeoJSON / `[lat, lng]` ring, centroid and area | 30 codes (all but UK) |
 | `get_solar_potential` | PVGIS photovoltaic estimate: kWp, kWh/year, savings, payback, CO₂, tilt | ES, PV, NA, PT, FR, IT, DE |
 | `get_agriculture` | Land use, main crop, NDVI and a reference crop price (SIGPAC detail in Spain) | ES, PV, NA, PT, FR, IT, DE |
+| `get_market_data` | Aggregated price reference for the parcel's area. Never individual sales | Figures: FR, IT, DE (NRW only). ES, PV, NA, PT: note without figures |
+| `get_investment_score` | Score 0–100 with a rating and qualitative factor levels (high / medium / low / not available) | ES, PV, NA, PT, FR, IT, DE |
+| `get_value_history` | Area and land-use snapshots of the parcel over time | ES, PV, NA, PT, FR, IT, DE, AT |
+| `compare_parcels` | Two or three parcels side by side: location, solar, agriculture, score | ES, PT, FR, IT, DE (not PV or NA) |
 
-Every tool call is one API call against your monthly quota, including calls that end in "not found".
+Every tool call is one API call against your monthly quota, including calls that end in "not found". `compare_parcels` is one call for the whole comparison.
+
+### What the market, score and history tools can and cannot tell
+
+- **`get_market_data`** has numbers only where an official source gives them: France (DVF recorded sales: average €/m², number of sales, last sale date, estimated value), Italy (OMI zone values from the Agenzia delle Entrate) and Germany (official *Bodenrichtwert* land value per m², North Rhine-Westphalia only; elsewhere in Germany it answers `available: false`). In Spain and Portugal it answers with a note and no figures: there is no per-parcel price source yet.
+- **`get_investment_score`** combines what the API can gather for the parcel: solar potential and agricultural use everywhere it answers, market prices only in France, Italy and Germany (NRW). Accessibility and risk are not computed yet and come back as `not_available`, so the score is relative to the factors that were available. You get the score, the rating and qualitative factor levels, never the weights.
+- **`get_value_history`** starts the first time anyone looks the parcel up through Catastro GPS (at most one snapshot every 30 days). A parcel nobody has queried returns an empty list. It records area and land use; the official cadastral value is not recorded yet, so `cadastral_value_eur` is always `null` and `change_pct` is the change in area.
+- **`compare_parcels`** fills area, land use and municipality only for Spanish parcels; for Portugal, France, Italy and Germany it returns the location, solar, agriculture and score. It does not include market prices. A parcel that is not found comes back with an error and the others are still compared.
 
 ## Coverage
 
@@ -105,6 +116,10 @@ Ask your agent:
 > Look up the Polish parcel 146510_8.0502.1/3 and tell me its area.
 
 > Compare the solar potential of these two rural parcels in Navarre and Portugal.
+
+> Compare these three parcels in Spain, France and Italy and tell me which has the best investment score.
+
+> What do land prices look like around the French parcel 75056000AB0001?
 
 What a `get_parcel` call returns (shortened; values are illustrative):
 

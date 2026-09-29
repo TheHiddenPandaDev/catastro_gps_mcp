@@ -5,6 +5,10 @@ import { registerSearchAddress } from "./tools/search-address.js";
 import { registerGetBoundaries } from "./tools/get-boundaries.js";
 import { registerGetSolar } from "./tools/get-solar.js";
 import { registerGetAgriculture } from "./tools/get-agriculture.js";
+import { registerGetMarket } from "./tools/get-market.js";
+import { registerGetScore } from "./tools/get-score.js";
+import { registerGetValueHistory } from "./tools/get-value-history.js";
+import { registerCompareParcels } from "./tools/compare-parcels.js";
 import { SERVER_VERSION } from "./version.js";
 import type { ServerConfig } from "./types/index.js";
 
@@ -24,6 +28,10 @@ export function createServer(config: ServerConfig): McpServer {
   registerGetBoundaries(server, client);
   registerGetSolar(server, client);
   registerGetAgriculture(server, client);
+  registerGetMarket(server, client);
+  registerGetScore(server, client);
+  registerGetValueHistory(server, client);
+  registerCompareParcels(server, client);
 
   return server;
 }

@@ -21,10 +21,14 @@ describe("MCP tools", () => {
   it("exposes exactly the tools that work with an API key", async () => {
     const { tools } = await client.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual([
+      "compare_parcels",
       "get_agriculture",
       "get_boundaries",
+      "get_investment_score",
+      "get_market_data",
       "get_parcel",
       "get_solar_potential",
+      "get_value_history",
       "search_address",
     ]);
   });
@@ -285,6 +289,189 @@ describe("MCP tools", () => {
       const body = toolJson(await client.callTool({ name: "get_agriculture", arguments: { reference: "R", country: "ES" } }));
       expect(body.agriculture).toMatchObject({ uso_suelo: "TA", cultivo_principal: "Cebada" });
     });
+  });
+
+  describe("get_market_data", () => {
+    it("returns aggregated figures and drops individual sales", async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({
+        success: true,
+        data: {
+          precio_estimado_eur: 250000,
+          precio_m2_eur: 3100,
+          num_transacciones: 4,
+          fecha_ultima_transaccion: "2025-06-01",
+          granularidad: "parcelle",
+          fuente: "DVF",
+          transacciones_historial: [{ valeur_fonciere: 180000, adresse: "1 RUE X" }],
+          disponible: true,
+          estado: "ok",
+          data_quality: "real",
+        },
+      }));
+
+      const result = await client.callTool({ name: "get_market_data", arguments: { reference: "75056000AB0001", country: "FR" } });
+      const body = toolJson(result);
+      const req = lastRequest(fetchMock);
+
+      expect(req.method).toBe("GET");
+      expect(req.url.pathname).toBe("/api/catastro/75056000AB0001/market");
+      expect(req.url.searchParams.get("country")).toBe("FR");
+      expect(body).toMatchObject({ available: true, has_price_figures: true, price_per_m2_eur: 3100, sales_count: 4, source: "DVF" });
+      expect(toolText(result)).not.toContain("valeur_fonciere");
+      expect(toolText(result)).not.toContain("1 RUE X");
+    });
+
+    it("says plainly when a country has no price figures", async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({
+        success: true,
+        data: { disponible: true, estado: "referencia", fuente: "Registradores de la Propiedad", mensaje_usuario: "Datos agregados por zona." },
+      }));
+
+      const body = toolJson(await client.callTool({ name: "get_market_data", arguments: { reference: "9872023VH5797S", country: "ES" } }));
+      expect(body).toMatchObject({ has_price_figures: false, price_per_m2_eur: null, note: "Datos agregados por zona." });
+    });
+
+    it("rejects countries the market endpoint does not cover", async () => {
+      const result = await client.callTool({ name: "get_market_data", arguments: { reference: "R", country: "PL" } });
+
+      expect(result.isError).toBe(true);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("get_investment_score", () => {
+    it("returns the score and qualitative factors, never the component numbers", async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({
+        success: true,
+        data: {
+          score_inversion: {
+            puntuacion: 72.5,
+            clasificacion: "bueno",
+            recomendacion: "Buen potencial de inversión.",
+            componentes: { viabilidad_solar: 8.1, potencial_agricola: 5.5, valor_mercado: 2.3, demanda_terreno: 0, estabilidad_politica: 0 },
+            factores_riesgo: ["Sin datos de mercado inmobiliario"],
+            factores_oportunidad: ["Buena irradiación solar"],
+          },
+        },
+      }));
+
+      const result = await client.callTool({ name: "get_investment_score", arguments: { reference: "9872023VH5797S", country: "ES" } });
+      const body = toolJson(result);
+
+      expect(lastRequest(fetchMock).url.pathname).toBe("/api/catastro/9872023VH5797S/score");
+      expect(body).toMatchObject({
+        score: 72.5,
+        rating: "bueno",
+        factors: { solar: "high", agriculture: "medium", market: "low", accessibility: "not_available", risk: "not_available" },
+        risk_factors: ["Sin datos de mercado inmobiliario"],
+      });
+      expect(toolText(result)).not.toContain("8.1");
+      expect(toolText(result)).not.toContain("componentes");
+    });
+  });
+
+  describe("get_value_history", () => {
+    it("maps snapshots and hides the unrecorded cadastral value", async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({
+        success: true,
+        data: {
+          refcat: "9872023VH5797S",
+          country: "ES",
+          entries: [
+            { fecha_captura: "2026-09-01", superficie: 520, uso: "Residencial", valor_catastral: 0, fuente: "catastro_api" },
+            { fecha_captura: "2026-06-01", superficie: 512, uso: "Residencial", valor_catastral: 0, fuente: "catastro_api" },
+          ],
+          totalEntries: 2,
+          variacionPct: 1.5625,
+        },
+      }));
+
+      const body = toolJson(await client.callTool({ name: "get_value_history", arguments: { reference: "9872023VH5797S", country: "ES" } }));
+
+      expect(lastRequest(fetchMock).url.pathname).toBe("/api/catastro/9872023VH5797S/value-history");
+      expect(body).toMatchObject({ reference: "9872023VH5797S", country: "ES", total: 2, change_pct: 1.5625 });
+      expect((body.snapshots as unknown[])[0]).toEqual({
+        date: "2026-09-01", area_m2: 520, land_use: "Residencial", cadastral_value_eur: null, source: "catastro_api",
+      });
+    });
+
+    it("returns an empty list for a parcel nobody looked up yet", async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({
+        success: true,
+        data: { refcat: "R", country: "AT", entries: null, totalEntries: 0, variacionPct: null },
+      }));
+
+      const body = toolJson(await client.callTool({ name: "get_value_history", arguments: { reference: "R", country: "AT" } }));
+      expect(body).toMatchObject({ snapshots: [], total: 0, change_pct: null });
+    });
+  });
+
+  describe("compare_parcels", () => {
+    it("posts the parcels and summarises each result", async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({
+        success: true,
+        data: {
+          total: 2,
+          comparacion: [
+            {
+              ref_catastral: "9872023VH5797S",
+              country: "ES",
+              parcela: { latitud: 40.41, longitud: -3.7, superficieParcela: 512, uso: "Residencial", municipio: "MADRID" },
+              solar: { disponible: true, kwh_year: 7200, kw_instalables: 5, nota_solar: 4 },
+              agro: { disponible: true, es_agricola: false },
+              score: { score_global: 64, clasificacion: "bueno", disponible: true, componentes: { solar: { score: 80, peso: 0.2 } } },
+            },
+            { ref_catastral: "NOPE", country: "FR", error: "Parcel not found." },
+          ],
+        },
+      }));
+
+      const result = await client.callTool({
+        name: "compare_parcels",
+        arguments: { parcels: [{ reference: "9872023VH5797S", country: "ES" }, { reference: "NOPE", country: "FR" }] },
+      });
+      const body = toolJson(result);
+      const req = lastRequest(fetchMock);
+
+      expect(req.method).toBe("POST");
+      expect(req.url.pathname).toBe("/api/catastro/compare");
+      expect(body.total).toBe(2);
+      expect((body.parcels as unknown[])[0]).toMatchObject({
+        reference: "9872023VH5797S",
+        area_m2: 512,
+        solar: { production_kwh_year: 7200 },
+        agriculture: { is_agricultural: false },
+        score: { value: 64, rating: "bueno" },
+      });
+      expect((body.parcels as unknown[])[1]).toEqual({ reference: "NOPE", country: "FR", error: "Parcel not found." });
+      expect(toolText(result)).not.toContain("peso");
+    });
+
+    it("refuses the Basque Country and Navarre before spending a call", async () => {
+      const result = await client.callTool({
+        name: "compare_parcels",
+        arguments: { parcels: [{ reference: "A", country: "ES" }, { reference: "B", country: "PV" }] },
+      });
+
+      expect(result.isError).toBe(true);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("needs at least two parcels", async () => {
+      const result = await client.callTool({ name: "compare_parcels", arguments: { parcels: [{ reference: "A", country: "ES" }] } });
+
+      expect(result.isError).toBe(true);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+  });
+
+  it("explains a rejected key on the reopened tools", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ success: false, code: "UNAUTHORIZED", error: "No autorizado" }, 401));
+
+    const result = await client.callTool({ name: "get_investment_score", arguments: { reference: "R", country: "FR" } });
+
+    expect(result.isError).toBe(true);
+    expect(toolText(result)).toContain("catastrogps.es/developers");
   });
 
   it("turns quota exhaustion into an upgrade hint", async () => {

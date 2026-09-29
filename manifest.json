@@ -2,9 +2,9 @@
   "manifest_version": "0.3",
   "name": "catastro-gps-mcp",
   "display_name": "Catastro GPS",
-  "version": "1.1.0",
-  "description": "Cadastral parcels in 31 European countries and regions: reference, coordinates, Spanish address, geometry, solar and agriculture.",
-  "long_description": "One API key for official cadastral data across 29 European countries plus the Basque Country and Navarre. Look up parcels by reference or coordinates, turn a Spanish postal address into a cadastral reference, get parcel outlines as GeoJSON, and estimate solar and agricultural potential. Free tier: 100 calls per month.",
+  "version": "1.2.0",
+  "description": "Cadastral parcels in 31 European countries and regions: reference, coordinates, Spanish address, geometry, solar, agriculture, market, score and comparison.",
+  "long_description": "One API key for official cadastral data across 29 European countries plus the Basque Country and Navarre. Look up parcels by reference or coordinates, turn a Spanish postal address into a cadastral reference, get parcel outlines as GeoJSON, estimate solar and agricultural potential, read aggregated market prices (France, Italy, Germany), score and compare parcels, and follow how a parcel changes over time. Free tier: 100 calls per month.",
   "author": {
     "name": "The Hidden Panda",
     "email": "soporte@catastrogps.es",
@@ -36,7 +36,11 @@
     { "name": "search_address", "description": "Spanish free-text address to cadastral reference" },
     { "name": "get_boundaries", "description": "Parcel outline as GeoJSON, centroid and area" },
     { "name": "get_solar_potential", "description": "PVGIS photovoltaic estimate for ES, PT, FR, IT and DE parcels" },
-    { "name": "get_agriculture", "description": "Land use, crop, NDVI and prices for rural parcels" }
+    { "name": "get_agriculture", "description": "Land use, crop, NDVI and prices for rural parcels" },
+    { "name": "get_market_data", "description": "Aggregated price reference: figures in FR, IT and DE (NRW); note only in ES and PT" },
+    { "name": "get_investment_score", "description": "0-100 investment score with qualitative factors for ES, PT, FR, IT and DE parcels" },
+    { "name": "get_value_history", "description": "Area and land-use snapshots recorded since the parcel was first looked up" },
+    { "name": "compare_parcels", "description": "Two or three parcels side by side across ES, PT, FR, IT and DE" }
   ],
   "user_config": {
     "api_key": {
