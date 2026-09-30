@@ -28,6 +28,7 @@ describe("MCP tools", () => {
       "get_market_data",
       "get_parcel",
       "get_solar_potential",
+      "get_terrain",
       "get_value_history",
       "search_address",
     ]);
@@ -238,6 +239,44 @@ describe("MCP tools", () => {
 
       const body = toolJson(await client.callTool({ name: "get_boundaries", arguments: { reference: "CZ1", country: "CZ" } }));
       expect(body).toMatchObject({ reference: "CZ1", country: "CZ", area_m2: 300, outline_lat_lng: [[50, 14]] });
+    });
+  });
+
+  describe("get_terrain", () => {
+    it("returns relief and protected areas with their sources", async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({
+        success: true,
+        data: {
+          refcat: "10194A00110004",
+          country: "ES",
+          relief: {
+            status: "ok",
+            elevation_m: { mean: 365.8, min: 212.3, max: 506.6 },
+            slope: { mean_pct: 36.5, mean_deg: 20, max_pct: 71.6, class: "very_steep", max_class: "very_steep",
+              share_over_10_pct: 98.4, classes_pct: { flat: 0.2 } },
+            aspect: { dominant: "N", dominant_share_pct: 75.3, mean_deg: 0, flat_share_pct: 0.2, sectors_pct: { N: 75.3 } },
+            sample: { method: "parcel", cells: 1448, resolution_m: 31 },
+            source: { name: "Copernicus DEM GLO-30", provider: "Copernicus / ESA", license: "Copernicus DEM licence",
+              attribution: "© DLR", url: "https://dataspace.copernicus.eu" },
+          },
+          protected_areas: {
+            status: "ok", intersects: true, inside: true, max_overlap_pct: 100,
+            natura2000: [{ code: "ES0000014", name: "Monfragüe y las Dehesas del Entorno", type: "SPA", country: "ES", overlap_pct: 100 }],
+            national: [], method: "parcel",
+            sources: [{ name: "Natura 2000", provider: "EEA", license: "CC BY 4.0", attribution: "© EEA", url: "https://sdi.eea.europa.eu" }],
+          },
+          calculated_at: "2026-09-30T18:57:29Z",
+          provenance: "1",
+        },
+      }));
+
+      const body = toolJson(await client.callTool({ name: "get_terrain", arguments: { reference: "10194A00110004", country: "ES" } }));
+      expect(fetchMock.mock.calls[0][0]).toContain("/api/catastro/10194A00110004/terrain?country=ES");
+      expect(body).toMatchObject({
+        reference: "10194A00110004",
+        relief: { slope: { mean_pct: 36.5 }, aspect: { dominant: "N" } },
+        protected_areas: { inside: true, natura2000: [{ type: "SPA", overlap_pct: 100 }] },
+      });
     });
   });
 

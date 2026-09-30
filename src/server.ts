@@ -4,6 +4,7 @@ import { registerGetParcel } from "./tools/get-parcel.js";
 import { registerSearchAddress } from "./tools/search-address.js";
 import { registerGetBoundaries } from "./tools/get-boundaries.js";
 import { registerGetSolar } from "./tools/get-solar.js";
+import { registerGetTerrain } from "./tools/get-terrain.js";
 import { registerGetAgriculture } from "./tools/get-agriculture.js";
 import { registerGetMarket } from "./tools/get-market.js";
 import { registerGetScore } from "./tools/get-score.js";
@@ -27,6 +28,7 @@ export function createServer(config: ServerConfig): McpServer {
   registerSearchAddress(server, client);
   registerGetBoundaries(server, client);
   registerGetSolar(server, client);
+  registerGetTerrain(server, client);
   registerGetAgriculture(server, client);
   registerGetMarket(server, client);
   registerGetScore(server, client);

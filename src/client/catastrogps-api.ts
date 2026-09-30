@@ -4,6 +4,7 @@ import type {
   ParcelData,
   PolygonData,
   SolarData,
+  TerrainData,
   AgroData,
   MarketData,
   ScoreData,
@@ -145,6 +146,10 @@ export class CatastroGPSClient {
 
   async getSolarPotential(reference: string, country?: string): Promise<ApiResponse<SolarData>> {
     return this.send("GET", this.parcelPath(reference, "/solar"), { country });
+  }
+
+  async getTerrain(reference: string, country?: string): Promise<ApiResponse<TerrainData>> {
+    return this.send("GET", this.parcelPath(reference, "/terrain"), { country });
   }
 
   async getAgriculture(reference: string, country?: string): Promise<ApiResponse<AgroData>> {
