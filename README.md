@@ -56,16 +56,6 @@ Use the same `npx -y catastro-gps-mcp` command with `CATASTROGPS_API_KEY` in the
 
 Every tool call is one API call against your monthly quota, including calls that end in "not found". `compare_parcels` is one call for the whole comparison.
 
-### Official documents, paid from a prepaid wallet
-
-| Tool | What it does | Cost |
-|------|--------------|------|
-| `list_documents` | Documents for a country or parcel (Italian visura, mortgage inspection, map extract and building layout, German Flurstückskarte), their price in euros and your wallet balance | Free |
-| `order_document` | Orders the document and charges its catalogue price to your organization's wallet. Checks the balance first, needs `confirm: true` after the user approves the price, and never charges twice for the same order on the same day | The document price |
-| `get_document_order` | Status (`processing`, `ready`, `failed`). With `include_file: true` a ready order comes with the PDF attached | Free |
-
-Top up the wallet once at [catastrogps.es/app/developer](https://www.catastrogps.es/app/developer) (50, 100, 250 or 500 EUR, card payment with invoice). If a document cannot be issued, its price goes back to the wallet by itself. Document calls do not count against the lookup quota. Test keys (`pk_test_…`) cannot order documents.
-
 ### What the market, score and history tools can and cannot tell
 
 - **`get_market_data`** has numbers only where an official source gives them: France (DVF recorded sales: average €/m², number of sales, last sale date, estimated value), Italy (OMI zone values from the Agenzia delle Entrate) and Germany (official *Bodenrichtwert* land value per m², North Rhine-Westphalia only; elsewhere in Germany it answers `available: false`). In Spain and Portugal it answers with a note and no figures: there is no per-parcel price source yet.
@@ -113,7 +103,7 @@ What each code answers today. "Partial" means the official source does not cover
 
 Data comes live from each country's official cadastre or INSPIRE service, so availability follows theirs: some national services are slow, and the server raises a clear `SERVICE_UNAVAILABLE` when one is down. Outside the table, a point or reference answers `CNV_COVERAGE`.
 
-Through the API and this server you can order the documents delivered automatically: the four Italian ones and the German Flurstückskarte. Other registry documents (Spanish *nota simple*, Portuguese *certidão permanente* and others) are ordered at [catastrogps.es](https://www.catastrogps.es).
+Official registry documents (Spanish *nota simple*, Italian *visura*, Portuguese *certidão permanente* and others) can be ordered at [catastrogps.es](https://www.catastrogps.es). They are not exposed through the API or this server yet.
 
 ## Examples
 

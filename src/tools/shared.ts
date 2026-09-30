@@ -23,19 +23,6 @@ const FRIENDLY_MESSAGES: Record<string, string> = {
   INTERNAL_ERROR: "Internal server error. Try again later.",
   MCP_TIMEOUT: "The request timed out. Official cadastres can be slow; try again or raise CATASTROGPS_TIMEOUT.",
   MCP_NETWORK: "Could not reach the CatastroGPS API. Check your connection or CATASTROGPS_API_URL.",
-  WAL_001: "Not enough balance in the document wallet. Nothing was charged. Top up at https://www.catastrogps.es/app/developer",
-  WAL_002: "That top-up amount is not allowed.",
-  WAL_003: "Documents need an API key that belongs to an organization.",
-  DOC_001: "The order is incomplete. Check list_documents for the required fields.",
-  DOC_002: "That document cannot be ordered through the API. Call list_documents to see what can.",
-  DOC_003: "That parcel is outside the area this document covers.",
-  DOC_004: "Invalid idempotency key.",
-  DOC_005: "That idempotency key was already used for a different order. Use another key.",
-  DOC_006: "Too many orders in progress. Wait for some to finish.",
-  DOC_007: "Test API keys cannot order documents. Use a live key.",
-  DOC_009: "The document is not ready yet. Check again later.",
-  DOC_404: "Order not found for this API key.",
-  DOC_500: "The order could not be placed. The money is already back in the wallet.",
 };
 
 export function friendlyMessageFor(code: string, status: number): string | undefined {
