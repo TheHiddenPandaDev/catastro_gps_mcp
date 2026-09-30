@@ -102,6 +102,64 @@ export interface PolygonData {
   geojson?: unknown;
 }
 
+export interface TerrainSource {
+  name: string;
+  provider: string;
+  license: string;
+  attribution: string;
+  url: string;
+  resolution?: string;
+  edition?: string;
+}
+
+export interface TerrainSite {
+  code: string;
+  name: string;
+  type?: string;
+  designation?: string;
+  country: string;
+  overlap_pct: number | null;
+}
+
+export interface TerrainData {
+  refcat: string;
+  country: string;
+  relief: {
+    status: "ok" | "no_data" | "unavailable";
+    elevation_m?: { mean: number; min: number; max: number };
+    slope?: {
+      mean_pct: number;
+      mean_deg: number;
+      max_pct: number;
+      class: string;
+      max_class: string;
+      share_over_10_pct: number;
+      classes_pct: Record<string, number>;
+    };
+    aspect?: {
+      dominant: string;
+      dominant_share_pct: number;
+      mean_deg: number | null;
+      flat_share_pct: number;
+      sectors_pct: Record<string, number>;
+    };
+    sample?: { method: string; cells: number; resolution_m: number };
+    source: TerrainSource;
+  };
+  protected_areas: {
+    status: "ok" | "no_data" | "unavailable";
+    intersects?: boolean;
+    inside?: boolean;
+    max_overlap_pct?: number | null;
+    natura2000?: TerrainSite[];
+    national?: TerrainSite[];
+    method?: string;
+    sources: TerrainSource[];
+  };
+  calculated_at: string;
+  provenance: string;
+}
+
 export interface SolarData {
   kwh_year: number;
   kw_instalables: number;

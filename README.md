@@ -48,6 +48,7 @@ Use the same `npx -y catastro-gps-mcp` command with `CATASTROGPS_API_KEY` in the
 | `search_address` | Spanish postal address in free text → cadastral reference | Spain, central Catastro |
 | `get_boundaries` | Parcel outline as GeoJSON / `[lat, lng]` ring, centroid and area | 30 codes (all but UK) |
 | `get_solar_potential` | PVGIS photovoltaic estimate: kWp, kWh/year, savings, payback, CO₂, tilt | ES, PV, NA, PT, FR, IT, DE |
+| `get_terrain` | Relief over the parcel outline (Copernicus DEM GLO-30: elevation, slope, orientation) and Natura 2000 / protected areas (EEA) with the share of the parcel inside each site | ES, PV, NA, PT, FR, IT, DE |
 | `get_agriculture` | Land use, main crop, NDVI and a reference crop price (SIGPAC detail in Spain) | ES, PV, NA, PT, FR, IT, DE |
 | `get_market_data` | Aggregated price reference for the parcel's area. Never individual sales | Figures: FR, IT, DE (NRW only). ES, PV, NA, PT: note without figures |
 | `get_investment_score` | Score 0–100 with a rating and qualitative factor levels (high / medium / low / not available) | ES, PV, NA, PT, FR, IT, DE |
