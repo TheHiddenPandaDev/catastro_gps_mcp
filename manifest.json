@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "catastro-gps-mcp",
   "display_name": "Catastro GPS",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "Cadastral parcels in 31 European countries and regions: reference, coordinates, Spanish address, geometry, solar, agriculture, market, score and comparison.",
   "long_description": "One API key for official cadastral data across 29 European countries plus the Basque Country and Navarre. Look up parcels by reference or coordinates, turn a Spanish postal address into a cadastral reference, get parcel outlines as GeoJSON, estimate solar and agricultural potential, read aggregated market prices (France, Italy, Germany), score and compare parcels, and follow how a parcel changes over time. Free tier: 250 calls per month, and failed lookups are not charged.",
   "author": {
@@ -18,13 +18,24 @@
     "url": "https://github.com/TheHiddenPandaDev/catastro_gps_mcp"
   },
   "license": "MIT",
-  "keywords": ["cadastre", "catastro", "parcel", "gis", "europe", "real-estate", "solar", "agriculture"],
+  "keywords": [
+    "cadastre",
+    "catastro",
+    "parcel",
+    "gis",
+    "europe",
+    "real-estate",
+    "solar",
+    "agriculture"
+  ],
   "server": {
     "type": "node",
     "entry_point": "build/index.js",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/build/index.js"],
+      "args": [
+        "${__dirname}/build/index.js"
+      ],
       "env": {
         "CATASTROGPS_API_KEY": "${user_config.api_key}",
         "CATASTROGPS_TIMEOUT": "${user_config.timeout_ms}"
@@ -32,15 +43,54 @@
     }
   },
   "tools": [
-    { "name": "get_parcel", "description": "Parcel by cadastral reference or coordinates in 31 European country and region codes" },
-    { "name": "search_address", "description": "Spanish free-text address to cadastral reference" },
-    { "name": "get_boundaries", "description": "Parcel outline as GeoJSON, centroid and area" },
-    { "name": "get_solar_potential", "description": "PVGIS photovoltaic estimate for ES, PT, FR, IT and DE parcels" },
-    { "name": "get_agriculture", "description": "Land use, crop, NDVI and prices for rural parcels" },
-    { "name": "get_market_data", "description": "Aggregated price reference: figures in FR, IT and DE (NRW); note only in ES and PT" },
-    { "name": "get_investment_score", "description": "0-100 investment score with qualitative factors for ES, PT, FR, IT and DE parcels" },
-    { "name": "get_value_history", "description": "Area and land-use snapshots recorded since the parcel was first looked up" },
-    { "name": "compare_parcels", "description": "Two or three parcels side by side across ES, PT, FR, IT and DE" }
+    {
+      "name": "get_parcel",
+      "description": "Parcel by cadastral reference or coordinates in 31 European country and region codes"
+    },
+    {
+      "name": "search_address",
+      "description": "Spanish free-text address to cadastral reference"
+    },
+    {
+      "name": "get_boundaries",
+      "description": "Parcel outline as GeoJSON, centroid and area"
+    },
+    {
+      "name": "get_solar_potential",
+      "description": "PVGIS photovoltaic estimate for ES, PT, FR, IT and DE parcels"
+    },
+    {
+      "name": "get_agriculture",
+      "description": "Land use, crop, NDVI and prices for rural parcels"
+    },
+    {
+      "name": "get_market_data",
+      "description": "Aggregated price reference: figures in FR, IT and DE (NRW); note only in ES and PT"
+    },
+    {
+      "name": "get_investment_score",
+      "description": "0-100 investment score with qualitative factors for ES, PT, FR, IT and DE parcels"
+    },
+    {
+      "name": "get_value_history",
+      "description": "Area and land-use snapshots recorded since the parcel was first looked up"
+    },
+    {
+      "name": "compare_parcels",
+      "description": "Two or three parcels side by side across ES, PT, FR, IT and DE"
+    },
+    {
+      "name": "list_documents",
+      "description": "List official documents that can be ordered for a country or parcel, with prices and the wallet balance"
+    },
+    {
+      "name": "order_document",
+      "description": "Order an official document and pay it from the prepaid wallet (spends money; needs confirm=true)"
+    },
+    {
+      "name": "get_document_order",
+      "description": "Status of a document order, with the PDF when it is ready"
+    }
   ],
   "user_config": {
     "api_key": {
@@ -61,7 +111,11 @@
     }
   },
   "compatibility": {
-    "platforms": ["darwin", "win32", "linux"],
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
     "runtimes": {
       "node": ">=18.0.0"
     }

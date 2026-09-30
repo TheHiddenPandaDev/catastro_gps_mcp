@@ -204,3 +204,80 @@ export interface ServerConfig {
   apiUrl: string;
   timeout: number;
 }
+
+export interface DocumentCatalogEntry {
+  country: string;
+  product: string;
+  name: string;
+  amount_cents: number;
+  currency: string;
+  api_orderable: boolean;
+  delivery?: "automatic" | "manual";
+  required_fields: string[];
+  api_unavailable_reason?: string;
+}
+
+export interface DocumentCatalogData {
+  documents: DocumentCatalogEntry[];
+  currency: string;
+}
+
+export interface WalletMove {
+  id: string;
+  delta_cents: number;
+  reason: "topup" | "order" | "refund";
+  order_id?: string;
+  balance_after_cents: number;
+  created_at: string;
+}
+
+export interface WalletData {
+  organization_id: string;
+  balance_cents: number;
+  currency: string;
+  topup_amounts_cents: number[];
+  moves: WalletMove[];
+}
+
+export interface DocumentHolder {
+  name: string;
+  tax_id: string;
+  tax_id_type?: string;
+  cru?: string;
+  mandate_given: boolean;
+  consent_given: boolean;
+  parcel_year?: number;
+}
+
+export interface DocumentOrderRequest {
+  country: string;
+  product: string;
+  parcel_ref: string;
+  email?: string;
+  locale?: string;
+  channel?: string;
+  holder?: DocumentHolder;
+}
+
+export interface DocumentOrderData {
+  id: string;
+  status: "processing" | "ready" | "failed";
+  country: string;
+  product: string;
+  parcel_ref: string;
+  amount_cents: number;
+  currency: string;
+  channel: string;
+  created_at: string;
+  ready_at?: string;
+  failed_at?: string;
+  failure_reason?: string;
+  refunded_cents?: number;
+  file_url?: string;
+}
+
+export interface DocumentOrderPlacement {
+  order: DocumentOrderData;
+  balance_cents: number;
+  replayed?: boolean;
+}
