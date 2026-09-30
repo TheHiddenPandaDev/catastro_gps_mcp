@@ -169,23 +169,35 @@ describe("document tools", () => {
     expect(url).toContain("/api/v1/documents/orders");
   });
 
-  it("passes the holder and a caller key for a nota simple", async () => {
-    const nota = { ...visura, country: "ES", product: "nota_simple", amount_cents: 2495, delivery: "manual" };
+  it("uses the caller's idempotency key when one is given", async () => {
     route(fetchMock, {
-      "GET /api/v1/documents/catalog": () => catalog([nota]),
-      "GET /api/v1/wallet": () => wallet(2495),
-      "POST /api/v1/documents/orders": () =>
-        jsonResponse({ success: true, data: { order: { ...placedOrder, country: "ES", product: "nota_simple" }, balance_cents: 0, replayed: true } }),
+      "GET /api/v1/documents/catalog": () => catalog([visura]),
+      "GET /api/v1/wallet": () => wallet(990),
+      "POST /api/v1/documents/orders": () => jsonResponse({ success: true, data: { order: placedOrder, balance_cents: 0, replayed: true } }),
     });
-    const holder = { name: "Ana", tax_id: "12345678Z", mandate_given: true, consent_given: true, cru: "28012000123456" };
     const result = await client.callTool({
       name: "order_document",
-      arguments: { country: "ES", product: "nota_simple", parcel_ref: "9872023VH5797S0001WX", holder, confirm: true, idempotency_key: "gestoria-000123" },
+      arguments: { country: "IT", product: "visura", parcel_ref: "H501", confirm: true, idempotency_key: "gestoria-000123" },
     });
     expect(toolJson(result).already_ordered).toBe(true);
     const [, init] = calls(fetchMock, "POST", "/api/v1/documents/orders")[0] as [string, RequestInit];
     expect((init.headers as Record<string, string>)["Idempotency-Key"]).toBe("gestoria-000123");
-    expect(JSON.parse(String(init.body)).holder).toEqual(holder);
+    expect(JSON.parse(String(init.body)).holder).toBeUndefined();
+  });
+
+  it("refuses a Spanish nota simple, which is only sold on the web", async () => {
+    const nota = { ...visura, country: "ES", product: "nota_simple", amount_cents: 2495, api_orderable: false, api_unavailable_reason: "web_only_for_now" };
+    route(fetchMock, {
+      "GET /api/v1/documents/catalog": () => catalog([nota]),
+      "GET /api/v1/wallet": () => wallet(5000),
+    });
+    const result = await client.callTool({
+      name: "order_document",
+      arguments: { country: "ES", product: "nota_simple", parcel_ref: "9872023VH5797S0001WX", confirm: true },
+    });
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result.content)).toContain("DOC_002");
+    expect(calls(fetchMock, "POST", "/api/v1/documents/orders")).toHaveLength(0);
   });
 
   it("explains API errors from the order in plain words", async () => {

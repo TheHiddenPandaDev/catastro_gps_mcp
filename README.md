@@ -60,7 +60,7 @@ Every tool call is one API call against your monthly quota, including calls that
 
 | Tool | What it does | Cost |
 |------|--------------|------|
-| `list_documents` | Documents you can order for a country or parcel (Spanish nota simple, Italian visura, mortgage inspection, map extract and building layout, German Flurstückskarte), their price in euros and your wallet balance | Free |
+| `list_documents` | Documents for a country or parcel (Italian visura, mortgage inspection, map extract and building layout, German Flurstückskarte), their price in euros and your wallet balance | Free |
 | `order_document` | Orders the document and charges its catalogue price to your organization's wallet. Checks the balance first, needs `confirm: true` after the user approves the price, and never charges twice for the same order on the same day | The document price |
 | `get_document_order` | Status (`processing`, `ready`, `failed`). With `include_file: true` a ready order comes with the PDF attached | Free |
 
@@ -113,7 +113,7 @@ What each code answers today. "Partial" means the official source does not cover
 
 Data comes live from each country's official cadastre or INSPIRE service, so availability follows theirs: some national services are slow, and the server raises a clear `SERVICE_UNAVAILABLE` when one is down. Outside the table, a point or reference answers `CNV_COVERAGE`.
 
-Official registry documents (Spanish *nota simple*, Italian *visura*, Portuguese *certidão permanente* and others) can be ordered at [catastrogps.es](https://www.catastrogps.es). They are not exposed through the API or this server yet.
+Through the API and this server you can order the documents delivered automatically: the four Italian ones and the German Flurstückskarte. Other registry documents (Spanish *nota simple*, Portuguese *certidão permanente* and others) are ordered at [catastrogps.es](https://www.catastrogps.es).
 
 ## Examples
 
