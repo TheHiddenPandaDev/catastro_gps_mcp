@@ -24,11 +24,14 @@ describe("MCP tools", () => {
       "compare_parcels",
       "get_agriculture",
       "get_boundaries",
+      "get_document_order",
       "get_investment_score",
       "get_market_data",
       "get_parcel",
       "get_solar_potential",
       "get_value_history",
+      "list_documents",
+      "order_document",
       "search_address",
     ]);
   });

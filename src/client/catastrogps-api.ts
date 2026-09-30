@@ -12,6 +12,11 @@ import type {
   CoordinatesSearchData,
   AddressSearchData,
   ApiErrorResponse,
+  DocumentCatalogData,
+  WalletData,
+  DocumentOrderRequest,
+  DocumentOrderPlacement,
+  DocumentOrderData,
 } from "../types/index.js";
 import { USER_AGENT } from "../version.js";
 
@@ -51,13 +56,30 @@ export class CatastroGPSClient {
     return url.toString();
   }
 
-  private async send<T>(method: "GET" | "POST", path: string, params?: QueryParams, body?: unknown): Promise<T> {
+  private async send<T>(
+    method: "GET" | "POST",
+    path: string,
+    params?: QueryParams,
+    body?: unknown,
+    extraHeaders: Record<string, string> = {},
+  ): Promise<T> {
+    const response = await this.request(method, path, params, body, { Accept: "application/json", ...extraHeaders });
+    return (await response.json()) as T;
+  }
+
+  private async request(
+    method: "GET" | "POST",
+    path: string,
+    params: QueryParams | undefined,
+    body: unknown,
+    extraHeaders: Record<string, string>,
+  ): Promise<Response> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
     const headers: Record<string, string> = {
       "X-API-Key": this.apiKey,
-      Accept: "application/json",
       "User-Agent": USER_AGENT,
+      ...extraHeaders,
     };
     if (body !== undefined) {
       headers["Content-Type"] = "application/json";
@@ -82,7 +104,7 @@ export class CatastroGPSClient {
         );
       }
 
-      return (await response.json()) as T;
+      return response;
     } catch (error) {
       if (error instanceof CatastroGPSApiError) throw error;
       if (error instanceof Error && error.name === "AbortError") {
@@ -136,6 +158,33 @@ export class CatastroGPSClient {
 
   async getValueHistory(reference: string, country?: string): Promise<ApiResponse<ValueHistoryData>> {
     return this.send("GET", this.parcelPath(reference, "/value-history"), { country });
+  }
+
+  async listDocuments(country?: string, parcelRef?: string, locale?: string): Promise<ApiResponse<DocumentCatalogData>> {
+    return this.send("GET", "/api/v1/documents/catalog", { country, parcel_ref: parcelRef, locale });
+  }
+
+  async getWallet(): Promise<ApiResponse<WalletData>> {
+    return this.send("GET", "/api/v1/wallet");
+  }
+
+  async orderDocument(order: DocumentOrderRequest, idempotencyKey: string): Promise<ApiResponse<DocumentOrderPlacement>> {
+    return this.send("POST", "/api/v1/documents/orders", undefined, order, { "Idempotency-Key": idempotencyKey });
+  }
+
+  async getDocumentOrder(orderId: string): Promise<ApiResponse<DocumentOrderData>> {
+    return this.send("GET", `/api/v1/documents/orders/${encodeURIComponent(orderId)}`);
+  }
+
+  async getDocumentFile(orderId: string): Promise<Uint8Array> {
+    const response = await this.request(
+      "GET",
+      `/api/v1/documents/orders/${encodeURIComponent(orderId)}/file`,
+      undefined,
+      undefined,
+      { Accept: "application/pdf" },
+    );
+    return new Uint8Array(await response.arrayBuffer());
   }
 
   async compareParcels(parcels: Array<{ reference: string; country: string }>): Promise<ApiResponse<CompareData>> {
