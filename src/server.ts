@@ -36,6 +36,16 @@ export function createServer(config: ServerConfig): McpServer {
   return server;
 }
 
+export type EndpointConfig = Omit<ServerConfig, "apiKey">;
+
+export function loadEndpointConfig(): EndpointConfig {
+  const timeout = parseInt(process.env.CATASTROGPS_TIMEOUT || "", 10);
+  return {
+    apiUrl: process.env.CATASTROGPS_API_URL || DEFAULT_API_URL,
+    timeout: Number.isFinite(timeout) && timeout > 0 ? timeout : DEFAULT_TIMEOUT_MS,
+  };
+}
+
 export function loadConfig(): ServerConfig {
   const apiKey = process.env.CATASTROGPS_API_KEY;
   if (!apiKey) {
@@ -45,12 +55,11 @@ export function loadConfig(): ServerConfig {
     );
     process.exit(1);
   }
+  return { apiKey, ...loadEndpointConfig() };
+}
 
-  const timeout = parseInt(process.env.CATASTROGPS_TIMEOUT || "", 10);
-
-  return {
-    apiKey,
-    apiUrl: process.env.CATASTROGPS_API_URL || DEFAULT_API_URL,
-    timeout: Number.isFinite(timeout) && timeout > 0 ? timeout : DEFAULT_TIMEOUT_MS,
-  };
+export function sessionConfig(endpoint: EndpointConfig, apiKeyHeader: string | string[] | undefined): ServerConfig | null {
+  const apiKey = (Array.isArray(apiKeyHeader) ? apiKeyHeader[0] : apiKeyHeader)?.trim();
+  if (!apiKey) return null;
+  return { apiKey, ...endpoint };
 }

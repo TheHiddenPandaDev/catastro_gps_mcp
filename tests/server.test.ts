@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { readFileSync } from "node:fs";
-import { DEFAULT_API_URL, DEFAULT_TIMEOUT_MS, loadConfig } from "../src/server.js";
+import { DEFAULT_API_URL, DEFAULT_TIMEOUT_MS, loadConfig, loadEndpointConfig, sessionConfig } from "../src/server.js";
 import { SERVER_NAME, SERVER_VERSION } from "../src/version.js";
 
 const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
@@ -77,5 +77,32 @@ describe("release metadata", () => {
 
   it("stays within the registry description limit", () => {
     expect(serverJson.description.length).toBeLessThanOrEqual(100);
+  });
+});
+
+describe("sessionConfig", () => {
+  const endpoint = { apiUrl: DEFAULT_API_URL, timeout: DEFAULT_TIMEOUT_MS };
+
+  it("uses the caller's own key for the session", () => {
+    expect(sessionConfig(endpoint, "pk_live_caller")).toEqual({ ...endpoint, apiKey: "pk_live_caller" });
+  });
+
+  it("takes the first key when the header repeats and trims it", () => {
+    expect(sessionConfig(endpoint, ["  pk_live_a ", "pk_live_b"])?.apiKey).toBe("pk_live_a");
+  });
+
+  it("refuses a session without a key so no server key is ever shared", () => {
+    process.env.CATASTROGPS_API_KEY = "pk_live_server_key";
+    expect(sessionConfig(endpoint, undefined)).toBeNull();
+    expect(sessionConfig(endpoint, "   ")).toBeNull();
+    expect(sessionConfig(endpoint, [])).toBeNull();
+    delete process.env.CATASTROGPS_API_KEY;
+  });
+});
+
+describe("loadEndpointConfig", () => {
+  it("does not need a server key", () => {
+    delete process.env.CATASTROGPS_API_KEY;
+    expect(loadEndpointConfig()).toEqual({ apiUrl: process.env.CATASTROGPS_API_URL || DEFAULT_API_URL, timeout: expect.any(Number) });
   });
 });

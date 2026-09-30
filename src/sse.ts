@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 import { createServer as createHttpServer } from "node:http";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
-import { createServer, loadConfig } from "./server.js";
+import { createServer, loadEndpointConfig, sessionConfig } from "./server.js";
 import { SERVER_NAME, SERVER_VERSION } from "./version.js";
 
 const log = (msg: string) => console.error(`[catastro-gps-mcp] ${msg}`);
 
 async function main(): Promise<void> {
-  const config = loadConfig();
+  const endpoint = loadEndpointConfig();
   const port = parseInt(process.env.MCP_PORT || "3001", 10);
   const transports = new Map<string, SSEServerTransport>();
 
@@ -29,6 +29,12 @@ async function main(): Promise<void> {
       return;
     }
     if (url.pathname === "/sse" && req.method === "GET") {
+      const config = sessionConfig(endpoint, req.headers["x-api-key"]);
+      if (!config) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "X-API-Key header with your own Catastro GPS key is required" }));
+        return;
+      }
       const transport = new SSEServerTransport("/message", res);
       const sessionId = transport.sessionId;
       transports.set(sessionId, transport);
