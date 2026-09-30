@@ -1,6 +1,6 @@
 {
   "name": "catastro-gps-mcp",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "mcpName": "com.parcelgps/catastro-gps",
   "description": "MCP server for cadastral parcels in 31 European countries and regions: reference, coordinates, Spanish free-text address, geometry, solar, agriculture, market, investment score and comparison",
   "author": "The Hidden Panda <soporte@catastrogps.es>",
