@@ -56,7 +56,7 @@ Use the same `npx -y catastro-gps-mcp` command with `CATASTROGPS_API_KEY` in the
 
 Every tool call is one API call against your monthly quota, including calls that end in "not found". `compare_parcels` is one call for the whole comparison.
 
-The API reports the monthly quota of your plan in the `X-Quota-Limit`, `X-Quota-Remaining` and `X-Quota-Reset` headers (plus `X-Quota-Tier`); when it runs out, the error tells you the date it resets. `X-RateLimit-*` is a separate per-minute burst limit (300 requests per 60 seconds per IP, the same on every plan) and has nothing to do with the monthly quota.
+The API reports the monthly quota of your plan in the `X-Quota-Limit`, `X-Quota-Remaining` and `X-Quota-Reset` headers (plus `X-Quota-Tier`); when it runs out, the error tells you the date it resets. `X-RateLimit-*` is a separate per-key burst limit per minute that depends on your plan (Free 10, Developer 60, Startup 120, Growth 300; a global per-IP guard also applies) and has nothing to do with the monthly quota.
 
 ### What the market, score and history tools can and cannot tell
 
