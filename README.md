@@ -56,6 +56,8 @@ Use the same `npx -y catastro-gps-mcp` command with `CATASTROGPS_API_KEY` in the
 
 Every tool call is one API call against your monthly quota, including calls that end in "not found". `compare_parcels` is one call for the whole comparison.
 
+The API reports the monthly quota of your plan in the `X-Quota-Limit`, `X-Quota-Remaining` and `X-Quota-Reset` headers (plus `X-Quota-Tier`); when it runs out, the error tells you the date it resets. `X-RateLimit-*` is a separate per-minute burst limit (300 requests per 60 seconds per IP, the same on every plan) and has nothing to do with the monthly quota.
+
 ### What the market, score and history tools can and cannot tell
 
 - **`get_market_data`** has numbers only where an official source gives them: France (DVF recorded sales: average €/m², number of sales, last sale date, estimated value), Italy (OMI zone values from the Agenzia delle Entrate) and Germany (official *Bodenrichtwert* land value per m², North Rhine-Westphalia only; elsewhere in Germany it answers `available: false`). In Spain and Portugal it answers with a note and no figures: there is no per-parcel price source yet.

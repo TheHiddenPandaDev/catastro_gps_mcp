@@ -130,16 +130,104 @@ describe("CatastroGPSClient", () => {
     expect(error.status).toBe(502);
   });
 
-  it("keeps the quota reset date of a 429", async () => {
+  it("keeps the monthly quota reset date of a 429 from X-Quota-Reset, not the per-minute limiter", async () => {
     fetchMock.mockResolvedValueOnce(
       new Response(JSON.stringify({ success: false, code: "KEY_AUTH_004", error: "Cuota mensual agotada" }), {
         status: 429,
-        headers: { "Content-Type": "application/json", "X-RateLimit-Reset": "2026-10-01T00:00:00Z" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Quota-Limit": "250",
+          "X-Quota-Remaining": "0",
+          "X-Quota-Reset": "2026-10-01T00:00:00Z",
+          "X-Quota-Tier": "free",
+          "X-RateLimit-Limit": "300",
+          "X-RateLimit-Remaining": "299",
+          "X-RateLimit-Reset": "60",
+        },
       }),
     );
 
     const error = (await client.getPolygon("X").catch((e: unknown) => e)) as CatastroGPSApiError;
     expect(error.resetsAt).toBe("2026-10-01T00:00:00Z");
+    expect(client.lastQuota).toEqual({ plan: "free", limit: 250, remaining: 0, resetsAt: "2026-10-01T00:00:00Z" });
+  });
+
+  it("records the monthly quota of a successful call from the X-Quota headers", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ success: true, data: {} }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "X-Quota-Limit": "5000",
+          "X-Quota-Remaining": "4899",
+          "X-Quota-Reset": "2026-11-01T00:00:00Z",
+          "X-Quota-Tier": "developer",
+          "X-RateLimit-Limit": "300",
+          "X-RateLimit-Remaining": "298",
+          "X-RateLimit-Reset": "60",
+        },
+      }),
+    );
+
+    await client.getParcelByReference("R");
+    expect(client.lastQuota).toEqual({
+      plan: "developer",
+      limit: 5000,
+      remaining: 4899,
+      resetsAt: "2026-11-01T00:00:00Z",
+    });
+  });
+
+  it("falls back to X-RateLimit headers from servers that predate X-Quota-Limit", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ success: false, code: "KEY_AUTH_004", error: "Cuota mensual agotada" }), {
+        status: 429,
+        headers: {
+          "Content-Type": "application/json",
+          "X-RateLimit-Limit": "100",
+          "X-RateLimit-Remaining": "0",
+          "X-RateLimit-Reset": "2026-10-01T00:00:00Z",
+          "X-Quota-Tier": "free",
+        },
+      }),
+    );
+
+    const error = (await client.getPolygon("X").catch((e: unknown) => e)) as CatastroGPSApiError;
+    expect(error.resetsAt).toBe("2026-10-01T00:00:00Z");
+    expect(client.lastQuota).toEqual({ plan: "free", limit: 100, remaining: 0, resetsAt: "2026-10-01T00:00:00Z" });
+  });
+
+  it("never reports the per-minute limiter as the monthly quota", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ success: false, code: "RATE_LIMIT", error: "Too many requests" }), {
+        status: 429,
+        headers: {
+          "Content-Type": "application/json",
+          "X-RateLimit-Limit": "300",
+          "X-RateLimit-Remaining": "0",
+          "X-RateLimit-Reset": "42",
+        },
+      }),
+    );
+
+    const error = (await client.getPolygon("X").catch((e: unknown) => e)) as CatastroGPSApiError;
+    expect(error.resetsAt).toBeUndefined();
+    expect(client.lastQuota).toBeUndefined();
+  });
+
+  it("keeps the last known quota when a response carries no quota headers", async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ success: true, data: {} }), {
+          status: 200,
+          headers: { "X-Quota-Limit": "250", "X-Quota-Remaining": "10", "X-Quota-Tier": "free" },
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ success: true, data: {} }));
+
+    await client.getParcelByReference("R");
+    await client.getParcelByReference("R");
+    expect(client.lastQuota).toEqual({ plan: "free", limit: 250, remaining: 10, resetsAt: undefined });
   });
 
   it("reports timeouts as MCP_TIMEOUT", async () => {

@@ -30,10 +30,32 @@ export class CatastroGPSApiError extends Error {
 
 type QueryParams = Record<string, string | number | undefined>;
 
+export interface Quota {
+  plan?: string;
+  limit?: number;
+  remaining?: number;
+  resetsAt?: string;
+}
+
+export function readQuota(headers: Headers): Quota | undefined {
+  const plan = headers.get("X-Quota-Tier") ?? undefined;
+  const family = headers.has("X-Quota-Limit") ? "X-Quota" : plan ? "X-RateLimit" : undefined;
+  if (!family) return undefined;
+  const limit = headers.get(`${family}-Limit`);
+  const remaining = headers.get(`${family}-Remaining`);
+  return {
+    plan,
+    limit: limit === null ? undefined : Number(limit),
+    remaining: remaining === null ? undefined : Number(remaining),
+    resetsAt: headers.get(`${family}-Reset`) ?? undefined,
+  };
+}
+
 export class CatastroGPSClient {
   private readonly apiKey: string;
   private readonly baseUrl: string;
   private readonly timeout: number;
+  public lastQuota?: Quota;
 
   constructor(config: ServerConfig) {
     this.apiKey = config.apiKey;
@@ -71,6 +93,9 @@ export class CatastroGPSClient {
         signal: controller.signal,
       });
 
+      const quota = readQuota(response.headers);
+      if (quota) this.lastQuota = quota;
+
       if (!response.ok) {
         const errorBody = (await response.json().catch(() => ({}))) as Partial<ApiErrorResponse>;
         throw new CatastroGPSApiError(
@@ -78,7 +103,7 @@ export class CatastroGPSClient {
           errorBody.error || errorBody.message || `API returned ${response.status}`,
           response.status,
           errorBody.data ?? errorBody.parsed,
-          response.headers.get("X-RateLimit-Reset") ?? undefined,
+          quota?.resetsAt,
         );
       }
 
