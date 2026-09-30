@@ -16,7 +16,7 @@ export function euros(cents: number): string {
 
 export function defaultIdempotencyKey(order: DocumentOrderRequest, now: Date = new Date()): string {
   const day = now.toISOString().slice(0, 10);
-  const fingerprint = JSON.stringify([order.country, order.product, order.parcel_ref, order.email ?? "", order.holder ?? null, day]);
+  const fingerprint = JSON.stringify([order.country, order.product, order.parcel_ref, order.email ?? "", day]);
   return `mcp-${createHash("sha256").update(fingerprint).digest("hex").slice(0, 40)}`;
 }
 
@@ -57,9 +57,9 @@ export function registerListDocuments(server: McpServer, client: CatastroGPSClie
     {
       title: "List Official Documents",
       description:
-        "List the official documents that can be ordered for a country or a parcel (Spanish nota simple, " +
-        "Italian visura and mortgage inspection, German Flurstückskarte…), with their price in euros, whether " +
-        "they can be ordered through the API and which fields they need. Also returns the prepaid wallet " +
+        "List the official documents for a country or a parcel (Italian visura, mortgage inspection, map extract " +
+        "and building layout, German Flurstückskarte…), with their price in euros, whether they can be ordered " +
+        "through the API and which fields they need. Also returns the prepaid wallet " +
         "balance of the organization that owns the API key. Free: listing never charges anything.",
       inputSchema: {
         country: z.string().length(2).optional().describe("Country code (ES, IT, DE, FR, PT, PL). Omit to list every country."),
@@ -87,18 +87,6 @@ export function registerListDocuments(server: McpServer, client: CatastroGPSClie
   );
 }
 
-const holderSchema = z
-  .object({
-    name: z.string().min(1).describe("Full name of the person or company the document is requested for"),
-    tax_id: z.string().min(1).describe("Their NIF, NIE or CIF"),
-    tax_id_type: z.enum(["nif", "nie", "cif", "passport"]).optional().describe("Type of tax_id. Defaults to nif."),
-    cru: z.string().optional().describe("Registry identifier (CRU/IDUFIR) when the property needs one"),
-    mandate_given: z.boolean().describe("The holder authorised you to request it on their behalf (you keep the proof)"),
-    consent_given: z.boolean().describe("The holder consented to the processing of their data"),
-    parcel_year: z.number().int().optional().describe("Year the building was built, if known"),
-  })
-  .describe("Only for the Spanish nota simple: whose name the registry request goes in");
-
 export function registerOrderDocument(server: McpServer, client: CatastroGPSClient): void {
   server.registerTool(
     "order_document",
@@ -112,12 +100,11 @@ export function registerOrderDocument(server: McpServer, client: CatastroGPSClie
         "back to the wallet automatically. Retrying the same order the same day never charges twice. " +
         "Follow up with get_document_order.",
       inputSchema: {
-        country: z.string().length(2).describe("Country code, e.g. ES, IT, DE"),
-        product: z.string().min(1).describe("Product code from list_documents, e.g. nota_simple, visura, flurkarte"),
+        country: z.string().length(2).describe("Country code, e.g. IT, DE"),
+        product: z.string().min(1).describe("Product code from list_documents, e.g. visura, flurkarte"),
         parcel_ref: z.string().min(1).describe("Official parcel reference"),
         email: z.string().email().optional().describe("Where a copy is delivered. Defaults to the API key owner's email."),
         locale: z.string().min(2).max(5).optional().describe("Language for emails about the order"),
-        holder: holderSchema.optional(),
         confirm: z.boolean().describe("Must be true, and only after the user explicitly approved paying the price"),
         idempotency_key: z
           .string()
@@ -127,7 +114,7 @@ export function registerOrderDocument(server: McpServer, client: CatastroGPSClie
       },
       annotations: { destructiveHint: true, idempotentHint: true, openWorldHint: true },
     },
-    async ({ country, product, parcel_ref, email, locale, holder, confirm, idempotency_key }) => {
+    async ({ country, product, parcel_ref, email, locale, confirm, idempotency_key }) => {
       if (confirm !== true) {
         return errorResult(
           "MCP_CONFIRM",
@@ -140,7 +127,6 @@ export function registerOrderDocument(server: McpServer, client: CatastroGPSClie
         parcel_ref,
         email,
         locale,
-        holder,
         channel: "mcp",
       };
       try {

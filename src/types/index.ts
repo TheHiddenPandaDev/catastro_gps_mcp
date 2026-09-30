@@ -239,16 +239,6 @@ export interface WalletData {
   moves: WalletMove[];
 }
 
-export interface DocumentHolder {
-  name: string;
-  tax_id: string;
-  tax_id_type?: string;
-  cru?: string;
-  mandate_given: boolean;
-  consent_given: boolean;
-  parcel_year?: number;
-}
-
 export interface DocumentOrderRequest {
   country: string;
   product: string;
@@ -256,7 +246,6 @@ export interface DocumentOrderRequest {
   email?: string;
   locale?: string;
   channel?: string;
-  holder?: DocumentHolder;
 }
 
 export interface DocumentOrderData {

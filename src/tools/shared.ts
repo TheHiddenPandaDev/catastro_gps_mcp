@@ -36,7 +36,6 @@ const FRIENDLY_MESSAGES: Record<string, string> = {
   DOC_009: "The document is not ready yet. Check again later.",
   DOC_404: "Order not found for this API key.",
   DOC_500: "The order could not be placed. The money is already back in the wallet.",
-  DOC_REGISTRY_ID: "This Spanish property needs its registry identifier (CRU/IDUFIR) in holder.cru.",
 };
 
 export function friendlyMessageFor(code: string, status: number): string | undefined {
