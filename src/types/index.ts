@@ -160,6 +160,36 @@ export interface TerrainData {
   provenance: string;
 }
 
+export interface GroundMotionData {
+  refcat: string;
+  country: string;
+  status: "ok" | "no_data" | "unavailable";
+  reason?: "no_reflectors" | "outside_coverage" | "parcel_too_large";
+  period: { from: string; to: string; label: string };
+  ground_motion?: {
+    class: string;
+    worst_class: string;
+    vertical: {
+      mean_mm_year: number;
+      max_subsidence_mm_year: number;
+      max_uplift_mm_year: number;
+      std_mm_year?: number;
+      acceleration_mm_year2?: number;
+      rmse_mm?: number;
+    };
+    east_west?: { mean_mm_year: number; std_mm_year?: number };
+    yearly_displacement?: Array<{ year: number; mm: number }>;
+    cells_with_data: number;
+    cells_considered: number;
+    coverage_pct: number;
+    basis: "parcel" | "surroundings";
+    cell_size_m: number;
+  };
+  source: TerrainSource;
+  calculated_at: string;
+  provenance: string;
+}
+
 export interface SolarData {
   kwh_year: number;
   kw_instalables: number;

@@ -66,6 +66,7 @@ mcp/
 | `get_boundaries` | `GET /api/catastro/:ref/polygon` | 30 (todos menos UK) |
 | `get_solar_potential` | `GET /api/catastro/:ref/solar` | ES, PV, NA, PT, FR, IT, DE |
 | `get_terrain` | `GET /api/catastro/:ref/terrain` | ES, PV, NA, PT, FR, IT, DE |
+| `get_ground_motion` | `GET /api/catastro/:ref/ground-motion` | ES, PV, NA, PT, FR, IT, DE |
 | `get_agriculture` | `GET /api/catastro/:ref/agro` | ES, PV, NA, PT, FR, IT, DE |
 | `get_market_data` | `GET /api/catastro/:ref/market` | Cifras: FR (DVF), IT (OMI), DE (BORIS, solo NRW). ES/PV/NA/PT: nota sin cifras |
 | `get_investment_score` | `GET /api/catastro/:ref/score` | ES, PV, NA, PT, FR, IT, DE |
