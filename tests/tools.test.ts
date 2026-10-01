@@ -24,6 +24,7 @@ describe("MCP tools", () => {
       "compare_parcels",
       "get_agriculture",
       "get_boundaries",
+      "get_ground_motion",
       "get_investment_score",
       "get_market_data",
       "get_parcel",
@@ -239,6 +240,57 @@ describe("MCP tools", () => {
 
       const body = toolJson(await client.callTool({ name: "get_boundaries", arguments: { reference: "CZ1", country: "CZ" } }));
       expect(body).toMatchObject({ reference: "CZ1", country: "CZ", area_m2: 300, outline_lat_lng: [[50, 14]] });
+    });
+  });
+
+  describe("get_ground_motion", () => {
+    it("returns the subsidence of the parcel with its source", async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({
+        success: true,
+        data: {
+          refcat: "30024A16000286",
+          country: "ES",
+          status: "ok",
+          period: { from: "2020-01", to: "2024-12", label: "2020-2024" },
+          ground_motion: {
+            class: "severe_subsidence", worst_class: "severe_subsidence",
+            vertical: { mean_mm_year: -40.9, max_subsidence_mm_year: -40.9, max_uplift_mm_year: 0 },
+            east_west: { mean_mm_year: -5.1 },
+            yearly_displacement: [{ year: 2020, mm: -17.9 }, { year: 2024, mm: -179.8 }],
+            cells_with_data: 1, cells_considered: 1, coverage_pct: 100, basis: "parcel", cell_size_m: 100,
+          },
+          source: { name: "European Ground Motion Service (EGMS) L3 Ortho", provider: "Copernicus Land Monitoring Service",
+            license: "Copernicus data policy", attribution: "Contains modified Copernicus Land Monitoring Service information",
+            url: "https://land.copernicus.eu" },
+          calculated_at: "2026-10-01T06:14:34Z",
+          provenance: "1",
+        },
+      }));
+
+      const body = toolJson(await client.callTool({ name: "get_ground_motion", arguments: { reference: "30024A16000286", country: "ES" } }));
+      expect(fetchMock.mock.calls[0][0]).toContain("/api/catastro/30024A16000286/ground-motion?country=ES");
+      expect(body).toMatchObject({
+        reference: "30024A16000286",
+        status: "ok",
+        period: "2020-2024",
+        ground_motion: { class: "severe_subsidence", vertical: { mean_mm_year: -40.9 } },
+        source: { attribution: "Contains modified Copernicus Land Monitoring Service information" },
+      });
+    });
+
+    it("passes on an honest no_data with its reason", async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({
+        success: true,
+        data: {
+          refcat: "X", country: "FR", status: "no_data", reason: "no_reflectors",
+          period: { from: "2020-01", to: "2024-12", label: "2020-2024" },
+          source: { name: "EGMS", provider: "CLMS", license: "Copernicus", attribution: "Copernicus", url: "https://land.copernicus.eu" },
+          calculated_at: "2026-10-01T06:14:34Z", provenance: "1",
+        },
+      }));
+      const body = toolJson(await client.callTool({ name: "get_ground_motion", arguments: { reference: "X", country: "FR" } }));
+      expect(body).toMatchObject({ status: "no_data", reason: "no_reflectors" });
+      expect(body).not.toHaveProperty("ground_motion.vertical");
     });
   });
 

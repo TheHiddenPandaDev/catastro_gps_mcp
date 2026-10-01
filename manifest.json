@@ -37,6 +37,7 @@
     { "name": "get_boundaries", "description": "Parcel outline as GeoJSON, centroid and area" },
     { "name": "get_solar_potential", "description": "PVGIS photovoltaic estimate for ES, PT, FR, IT and DE parcels" },
     { "name": "get_terrain", "description": "Relief (Copernicus DEM) and Natura 2000 / protected areas (EEA) over the parcel for ES, PT, FR, IT and DE" },
+    { "name": "get_ground_motion", "description": "Satellite ground motion (Copernicus EGMS): subsidence or uplift in mm/year for ES, PT, FR, IT and DE parcels" },
     { "name": "get_agriculture", "description": "Land use, crop, NDVI and prices for rural parcels" },
     { "name": "get_market_data", "description": "Aggregated price reference: figures in FR, IT and DE (NRW); note only in ES and PT" },
     { "name": "get_investment_score", "description": "0-100 investment score with qualitative factors for ES, PT, FR, IT and DE parcels" },
