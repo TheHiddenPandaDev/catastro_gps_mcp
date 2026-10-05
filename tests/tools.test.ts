@@ -44,7 +44,7 @@ describe("MCP tools", () => {
 
     expect(SUPPORTED_COUNTRIES).toHaveLength(31);
     expect(country.enum).toEqual([...SUPPORTED_COUNTRIES]);
-    expect(getParcel.description).toContain("31 codes");
+    expect(getParcel.description).toContain("31 official cadastres");
   });
 
   it("keeps the United Kingdom out of reference-based tools", async () => {
