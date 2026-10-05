@@ -11,6 +11,8 @@ import { registerGetMarket } from "./tools/get-market.js";
 import { registerGetScore } from "./tools/get-score.js";
 import { registerGetValueHistory } from "./tools/get-value-history.js";
 import { registerCompareParcels } from "./tools/compare-parcels.js";
+import { registerGetUnits } from "./tools/get-units.js";
+import { registerResolveReference } from "./tools/resolve-reference.js";
 import { SERVER_VERSION } from "./version.js";
 import type { ServerConfig } from "./types/index.js";
 
@@ -36,6 +38,8 @@ export function createServer(config: ServerConfig): McpServer {
   registerGetScore(server, client);
   registerGetValueHistory(server, client);
   registerCompareParcels(server, client);
+  registerGetUnits(server, client);
+  registerResolveReference(server, client);
 
   return server;
 }

@@ -25,7 +25,9 @@ mcp/
       catastrogps-api.ts       → Cliente HTTP hacia el backend Go
     tools/
       get-parcel.ts            → Tool: parcela por referencia o coordenadas (31 códigos)
-      search-address.ts        → Tool: dirección española en texto libre → referencia
+      search-address.ts        → Tool: dirección en texto libre → candidatos (ES + 26 países)
+      get-units.ts             → Tool: unidades/viviendas de una finca (ES/PV/NA), paginado
+      resolve-reference.ts     → Tool: clasifica un texto (referencia/coordenadas/topónimo), gratis
       get-boundaries.ts        → Tool: geometría (GeoJSON / anillo), centroide, área
       get-solar.ts             → Tool: potencial solar (ES/PV/NA/PT/FR/IT/DE)
       get-agriculture.ts       → Tool: datos agrícolas (ES/PV/NA/PT/FR/IT/DE)
@@ -57,21 +59,28 @@ mcp/
 | Cliente HTTP | Fetch nativo |
 | Auth | API key en header `X-API-Key` |
 
-## Tools disponibles (1.2.0)
+## Tools disponibles (1.3.0)
 
 | Tool | Endpoint backend | Países |
 |------|------------------|--------|
-| `get_parcel` | `GET /api/catastro/:ref` · `GET /api/search/coordinates` | 31 códigos (`wiredCountries`); UK solo coordenadas (Escocia) |
-| `search_address` | `POST /api/search/address/parse` `{direccion}` | España régimen común |
+| `get_parcel` | `GET /api/catastro/:ref` · `GET /api/search/coordinates` | 31 códigos (`wiredCountries`); UK y HR solo coordenadas |
+| `search_address` | `GET /api/search/address/candidates?q=&country=&limit=` | ES (con PV/NA) + 26 países del enum de la OpenAPI; SE/HR → `CNV_COVERAGE` |
+| `get_units` | `GET /api/catastro/:ref/units?country=&cursor=` | ES, PV, NA. Cobra una unidad por unidad servida |
+| `resolve_reference` | `GET /api/resolve?q=&hint=` | Todos; sin auth, no gasta cuota |
 | `get_boundaries` | `GET /api/catastro/:ref/polygon` | 30 (todos menos UK) |
 | `get_solar_potential` | `GET /api/catastro/:ref/solar` | ES, PV, NA, PT, FR, IT, DE |
-| `get_terrain` | `GET /api/catastro/:ref/terrain` | ES, PV, NA, PT, FR, IT, DE |
-| `get_ground_motion` | `GET /api/catastro/:ref/ground-motion` | ES, PV, NA, PT, FR, IT, DE |
+| `get_terrain` | `GET /api/catastro/:ref/terrain?lat=&lng=` | Todos los de referencia menos HR; fuera de los 7, `lat`/`lng` obligatorios. Incluye `climate` (ERA5-Land) |
+| `get_ground_motion` | `GET /api/catastro/:ref/ground-motion?lat=&lng=` | Igual que terrain (el backend usa `terrainLocation` en los dos) |
 | `get_agriculture` | `GET /api/catastro/:ref/agro` | ES, PV, NA, PT, FR, IT, DE |
 | `get_market_data` | `GET /api/catastro/:ref/market` | Cifras: FR (DVF), IT (OMI), DE (BORIS, solo NRW). ES/PV/NA/PT: nota sin cifras |
 | `get_investment_score` | `GET /api/catastro/:ref/score` | ES, PV, NA, PT, FR, IT, DE |
 | `get_value_history` | `GET /api/catastro/:ref/value-history` | ES, PV, NA, PT, FR, IT, DE, AT (donde `GetByRefcat` graba) |
 | `compare_parcels` | `POST /api/catastro/compare` `{parcelas:[{ref_catastral,country}]}` | ES, PT, FR, IT, DE (PV/NA caen al Catastro común y fallan) |
+
+Cuota: el cliente lee de cada respuesta `X-Quota-*` (mensual), `X-Quota-Overage`/`-Balance`/`-Overage-Unit-Price`/
+`-Overage-Remaining` (saldo prepagado), `X-RateLimit-*` (ráfaga por minuto) y `X-Quota-Finca-Cap*` (tope por finca en
+`/units`), y cada tool devuelve un objeto `quota` de ESA respuesta (no del `lastQuota` compartido). Sin saldo la API
+responde `429 KEY_AUTH_004`; no existe 402.
 
 Las siete rutas de enriquecimiento van por `RegisterApiProRoutes` (`apiKeyMiddleware,
 optionalAuthMiddleware, proOrApiKey`): entran con API key de organización (consume cuota, también

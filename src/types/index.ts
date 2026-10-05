@@ -21,6 +21,23 @@ export type EnrichmentCountryCode = (typeof ENRICHMENT_COUNTRIES)[number];
 export const VALUE_HISTORY_COUNTRIES = ["ES", "PV", "NA", "PT", "FR", "IT", "DE", "AT"] as const;
 export type ValueHistoryCountryCode = (typeof VALUE_HISTORY_COUNTRIES)[number];
 
+export const SITE_ANALYSIS_COUNTRIES = [
+  "ES", "PV", "NA", "PT", "FR", "IT", "DE", "AT", "CH", "LI",
+  "BE", "NL", "LU", "PL", "CZ", "SK", "SI", "BG", "GR",
+  "CY", "DK", "SE", "NO", "FI", "IS", "EE", "LV", "LT", "IE",
+] as const;
+export type SiteAnalysisCountryCode = (typeof SITE_ANALYSIS_COUNTRIES)[number];
+
+export const ADDRESS_COUNTRIES = [
+  "ES", "FR", "IT", "DE", "AT", "NL", "BE", "PL", "CH", "CZ",
+  "DK", "NO", "FI", "EE", "LV", "LT", "SI", "SK", "BG", "GR",
+  "CY", "LU", "LI", "IS", "IE", "UK", "PT",
+] as const;
+export type AddressCountryCode = (typeof ADDRESS_COUNTRIES)[number];
+
+export const UNITS_COUNTRIES = ["ES", "PV", "NA"] as const;
+export type UnitsCountryCode = (typeof UNITS_COUNTRIES)[number];
+
 export const COMPARE_COUNTRIES = ["ES", "PT", "FR", "IT", "DE"] as const;
 export type CompareCountryCode = (typeof COMPARE_COUNTRIES)[number];
 
@@ -37,6 +54,29 @@ export interface ApiResponse<T> {
   error?: string;
   code?: string;
   searchesRemaining?: number;
+  quota?: Quota;
+}
+
+export interface Quota {
+  plan?: string;
+  limit?: number;
+  remaining?: number;
+  resetsAt?: string;
+  overage?: {
+    enabled: boolean;
+    balanceEur?: number;
+    unitPriceEur?: number;
+    unitsLeft?: number;
+  };
+  perMinute?: {
+    limit?: number;
+    remaining?: number;
+    resetSeconds?: number;
+  };
+  fincaCap?: {
+    cap: number;
+    used?: number;
+  };
 }
 
 export interface ParcelData {
@@ -75,18 +115,85 @@ export interface CoordinatesSearchData {
   googleMapsUrl: string;
 }
 
-export interface AddressSearchData {
-  referenciaCatastral: string;
-  refCat14?: string;
+export interface AddressCandidate {
+  refCatastral: string;
+  pais?: string;
   direccion?: string;
-  provincia?: string;
-  municipio?: string;
-  tipoVia?: string;
-  nombreVia?: string;
   numero?: number;
+  codigoPostal?: string;
+  municipio?: string;
+  provincia?: string;
+  latitud?: number;
+  longitud?: number;
+  confianza?: number;
+  coincideNumero?: boolean;
+  coincideMunicipio?: boolean;
+  enCopia?: boolean;
+  direccionCatastro?: string;
+  uso?: string;
+  viviendas?: number;
+  anioConstruccion?: number;
+}
+
+export interface AddressCandidatesData {
+  consulta?: { texto?: string; calle?: string; numero?: number; municipio?: string; codigoPostal?: string };
+  candidatos: AddressCandidate[] | null;
+  attribution?: string;
+}
+
+export interface Unit {
+  refCatastral: string;
+  escalera?: string;
   planta?: string;
   puerta?: string;
+  uso?: string;
+  superficie?: number;
+  descripcion?: string;
+  participacion?: number;
+  anio?: number;
+  direccion?: string;
+}
+
+export interface Construction {
+  escalera?: string;
+  planta?: string;
+  puerta?: string;
+  uso?: string;
+  superficie?: number;
+  descripcion?: string;
+}
+
+export interface UnitsPageData {
+  refCatastral: string;
+  direccion?: string;
   codigoPostal?: string;
+  municipio?: string;
+  provincia?: string;
+  usoGeneral?: string;
+  anioConstruccion?: number;
+  totalUnidades?: number;
+  totalUnidadesFinca?: number;
+  unidades: Unit[] | null;
+  construcciones?: Construction[] | null;
+  truncated?: boolean;
+  nextCursor?: string;
+  dataSource?: string;
+  dataDate?: string;
+  attribution?: string;
+}
+
+export interface ResolveCandidate {
+  country: string;
+  kind: string;
+  normalized: string;
+  confidence: number;
+  supported: boolean;
+}
+
+export interface ResolveData {
+  input: string;
+  candidates: ResolveCandidate[] | null;
+  ambiguous: boolean;
 }
 
 export interface PolygonData {
@@ -119,6 +226,15 @@ export interface TerrainSite {
   designation?: string;
   country: string;
   overlap_pct: number | null;
+}
+
+export interface ClimatePeriod {
+  start_year: number;
+  end_year: number;
+  mean_temp_c?: number;
+  annual_precip_mm?: number;
+  frost_days_per_year?: number;
+  hot_days_per_year?: number;
 }
 
 export interface TerrainData {
@@ -155,6 +271,22 @@ export interface TerrainData {
     national?: TerrainSite[];
     method?: string;
     sources: TerrainSource[];
+  };
+  climate?: {
+    status: "ok" | "no_data" | "unavailable";
+    baseline?: ClimatePeriod;
+    recent?: ClimatePeriod;
+    change?: {
+      mean_temp_c?: number;
+      annual_precip_mm?: number;
+      annual_precip_pct?: number;
+      frost_days_per_year?: number;
+      hot_days_per_year?: number;
+    };
+    frost_threshold_c?: number;
+    hot_threshold_c?: number;
+    cell?: { lat: number; lng: number; resolution_deg: number };
+    source?: TerrainSource;
   };
   calculated_at: string;
   provenance: string;

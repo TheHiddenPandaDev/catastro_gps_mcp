@@ -55,7 +55,7 @@ export function registerGetScore(server: McpServer, client: CatastroGPSClient): 
     },
     async ({ reference, country }) => {
       try {
-        const { data } = await client.getInvestmentScore(reference, country);
+        const { data, quota } = await client.getInvestmentScore(reference, country);
         const s = data.score_inversion;
         return jsonResult({
           reference,
@@ -67,7 +67,7 @@ export function registerGetScore(server: McpServer, client: CatastroGPSClient): 
           risk_factors: s.factores_riesgo ?? [],
           opportunity_factors: s.factores_oportunidad ?? [],
           note: "Score based on the data available for this parcel. Factor levels are qualitative.",
-        });
+        }, quota);
       } catch (error) {
         return handleToolError(error);
       }

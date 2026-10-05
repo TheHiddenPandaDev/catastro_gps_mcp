@@ -4,3 +4,4 @@ build/
 *.tsbuildinfo
 *.mcpb
 *.tgz
+coverage/

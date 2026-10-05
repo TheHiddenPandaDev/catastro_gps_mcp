@@ -40,7 +40,7 @@ export function registerCompareParcels(server: McpServer, client: CatastroGPSCli
         "common regime), PT, FR, IT and DE. The Basque Country and Navarre are not supported here " +
         "(use the single-parcel tools). Area, land use and municipality are only filled for Spain. " +
         "No market prices. A parcel that is not found comes back with an error and the others are " +
-        "still compared. One API call for the whole comparison.",
+        "still compared. Costs one quota unit per parcel found (0 to 3).",
       inputSchema: {
         parcels: z
           .array(
@@ -56,9 +56,9 @@ export function registerCompareParcels(server: McpServer, client: CatastroGPSCli
     },
     async ({ parcels }) => {
       try {
-        const { data } = await client.compareParcels(parcels);
+        const { data, quota } = await client.compareParcels(parcels);
         const items = data.comparacion ?? [];
-        return jsonResult({ total: data.total ?? items.length, parcels: items.map(summarize) });
+        return jsonResult({ total: data.total ?? items.length, parcels: items.map(summarize) }, quota);
       } catch (error) {
         return handleToolError(error);
       }

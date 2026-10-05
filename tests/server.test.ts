@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { readFileSync } from "node:fs";
 import { DEFAULT_API_URL, DEFAULT_TIMEOUT_MS, loadConfig, loadEndpointConfig, sessionConfig } from "../src/server.js";
 import { SERVER_NAME, SERVER_VERSION } from "../src/version.js";
+import { connectClient } from "./helpers.js";
 
 const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
 const serverJson = JSON.parse(readFileSync(new URL("../server.json", import.meta.url), "utf8"));
@@ -73,6 +74,14 @@ describe("release metadata", () => {
 
   it("uses the same registry name in package.json and server.json", () => {
     expect(pkg.mcpName).toBe(serverJson.name);
+  });
+
+  it("lists in the MCPB manifest exactly the tools the server registers", async () => {
+    const manifest = JSON.parse(readFileSync(new URL("../manifest.json", import.meta.url), "utf8"));
+    const client = await connectClient();
+    const { tools } = await client.listTools();
+
+    expect(manifest.tools.map((t: { name: string }) => t.name).sort()).toEqual(tools.map((t) => t.name).sort());
   });
 
   it("stays within the registry description limit", () => {

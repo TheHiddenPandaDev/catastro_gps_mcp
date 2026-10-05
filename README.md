@@ -2,14 +2,15 @@
 
 <!-- mcp-name: com.parcelgps/catastro-gps -->
 
-Official cadastral parcels for AI agents, across **29 European countries plus the Basque Country and Navarre** (31 country and region codes), with one API key.
+Official cadastral parcels for AI agents from **26 European cadastres plus the Basque Country and Navarre**, with one API key. Croatia (ARKOD agricultural parcels), Sweden (agricultural blocks) and Scotland (by coordinates) are served too, but they are not full cadastres: 31 country and region codes in total.
 
-Ask your agent for a parcel by its cadastral reference, by a point on the map or, in Spain, by a postal address typed as free text. It gets back the reference, location, area, land use and the parcel outline, and it can estimate solar and agricultural potential, read aggregated market prices, score and compare parcels in Spain, Portugal, France, Italy and Germany.
+Ask your agent for a parcel by its cadastral reference, by a point on the map or by a postal address. It gets back the reference, location, area, land use and the parcel outline; it can list every dwelling of a Spanish building, read relief, protected areas, climate normals and satellite ground motion, estimate solar and agricultural potential, read aggregated market prices, and score and compare parcels.
 
-- **31 codes, one call shape.** `ES`, `PT`, `FR`, `IT`, `DE`, `PL`, `NL`, `CH`… and the two Spanish foral cadastres (`PV`, `NA`) that the central Catastro does not serve.
-- **The country is optional.** It is detected from the reference format or from the point. A few references are valid in more than one country (some German and Portuguese numbers look alike): pass `country` to be explicit.
-- **Free-text Spanish addresses.** `"Calle Mallorca 213, Barcelona"` becomes a cadastral reference.
-- **Geometry included.** Parcel outlines as GeoJSON or `[lat, lng]` rings, with centroid and area.
+- **31 codes, one call shape.** `ES`, `PT`, `FR`, `IT`, `DE`, `PL`, `NL`, `CH`... and the two Spanish foral cadastres (`PV`, `NA`) that the central Catastro does not serve.
+- **The country is optional.** It is detected from the reference format or from the point. When bare digits fit several countries the API says so (`CNV_AMBIGUOUS`) and `resolve_reference` tells you which ones, for free.
+- **Address search in 27 countries.** `"Calle Gran Via 31, Madrid"`, `"8 boulevard du Port, Amiens"` or `"Damrak 1, 1012 LG Amsterdam"` become ranked parcels.
+- **Buildings, not only plots.** `get_units` lists every dwelling, shop and garage of a Spanish building with floor, door, area and participation coefficient.
+- **Your quota in every answer.** Each result carries the monthly quota left, the prepaid balance and the per-minute headroom.
 - **Free tier for good.** 250 calls a month at no cost, no card. Failed lookups are not charged.
 
 Get a key at **[parcelgps.com/developers](https://www.parcelgps.com/developers)**.
@@ -44,21 +45,27 @@ Use the same `npx -y catastro-gps-mcp` command with `CATASTROGPS_API_KEY` in the
 
 | Tool | What it does | Countries |
 |------|--------------|-----------|
-| `get_parcel` | Parcel by cadastral reference **or** WGS84 coordinates: reference, location, address, municipality, area, land use, outline | All 31 codes (UK: coordinates only) |
-| `search_address` | Spanish postal address in free text → cadastral reference | Spain, central Catastro |
+| `get_parcel` | Parcel by cadastral reference **or** WGS84 coordinates: reference, location, address, municipality, area, land use, outline | All 31 codes (UK and HR: coordinates only) |
+| `search_address` | Postal address in free text to ranked parcels, with confidence and whether the number and municipality match | ES (with PV and NA entrances) and FR, IT, DE, AT, NL, BE, PL, CH, CZ, DK, NO, FI, EE, LV, LT, SI, SK, BG, GR, CY, LU, LI, IS, IE, UK, PT |
+| `get_units` | Every unit (dwelling, shop, garage, storage) of a Spanish building: stair, floor, door, use, area, participation, year. Paginated, 200 per page | ES, PV, NA |
+| `resolve_reference` | Free, no quota: is this text a reference, coordinates or a place name, and of which country | All |
 | `get_boundaries` | Parcel outline as GeoJSON / `[lat, lng]` ring, centroid and area | 30 codes (all but UK) |
-| `get_solar_potential` | PVGIS photovoltaic estimate: kWp, kWh/year, savings, payback, CO₂, tilt | ES, PV, NA, PT, FR, IT, DE |
-| `get_terrain` | Relief over the parcel outline (Copernicus DEM GLO-30: elevation, slope, orientation) and Natura 2000 / protected areas (EEA) with the share of the parcel inside each site | ES, PV, NA, PT, FR, IT, DE |
-| `get_ground_motion` | Ground motion measured by satellite (Copernicus EGMS, 2020-2024): subsidence or uplift in mm/year over the parcel, fastest-sinking cell, east-west motion and yearly displacement; says so when there are no radar reflectors | ES, PV, NA, PT, FR, IT, DE |
+| `get_terrain` | Relief over the parcel outline (Copernicus DEM GLO-30), Natura 2000 / protected areas (EEA) and ERA5-Land climate normals with the recent change | Every reference country but HR; outside ES, PV, NA, PT, FR, IT, DE pass `latitude`/`longitude` |
+| `get_ground_motion` | Ground motion measured by satellite (Copernicus EGMS, 2020-2024): subsidence or uplift in mm/year, fastest-sinking cell, east-west motion, yearly displacement; says so when there are no radar reflectors | Same as `get_terrain` |
+| `get_solar_potential` | PVGIS photovoltaic estimate: kWp, kWh/year, savings, payback, CO2, tilt | ES, PV, NA, PT, FR, IT, DE |
 | `get_agriculture` | Land use, main crop, NDVI and a reference crop price (SIGPAC detail in Spain) | ES, PV, NA, PT, FR, IT, DE |
 | `get_market_data` | Aggregated price reference for the parcel's area. Never individual sales | Figures: FR, IT, DE (NRW only). ES, PV, NA, PT: note without figures |
-| `get_investment_score` | Score 0–100 with a rating and qualitative factor levels (high / medium / low / not available) | ES, PV, NA, PT, FR, IT, DE |
+| `get_investment_score` | Score 0-100 with a rating and qualitative factor levels (high / medium / low / not available) | ES, PV, NA, PT, FR, IT, DE |
 | `get_value_history` | Area and land-use snapshots of the parcel over time | ES, PV, NA, PT, FR, IT, DE, AT |
 | `compare_parcels` | Two or three parcels side by side: location, solar, agriculture, score | ES, PT, FR, IT, DE (not PV or NA) |
 
-Every tool call is one API call against your monthly quota, including calls that end in "not found". `compare_parcels` is one call for the whole comparison.
+## Quota, prepaid balance and limits
 
-The API reports the monthly quota of your plan in the `X-Quota-Limit`, `X-Quota-Remaining` and `X-Quota-Reset` headers (plus `X-Quota-Tier`); when it runs out, the error tells you the date it resets. `X-RateLimit-*` is a separate per-key burst limit per minute that depends on your plan (Free 10, Developer 60, Startup 120, Growth 300; a global per-IP guard also applies) and has nothing to do with the monthly quota.
+- Only successful answers with data spend quota: a not found, a validation error, `CNV_COVERAGE`, `CNV_AMBIGUOUS`, a 5xx and an answer without data (`available: false`) are free. `resolve_reference` never spends.
+- Each successful call costs 1 unit, except `get_units` (one unit per unit served in the page, minimum 1) and `compare_parcels` (one per parcel found).
+- Every result carries a `quota` object read from that same response: `remaining`, `limit`, `resets_at`, `plan`, and when they apply `prepaid_overage`, `prepaid_balance_eur`, `overage_units_left`, `per_minute_remaining`, and on `get_units` with a contract per-finca cap `finca_cap` / `finca_cap_used`.
+- When the monthly quota runs out the API does not cut you off if you have prepaid balance: each extra unit is paid from it (top up at [parcelgps.com/app/developer](https://parcelgps.com/app/developer)). With the quota used up and no balance the call fails with `KEY_AUTH_004` (HTTP 429, never 402) and the error says whether to top up or upgrade, and when the quota resets.
+- A separate per-minute limit depends on the plan (Free 10, Developer 60, Startup 120, Growth 300 calls per minute; a global per-IP guard also applies). Going over it answers `KEY_RATE_002` with the seconds to wait.
 
 ### What the market, score and history tools can and cannot tell
 
@@ -69,43 +76,34 @@ The API reports the monthly quota of your plan in the `X-Quota-Limit`, `X-Quota-
 
 ## Coverage
 
-What each code answers today. "Partial" means the official source does not cover the whole territory.
+What each code answers today (measured against production on 1 October 2026). "Partial" means the official source does not cover the whole territory.
 
-| Code | Country / region | By reference | By coordinates | Geometry | Notes |
-|------|------------------|:---:|:---:|:---:|-------|
-| `ES` | Spain (central Catastro) | ✅ | ✅ | ✅ | Free-text address search too |
-| `PV` | Basque Country (Álava, Bizkaia, Gipuzkoa) | ✅ | ✅ | ✅ | Foral cadastres, separate from the central Catastro |
-| `NA` | Navarre | ✅ | ✅ | ✅ | Foral cadastre |
-| `PT` | Portugal | Partial | ✅ | Partial | Digital cadastre does not cover the whole country |
-| `FR` | France | ✅ | ✅ | ✅ | |
-| `IT` | Italy | ✅ | ✅ | ✅ | |
-| `DE` | Germany | Partial | Partial | Partial | Every Land except Bavaria |
-| `AT` | Austria | ✅ | ✅ | ✅ | |
-| `CH` | Switzerland | ✅ | ✅ | ✅ | E-GRID references |
-| `LI` | Liechtenstein | ✅ | ✅ | ✅ | |
-| `BE` | Belgium | ✅ | ✅ | ✅ | |
-| `NL` | Netherlands | ✅ | ✅ | ✅ | |
-| `LU` | Luxembourg | ✅ | ✅ | ✅ | |
-| `PL` | Poland | ✅ | ✅ | ✅ | TERYT parcel IDs |
-| `CZ` | Czechia | ✅ | ✅ | ✅ | |
-| `SK` | Slovakia | ✅ | ✅ | ✅ | |
-| `SI` | Slovenia | ✅ | ✅ | ✅ | |
-| `HR` | Croatia | ✅ | ✅ | ✅ | |
-| `BG` | Bulgaria | ✅ | ✅ | ✅ | |
-| `GR` | Greece | ✅ | ✅ | ✅ | |
-| `CY` | Cyprus | ✅ | ✅ | ✅ | |
-| `DK` | Denmark | ✅ | ✅ | ✅ | |
-| `SE` | Sweden | ✅ | ✅ | ✅ | Agricultural blocks (Jordbruksverket), not property units |
-| `NO` | Norway | ✅ | ✅ | ✅ | |
-| `FI` | Finland | ✅ | ✅ | ✅ | |
-| `IS` | Iceland | ✅ | ✅ | ✅ | |
-| `EE` | Estonia | ✅ | ✅ | ✅ | |
-| `LV` | Latvia | ✅ | ✅ | ✅ | |
-| `LT` | Lithuania | ✅ | ✅ | ✅ | |
-| `IE` | Ireland | ✅ | ✅ | ✅ | |
-| `UK` | United Kingdom | — | Scotland | Scotland | Registers of Scotland; England, Wales and Northern Ireland not yet |
+| Code | Country / region | By reference | By coordinates | Address search | Notes |
+|------|------------------|---|---|---|-------|
+| `ES` | Spain (central Catastro) | yes | yes | yes | Buildings and dwellings with `get_units` |
+| `PV` | Basque Country (Araba, Bizkaia, Gipuzkoa) | yes | yes | with `country: ES` | Foral cadastres; `get_units` without participation coefficient |
+| `NA` | Navarre | yes | yes | with `country: ES` | Foral cadastre; `get_units` |
+| `FR` | France | yes | yes | yes | |
+| `IT` | Italy | yes | yes | yes | |
+| `DE` | Germany | partial | partial | partial | 15 of 16 Lander: **not Bavaria** |
+| `AT` | Austria | yes | yes | yes | |
+| `NL` | Netherlands | yes | yes | yes | |
+| `BE` | Belgium | yes | yes (slow source) | yes | |
+| `PL` | Poland | yes | yes | yes | TERYT parcel IDs |
+| `CH` | Switzerland | yes | partial | yes | Not in cantons that publish no parcels (e.g. Vaud) |
+| `CZ` `DK` `NO` `FI` `EE` | Czechia, Denmark, Norway, Finland, Estonia | yes | yes | yes | |
+| `LT` `SI` `SK` `BG` | Lithuania, Slovenia, Slovakia, Bulgaria | yes | yes | yes | |
+| `LU` `LI` `IS` | Luxembourg, Liechtenstein, Iceland | yes | yes | yes | |
+| `CY` | Cyprus | yes | yes | yes, low confidence | Few house numbers mapped |
+| `LV` | Latvia | with `country: LV` | yes | yes | |
+| `GR` | Greece | with `country: GR` | yes | yes | |
+| `PT` | Portugal | yes | partial | partial | The cadastre does not cover Lisbon, Porto or Coimbra; the DGT source is often down |
+| `IE` | Ireland | with `country: IE` (SP_ID) | partial | partial | |
+| `UK` | United Kingdom | no | Scotland only | Scotland only | England, Wales and Northern Ireland not yet |
+| `HR` | Croatia | no | ARKOD agricultural parcels only | no | No open cadastre; not Zagreb or Rijeka |
+| `SE` | Sweden | agricultural blocks | agricultural blocks | no | Not property units |
 
-Data comes live from each country's official cadastre or INSPIRE service, so availability follows theirs: some national services are slow, and the server raises a clear `SERVICE_UNAVAILABLE` when one is down. Outside the table, a point or reference answers `CNV_COVERAGE`.
+Hungary, Romania and the rest of Europe are not covered: a reference or point there answers `CNV_COVERAGE`. Data comes from each country's official cadastre or INSPIRE service (Spain from our copy of the Catastro), so availability follows theirs; when one is down the server answers `SERVICE_UNAVAILABLE`, which is free.
 
 Official registry documents (Spanish *nota simple*, Italian *visura*, Portuguese *certidão permanente* and others) can be ordered at [catastrogps.es](https://www.catastrogps.es). They are not exposed through the API or this server yet.
 
@@ -114,6 +112,10 @@ Official registry documents (Spanish *nota simple*, Italian *visura*, Portuguese
 Ask your agent:
 
 > Find the cadastral parcel at Calle Mallorca 213, Barcelona, and give me its area and outline.
+
+> List every flat of the building at Avenida Jose Rodriguez de la Borbolla 10, Dos Hermanas, with floor, door and area.
+
+> Is the ground sinking under parcel 30024A16000286? Is it inside a Natura 2000 site?
 
 > What is the parcel at 52.2297, 21.0122? What's its area?
 
@@ -148,7 +150,7 @@ Errors come back as a code plus a sentence the agent can act on, for example:
 ```text
 CNV_COVERAGE: That reference or point is in a country that is not covered yet.
 SERVICE_UNAVAILABLE: The official cadastre for this country is not responding. Try again in a few minutes.
-KEY_AUTH_004: Monthly quota exhausted. Upgrade at https://www.parcelgps.com/developers
+KEY_AUTH_004: Monthly quota used up and prepaid balance empty: top up at https://parcelgps.com/app/developer (or upgrade at https://www.parcelgps.com/developers).
 ```
 
 ## Pricing
@@ -179,6 +181,7 @@ Details and sign-up: [parcelgps.com/developers](https://www.parcelgps.com/develo
 npm install
 npm run lint
 npm test
+npm run test:coverage
 npm run build
 CATASTROGPS_API_KEY=pk_live_xxx node build/index.js
 ```

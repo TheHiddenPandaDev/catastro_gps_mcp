@@ -30,7 +30,9 @@ describe("MCP tools", () => {
       "get_parcel",
       "get_solar_potential",
       "get_terrain",
+      "get_units",
       "get_value_history",
+      "resolve_reference",
       "search_address",
     ]);
   });
@@ -165,46 +167,68 @@ describe("MCP tools", () => {
   });
 
   describe("search_address", () => {
-    it("returns the reference and the parsed address", async () => {
-      fetchMock.mockResolvedValueOnce(jsonResponse({
+    it("returns ranked candidates with the attribution and the quota", async () => {
+      fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({
         success: true,
         data: {
-          referenciaCatastral: "0485206DF3808E0016EZ",
-          refCat14: "0485206DF3808E",
-          direccion: "CL MALLORCA 213, BARCELONA",
-          provincia: "BARCELONA",
-          municipio: "BARCELONA",
-          tipoVia: "CL",
-          nombreVia: "MALLORCA",
-          numero: 213,
+          consulta: { texto: "Calle Gran Via 31, Madrid" },
+          candidatos: [{
+            refCatastral: "0847106VK4704F", pais: "ES", direccion: "CL GRAN VIA 31", numero: 31,
+            codigoPostal: "28013", municipio: "Madrid", provincia: "Madrid", latitud: 40.42, longitud: -3.70,
+            confianza: 0.95, coincideNumero: true, coincideMunicipio: true, enCopia: true, uso: "Residencial",
+            viviendas: 24, anioConstruccion: 1925,
+          }],
+          attribution: "Catastro",
         },
+      }), { status: 200, headers: { "X-Quota-Remaining": "249", "X-Quota-Limit": "250" } }));
+
+      const body = toolJson(await client.callTool({
+        name: "search_address",
+        arguments: { address: "Calle Gran Via 31, Madrid", limit: 3 },
       }));
 
-      const result = await client.callTool({ name: "search_address", arguments: { address: "Calle Mallorca 213, Barcelona" } });
-
-      expect(toolJson(result)).toMatchObject({
-        reference: "0485206DF3808E0016EZ",
-        parcel_reference: "0485206DF3808E",
+      expect(body).toMatchObject({
         country: "ES",
-        street: "MALLORCA",
-        number: 213,
-        municipality: "BARCELONA",
+        total: 1,
+        attribution: "Catastro",
+        quota: { remaining: 249, limit: 250 },
+        candidates: [{
+          reference: "0847106VK4704F",
+          country: "ES",
+          number: 31,
+          confidence: 0.95,
+          number_matches: true,
+          municipality_matches: true,
+          dwellings: 24,
+          construction_year: 1925,
+        }],
       });
-      expect(lastRequest(fetchMock).body).toEqual({ direccion: "Calle Mallorca 213, Barcelona" });
+      const req = lastRequest(fetchMock);
+      expect(req.url.pathname).toBe("/api/search/address/candidates");
+      expect(req.url.searchParams.get("limit")).toBe("3");
+      expect(req.url.searchParams.has("country")).toBe(false);
     });
 
-    it("explains a miss and shows what was understood", async () => {
+    it("searches other countries and tolerates a null list", async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: { candidatos: null } }));
+
+      const body = toolJson(await client.callTool({
+        name: "search_address",
+        arguments: { address: "Damrak 1, 1012 LG Amsterdam", country: "NL" },
+      }));
+
+      expect(body).toMatchObject({ country: "NL", total: 0, candidates: [], attribution: null });
+      expect(lastRequest(fetchMock).url.searchParams.get("country")).toBe("NL");
+    });
+
+    it("rejects Sweden and Croatia at the schema", async () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
-        success: false,
-        error: "No se pudo determinar la provincia. Añade el código postal o el nombre de la provincia.",
-        parsed: { NombreVia: "MAYOR", Numero: 1 },
-      }, 404));
+        success: false, code: "CNV_COVERAGE", error: "No address search", data: { supportedCountries: ["ES", "FR"] },
+      }, 422));
 
-      const result = await client.callTool({ name: "search_address", arguments: { address: "Calle Mayor 1" } });
-
+      const result = await client.callTool({ name: "search_address", arguments: { address: "Storgatan 1, Umea", country: "SE" } });
       expect(result.isError).toBe(true);
-      expect(toolText(result)).toContain("provincia");
-      expect(toolText(result)).toContain("MAYOR");
+      expect(fetchMock).not.toHaveBeenCalled();
     });
 
     it("rejects empty input without calling the API", async () => {
