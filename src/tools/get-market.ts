@@ -27,7 +27,7 @@ export function registerGetMarket(server: McpServer, client: CatastroGPSClient):
     },
     async ({ reference, country }) => {
       try {
-        const { data: d } = await client.getMarketData(reference, country);
+        const { data: d, quota } = await client.getMarketData(reference, country);
         const hasFigures = (d.precio_m2_eur ?? 0) > 0 || (d.precio_estimado_eur ?? 0) > 0;
         return jsonResult({
           reference,
@@ -43,7 +43,7 @@ export function registerGetMarket(server: McpServer, client: CatastroGPSClient):
           updated: d.fecha_actualizacion || null,
           source: d.fuente ?? null,
           note: d.mensaje_usuario ?? null,
-        });
+        }, quota);
       } catch (error) {
         return handleToolError(error);
       }

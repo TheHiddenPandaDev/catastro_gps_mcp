@@ -26,7 +26,7 @@ export function registerGetValueHistory(server: McpServer, client: CatastroGPSCl
     },
     async ({ reference, country }) => {
       try {
-        const { data } = await client.getValueHistory(reference, country);
+        const { data, quota } = await client.getValueHistory(reference, country);
         const entries = data.entries ?? [];
         return jsonResult({
           reference: data.refcat ?? reference,
@@ -40,7 +40,7 @@ export function registerGetValueHistory(server: McpServer, client: CatastroGPSCl
           })),
           total: data.totalEntries ?? entries.length,
           change_pct: data.variacionPct ?? null,
-        });
+        }, quota);
       } catch (error) {
         return handleToolError(error);
       }

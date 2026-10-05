@@ -23,7 +23,7 @@ export function registerGetSolar(server: McpServer, client: CatastroGPSClient): 
     },
     async ({ reference, country }) => {
       try {
-        const { data: d } = await client.getSolarPotential(reference, country);
+        const { data: d, quota } = await client.getSolarPotential(reference, country);
         return jsonResult({
           available: d.disponible,
           status: d.estado,
@@ -38,7 +38,7 @@ export function registerGetSolar(server: McpServer, client: CatastroGPSClient): 
           optimal_orientation: d.orientacion_optima ?? null,
           optimal_tilt_deg: d.angulo_inclinacion ?? null,
           source: d.fuente ?? "PVGIS",
-        });
+        }, quota);
       } catch (error) {
         return handleToolError(error);
       }

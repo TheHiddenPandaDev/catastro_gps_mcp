@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { CatastroGPSClient, CatastroGPSApiError } from "../src/client/catastrogps-api.js";
+import { CatastroGPSClient, CatastroGPSApiError, readQuota } from "../src/client/catastrogps-api.js";
 import { USER_AGENT } from "../src/version.js";
 import { TEST_CONFIG, installFetchMock, jsonResponse, lastRequest } from "./helpers.js";
 
@@ -56,15 +56,51 @@ describe("CatastroGPSClient", () => {
     expect(req.url.searchParams.get("country")).toBe("PL");
   });
 
-  it("posts free-text addresses to the parser endpoint in the field the API expects", async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: {} }));
-    await client.searchAddress("Calle Mallorca 213, Barcelona");
+  it("asks the address candidates endpoint with country and limit", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: { candidatos: [] } }));
+    await client.searchAddressCandidates("8 boulevard du Port, Amiens", "FR", 3);
 
     const req = lastRequest(fetchMock);
-    expect(req.method).toBe("POST");
-    expect(req.url.pathname).toBe("/api/search/address/parse");
-    expect(req.headers["Content-Type"]).toBe("application/json");
-    expect(req.body).toEqual({ direccion: "Calle Mallorca 213, Barcelona" });
+    expect(req.method).toBe("GET");
+    expect(req.url.pathname).toBe("/api/search/address/candidates");
+    expect(req.url.searchParams.get("q")).toBe("8 boulevard du Port, Amiens");
+    expect(req.url.searchParams.get("country")).toBe("FR");
+    expect(req.url.searchParams.get("limit")).toBe("3");
+    expect(req.body).toBeUndefined();
+  });
+
+  it("pages units with country and cursor", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: { unidades: [] } }));
+    await client.getUnits("020-3-657", "PV", "N0714723L");
+
+    const req = lastRequest(fetchMock);
+    expect(req.url.pathname).toBe("/api/catastro/020-3-657/units");
+    expect(req.url.searchParams.get("country")).toBe("PV");
+    expect(req.url.searchParams.get("cursor")).toBe("N0714723L");
+  });
+
+  it("resolves free text with an optional hint", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: { input: "x", candidates: [], ambiguous: false } }));
+    await client.resolve("05102200100005", "DE");
+
+    const req = lastRequest(fetchMock);
+    expect(req.url.pathname).toBe("/api/resolve");
+    expect(req.url.searchParams.get("q")).toBe("05102200100005");
+    expect(req.url.searchParams.get("hint")).toBe("DE");
+  });
+
+  it.each([
+    ["getTerrain", "/terrain"],
+    ["getGroundMotion", "/ground-motion"],
+  ] as const)("%s sends the parcel point when given", async (method, suffix) => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: {} }));
+    await client[method]("BE1", "BE", { lat: 50.848139, lng: 4.353613 });
+
+    const req = lastRequest(fetchMock);
+    expect(req.url.pathname).toBe(`/api/catastro/BE1${suffix}`);
+    expect(req.url.searchParams.get("lat")).toBe("50.848139");
+    expect(req.url.searchParams.get("lng")).toBe("4.353613");
+    expect(req.url.searchParams.get("country")).toBe("BE");
   });
 
   it.each([
@@ -112,14 +148,14 @@ describe("CatastroGPSClient", () => {
     expect((error as CatastroGPSApiError).details).toEqual({ candidates: [{ country: "DE" }, { country: "PT" }] });
   });
 
-  it("keeps what the address parser understood when it cannot find the address", async () => {
+  it("keeps the details of a coverage error", async () => {
     fetchMock.mockResolvedValueOnce(
-      jsonResponse({ success: false, error: "No se pudo determinar la provincia", parsed: { NombreVia: "MAYOR" } }, 404),
+      jsonResponse({ success: false, code: "CNV_COVERAGE", error: "no", data: { supportedCountries: ["ES", "FR"] } }, 422),
     );
 
-    const error = (await client.searchAddress("Calle Mayor").catch((e: unknown) => e)) as CatastroGPSApiError;
-    expect(error.code).toBe("HTTP_404");
-    expect(error.details).toEqual({ NombreVia: "MAYOR" });
+    const error = (await client.searchAddressCandidates("Storgatan 1", "SE").catch((e: unknown) => e)) as CatastroGPSApiError;
+    expect(error.code).toBe("CNV_COVERAGE");
+    expect(error.details).toEqual({ supportedCountries: ["ES", "FR"] });
   });
 
   it("falls back to an HTTP code when the error body is not JSON", async () => {
@@ -132,7 +168,7 @@ describe("CatastroGPSClient", () => {
 
   it("keeps the monthly quota reset date of a 429 from X-Quota-Reset, not the per-minute limiter", async () => {
     fetchMock.mockResolvedValueOnce(
-      new Response(JSON.stringify({ success: false, code: "KEY_AUTH_004", error: "Cuota mensual agotada" }), {
+      new Response(JSON.stringify({ success: false, code: "KEY_AUTH_004", error: "Monthly quota used up" }), {
         status: 429,
         headers: {
           "Content-Type": "application/json",
@@ -149,12 +185,19 @@ describe("CatastroGPSClient", () => {
 
     const error = (await client.getPolygon("X").catch((e: unknown) => e)) as CatastroGPSApiError;
     expect(error.resetsAt).toBe("2026-10-01T00:00:00Z");
-    expect(client.lastQuota).toEqual({ plan: "free", limit: 250, remaining: 0, resetsAt: "2026-10-01T00:00:00Z" });
+    expect(error.quota?.remaining).toBe(0);
+    expect(client.lastQuota).toEqual({
+      plan: "free",
+      limit: 250,
+      remaining: 0,
+      resetsAt: "2026-10-01T00:00:00Z",
+      perMinute: { limit: 300, remaining: 299, resetSeconds: 60 },
+    });
   });
 
-  it("records the monthly quota of a successful call from the X-Quota headers", async () => {
+  it("returns the quota of each successful response with the data", async () => {
     fetchMock.mockResolvedValueOnce(
-      new Response(JSON.stringify({ success: true, data: {} }), {
+      new Response(JSON.stringify({ success: true, data: { refCatastral: "R" } }), {
         status: 200,
         headers: {
           "Content-Type": "application/json",
@@ -162,57 +205,73 @@ describe("CatastroGPSClient", () => {
           "X-Quota-Remaining": "4899",
           "X-Quota-Reset": "2026-11-01T00:00:00Z",
           "X-Quota-Tier": "developer",
-          "X-RateLimit-Limit": "300",
-          "X-RateLimit-Remaining": "298",
-          "X-RateLimit-Reset": "60",
+          "X-RateLimit-Limit": "60",
+          "X-RateLimit-Remaining": "58",
+          "X-RateLimit-Reset": "41",
         },
       }),
     );
 
-    await client.getParcelByReference("R");
-    expect(client.lastQuota).toEqual({
+    const response = await client.getParcelByReference("R");
+    expect(response.data).toEqual({ refCatastral: "R" });
+    expect(response.quota).toEqual({
       plan: "developer",
       limit: 5000,
       remaining: 4899,
       resetsAt: "2026-11-01T00:00:00Z",
+      perMinute: { limit: 60, remaining: 58, resetSeconds: 41 },
     });
+    expect(client.lastQuota).toEqual(response.quota);
   });
 
-  it("falls back to X-RateLimit headers from servers that predate X-Quota-Limit", async () => {
+  it("reads the prepaid overage balance and the per-finca cap", async () => {
     fetchMock.mockResolvedValueOnce(
-      new Response(JSON.stringify({ success: false, code: "KEY_AUTH_004", error: "Cuota mensual agotada" }), {
-        status: 429,
+      new Response(JSON.stringify({ success: true, data: {} }), {
+        status: 200,
         headers: {
-          "Content-Type": "application/json",
-          "X-RateLimit-Limit": "100",
-          "X-RateLimit-Remaining": "0",
-          "X-RateLimit-Reset": "2026-10-01T00:00:00Z",
-          "X-Quota-Tier": "free",
+          "X-Quota-Limit": "15000",
+          "X-Quota-Remaining": "0",
+          "X-Quota-Tier": "pro",
+          "X-Quota-Overage": "on",
+          "X-Quota-Balance": "4.995000",
+          "X-Quota-Overage-Unit-Price": "0.004000",
+          "X-Quota-Overage-Remaining": "1248",
+          "X-Quota-Finca-Cap": "50",
+          "X-Quota-Finca-Cap-Used": "12",
         },
       }),
     );
 
-    const error = (await client.getPolygon("X").catch((e: unknown) => e)) as CatastroGPSApiError;
-    expect(error.resetsAt).toBe("2026-10-01T00:00:00Z");
-    expect(client.lastQuota).toEqual({ plan: "free", limit: 100, remaining: 0, resetsAt: "2026-10-01T00:00:00Z" });
+    const response = await client.getUnits("0745901TG4304N");
+    expect(response.quota?.overage).toEqual({ enabled: true, balanceEur: 4.995, unitPriceEur: 0.004, unitsLeft: 1248 });
+    expect(response.quota?.fincaCap).toEqual({ cap: 50, used: 12 });
   });
 
-  it("never reports the per-minute limiter as the monthly quota", async () => {
+  it("does not attach a quota when the response carries no quota headers", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: {} }));
+    const response = await client.getParcelByReference("R");
+    expect(response.quota).toBeUndefined();
+    expect(readQuota(new Headers({ "X-Quota-Limit": "abc" }))).toBeUndefined();
+  });
+
+  it("never reports the per-minute limiter as the monthly quota and keeps Retry-After", async () => {
     fetchMock.mockResolvedValueOnce(
-      new Response(JSON.stringify({ success: false, code: "RATE_LIMIT", error: "Too many requests" }), {
+      new Response(JSON.stringify({ success: false, code: "KEY_RATE_002", error: "Too many requests" }), {
         status: 429,
         headers: {
           "Content-Type": "application/json",
-          "X-RateLimit-Limit": "300",
+          "Retry-After": "17",
+          "X-RateLimit-Limit": "10",
           "X-RateLimit-Remaining": "0",
-          "X-RateLimit-Reset": "42",
+          "X-RateLimit-Reset": "17",
         },
       }),
     );
 
     const error = (await client.getPolygon("X").catch((e: unknown) => e)) as CatastroGPSApiError;
     expect(error.resetsAt).toBeUndefined();
-    expect(client.lastQuota).toBeUndefined();
+    expect(error.retryAfterSeconds).toBe(17);
+    expect(client.lastQuota).toEqual({ perMinute: { limit: 10, remaining: 0, resetSeconds: 17 } });
   });
 
   it("keeps the last known quota when a response carries no quota headers", async () => {
@@ -227,7 +286,7 @@ describe("CatastroGPSClient", () => {
 
     await client.getParcelByReference("R");
     await client.getParcelByReference("R");
-    expect(client.lastQuota).toEqual({ plan: "free", limit: 250, remaining: 10, resetsAt: undefined });
+    expect(client.lastQuota).toEqual({ plan: "free", limit: 250, remaining: 10 });
   });
 
   it("reports timeouts as MCP_TIMEOUT", async () => {

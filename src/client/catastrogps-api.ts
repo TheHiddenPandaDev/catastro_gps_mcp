@@ -1,4 +1,5 @@
 import type {
+  Quota,
   ServerConfig,
   ApiResponse,
   ParcelData,
@@ -12,45 +13,99 @@ import type {
   ValueHistoryData,
   CompareData,
   CoordinatesSearchData,
-  AddressSearchData,
+  AddressCandidatesData,
+  UnitsPageData,
+  ResolveData,
   ApiErrorResponse,
 } from "../types/index.js";
 import { USER_AGENT } from "../version.js";
 
+export interface ApiErrorExtras {
+  quota?: Quota;
+  retryAfterSeconds?: number;
+}
+
 export class CatastroGPSApiError extends Error {
+  public readonly quota?: Quota;
+  public readonly retryAfterSeconds?: number;
+
   constructor(
     public readonly code: string,
     message: string,
     public readonly status: number,
     public readonly details?: unknown,
-    public readonly resetsAt?: string,
+    extras: ApiErrorExtras = {},
   ) {
     super(message);
     this.name = "CatastroGPSApiError";
+    this.quota = extras.quota;
+    this.retryAfterSeconds = extras.retryAfterSeconds;
+  }
+
+  get resetsAt(): string | undefined {
+    return this.quota?.resetsAt;
   }
 }
 
 type QueryParams = Record<string, string | number | undefined>;
 
-export interface Quota {
-  plan?: string;
-  limit?: number;
-  remaining?: number;
-  resetsAt?: string;
+export type { Quota };
+
+function numberHeader(headers: Headers, name: string): number | undefined {
+  const raw = headers.get(name);
+  if (raw === null || raw.trim() === "") return undefined;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : undefined;
+}
+
+function readOverage(headers: Headers): Quota["overage"] {
+  const flag = headers.get("X-Quota-Overage");
+  if (flag === null) return undefined;
+  return {
+    enabled: flag.trim().toLowerCase() === "on",
+    balanceEur: numberHeader(headers, "X-Quota-Balance"),
+    unitPriceEur: numberHeader(headers, "X-Quota-Overage-Unit-Price"),
+    unitsLeft: numberHeader(headers, "X-Quota-Overage-Remaining"),
+  };
+}
+
+function readPerMinute(headers: Headers): Quota["perMinute"] {
+  if (!headers.has("X-RateLimit-Limit") && !headers.has("X-RateLimit-Remaining")) return undefined;
+  return {
+    limit: numberHeader(headers, "X-RateLimit-Limit"),
+    remaining: numberHeader(headers, "X-RateLimit-Remaining"),
+    resetSeconds: numberHeader(headers, "X-RateLimit-Reset"),
+  };
+}
+
+function readFincaCap(headers: Headers): Quota["fincaCap"] {
+  const cap = numberHeader(headers, "X-Quota-Finca-Cap");
+  if (cap === undefined) return undefined;
+  return { cap, used: numberHeader(headers, "X-Quota-Finca-Cap-Used") };
 }
 
 export function readQuota(headers: Headers): Quota | undefined {
-  const plan = headers.get("X-Quota-Tier") ?? undefined;
-  const family = headers.has("X-Quota-Limit") ? "X-Quota" : plan ? "X-RateLimit" : undefined;
-  if (!family) return undefined;
-  const limit = headers.get(`${family}-Limit`);
-  const remaining = headers.get(`${family}-Remaining`);
-  return {
-    plan,
-    limit: limit === null ? undefined : Number(limit),
-    remaining: remaining === null ? undefined : Number(remaining),
-    resetsAt: headers.get(`${family}-Reset`) ?? undefined,
-  };
+  const quota: Quota = {};
+  const plan = headers.get("X-Quota-Tier");
+  if (plan !== null) quota.plan = plan;
+  const limit = numberHeader(headers, "X-Quota-Limit");
+  if (limit !== undefined) quota.limit = limit;
+  const remaining = numberHeader(headers, "X-Quota-Remaining");
+  if (remaining !== undefined) quota.remaining = remaining;
+  const resetsAt = headers.get("X-Quota-Reset");
+  if (resetsAt !== null) quota.resetsAt = resetsAt;
+  const overage = readOverage(headers);
+  if (overage) quota.overage = overage;
+  const perMinute = readPerMinute(headers);
+  if (perMinute) quota.perMinute = perMinute;
+  const fincaCap = readFincaCap(headers);
+  if (fincaCap) quota.fincaCap = fincaCap;
+  return Object.keys(quota).length > 0 ? quota : undefined;
+}
+
+function retryAfterSeconds(headers: Headers): number | undefined {
+  const value = numberHeader(headers, "Retry-After");
+  return value !== undefined && value > 0 ? value : undefined;
 }
 
 export class CatastroGPSClient {
@@ -105,11 +160,15 @@ export class CatastroGPSClient {
           errorBody.error || errorBody.message || `API returned ${response.status}`,
           response.status,
           errorBody.data ?? errorBody.parsed,
-          quota?.resetsAt,
+          { quota, retryAfterSeconds: retryAfterSeconds(response.headers) },
         );
       }
 
-      return (await response.json()) as T;
+      const payload = (await response.json()) as T;
+      if (quota && payload && typeof payload === "object") {
+        return { ...payload, quota } as T;
+      }
+      return payload;
     } catch (error) {
       if (error instanceof CatastroGPSApiError) throw error;
       if (error instanceof Error && error.name === "AbortError") {
@@ -137,8 +196,16 @@ export class CatastroGPSClient {
     return this.send("GET", "/api/search/coordinates", { lat, lng, country });
   }
 
-  async searchAddress(address: string): Promise<ApiResponse<AddressSearchData>> {
-    return this.send("POST", "/api/search/address/parse", undefined, { direccion: address });
+  async searchAddressCandidates(address: string, country?: string, limit?: number): Promise<ApiResponse<AddressCandidatesData>> {
+    return this.send("GET", "/api/search/address/candidates", { q: address, country, limit });
+  }
+
+  async getUnits(reference: string, country?: string, cursor?: string): Promise<ApiResponse<UnitsPageData>> {
+    return this.send("GET", this.parcelPath(reference, "/units"), { country, cursor });
+  }
+
+  async resolve(text: string, hint?: string): Promise<ApiResponse<ResolveData>> {
+    return this.send("GET", "/api/resolve", { q: text, hint });
   }
 
   async getPolygon(reference: string, country?: string): Promise<ApiResponse<PolygonData>> {
@@ -149,12 +216,12 @@ export class CatastroGPSClient {
     return this.send("GET", this.parcelPath(reference, "/solar"), { country });
   }
 
-  async getTerrain(reference: string, country?: string): Promise<ApiResponse<TerrainData>> {
-    return this.send("GET", this.parcelPath(reference, "/terrain"), { country });
+  async getTerrain(reference: string, country?: string, point?: { lat: number; lng: number }): Promise<ApiResponse<TerrainData>> {
+    return this.send("GET", this.parcelPath(reference, "/terrain"), { country, lat: point?.lat, lng: point?.lng });
   }
 
-  async getGroundMotion(reference: string, country?: string): Promise<ApiResponse<GroundMotionData>> {
-    return this.send("GET", this.parcelPath(reference, "/ground-motion"), { country });
+  async getGroundMotion(reference: string, country?: string, point?: { lat: number; lng: number }): Promise<ApiResponse<GroundMotionData>> {
+    return this.send("GET", this.parcelPath(reference, "/ground-motion"), { country, lat: point?.lat, lng: point?.lng });
   }
 
   async getAgriculture(reference: string, country?: string): Promise<ApiResponse<AgroData>> {

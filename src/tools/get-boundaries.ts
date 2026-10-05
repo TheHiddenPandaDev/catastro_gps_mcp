@@ -23,7 +23,7 @@ export function registerGetBoundaries(server: McpServer, client: CatastroGPSClie
     },
     async ({ reference, country }) => {
       try {
-        const { data: d } = await client.getPolygon(reference, country);
+        const { data: d, quota } = await client.getPolygon(reference, country);
         return jsonResult(compact({
           reference: d.refCatastral || d.refcat || reference,
           country: d.pais || country,
@@ -32,7 +32,7 @@ export function registerGetBoundaries(server: McpServer, client: CatastroGPSClie
           area_m2: d.area || d.superficieParcela,
           outline_lat_lng: d.poligono,
           geojson: d.geojson,
-        }));
+        }), quota);
       } catch (error) {
         return handleToolError(error);
       }

@@ -35,7 +35,7 @@ export function registerGetParcel(server: McpServer, client: CatastroGPSClient):
           if (country === "UK") {
             return errorResult("MCP_002", "United Kingdom parcels can only be looked up by coordinates.");
           }
-          const { data: d } = await client.getParcelByReference(reference, country);
+          const { data: d, quota } = await client.getParcelByReference(reference, country);
           return jsonResult(compact({
             reference: d.refCatastral,
             country: d.pais || country,
@@ -53,14 +53,14 @@ export function registerGetParcel(server: McpServer, client: CatastroGPSClient):
             source: d.fuenteDatos,
             outline_lat_lng: d.poligono,
             google_maps_url: d.googleMapsUrl,
-          }));
+          }), quota);
         }
 
         if (latitude === undefined || longitude === undefined) {
           return errorResult("MCP_001", "Provide either 'reference' or both 'latitude' and 'longitude'.");
         }
 
-        const { data: d } = await client.getParcelByCoordinates(latitude, longitude, country);
+        const { data: d, quota } = await client.getParcelByCoordinates(latitude, longitude, country);
         return jsonResult(compact({
           reference: d.referenciaCatastral || d.refCatastral,
           country: d.pais || country,
@@ -73,7 +73,7 @@ export function registerGetParcel(server: McpServer, client: CatastroGPSClient):
           area_m2: d.superficieParcela,
           property_type: d.tipoInmueble,
           google_maps_url: d.googleMapsUrl,
-        }));
+        }), quota);
       } catch (error) {
         return handleToolError(error);
       }

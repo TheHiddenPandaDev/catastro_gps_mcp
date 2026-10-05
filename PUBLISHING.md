@@ -1,5 +1,16 @@
 # Publicar el MCP y los SDKs — checklist para Dani
 
+## Versión 1.3.0 (5-oct-2026): qué hay que volver a enviar
+
+| Directorio | Qué hacer | Manual |
+|------------|-----------|--------|
+| npm | `npm login --auth-type=web` y `npm publish` en este repo | Sí (Dani) |
+| Registro oficial MCP | `mcp-publisher login dns ...` (o github) y `mcp-publisher publish` DESPUÉS de npm | Sí (Dani) |
+| Smithery | Rehacer el bundle `catastro-gps-mcp-1.3.0.mcpb` y `smithery mcp publish` (§5) | Sí (Dani) |
+| Glama | Relee GitHub solo; si la ficha no muestra las 13 tools en unos días, "Sync" en la ficha reclamada | No |
+| PulseMCP | Se alimenta del registro oficial | No |
+| mcp.so | Lee GitHub; si la ficha sigue con 11 tools, editarla desde la cuenta | No (revisar) |
+
 Todo está preparado y verificado en local (tests, build, `npm pack --dry-run`, `python -m build`,
 `twine check`, `mcp-publisher validate`, `mcpb pack`). Lo único que falta son **tus cuentas**.
 Sigue el orden: cada paso depende del anterior.
@@ -7,7 +18,7 @@ Sigue el orden: cada paso depende del anterior.
 | # | Canal | Qué publica | Necesita | Tiempo |
 |---|-------|-------------|----------|--------|
 | 0 | Decidir namespace | nada | leer §0 | 2 min |
-| 1 | npm | `catastro-gps-mcp@1.2.0` y `catastrogps@1.0.0` | cuenta npm con 2FA | 5 min |
+| 1 | npm | `catastro-gps-mcp@1.3.0` y `catastrogps@1.0.0` | cuenta npm con 2FA | 5 min |
 | 2 | PyPI | `catastrogps==1.0.0` | cuenta PyPI con 2FA + token | 10 min |
 | 3 | Registro oficial MCP | `com.parcelgps/catastro-gps` | DNS de parcelgps.com (o GitHub) | 15 min |
 | 4 | Glama | ficha reclamada | GitHub | 5 min |
@@ -92,7 +103,7 @@ Opcional antes: probarlo en TestPyPI con `twine upload -r testpypi dist/*` (cuen
 
 ## 3. Registro oficial MCP (registry.modelcontextprotocol.io)
 
-Requisito: el paso 1 hecho (el registro comprueba que `catastro-gps-mcp@1.2.0` existe en npm
+Requisito: el paso 1 hecho (el registro comprueba que `catastro-gps-mcp@1.3.0` existe en npm
 y que su `package.json` lleva el mismo `mcpName`).
 
 Instalar `mcp-publisher`:
@@ -172,15 +183,15 @@ del repo se queda para Glama y otros índices que aún lo leen.
 cd ~/Documents/development/thp/catastrato/mcp
 npm ci && npm run build
 npm prune --omit=dev
-npx -y @anthropic-ai/mcpb pack . catastro-gps-mcp-1.2.0.mcpb
+npx -y @anthropic-ai/mcpb pack . catastro-gps-mcp-1.3.0.mcpb
 npm ci
 
 npx -y @smithery/cli login
-npx -y @smithery/cli mcp publish ./catastro-gps-mcp-1.2.0.mcpb -n thehiddenpanda/catastro-gps
+npx -y @smithery/cli mcp publish ./catastro-gps-mcp-1.3.0.mcpb -n thehiddenpanda/catastro-gps
 ```
 
 El mismo `.mcpb` sirve para instalar con doble clic en Claude Desktop: súbelo también como
-asset de un release de GitHub (`gh release create v1.2.0 catastro-gps-mcp-1.2.0.mcpb`).
+asset de un release de GitHub (`gh release create v1.3.0 catastro-gps-mcp-1.3.0.mcpb`).
 
 Si la CLI de Smithery pide otro formato de nombre o de login, manda su ayuda
 (`npx @smithery/cli mcp publish --help`), no este documento.

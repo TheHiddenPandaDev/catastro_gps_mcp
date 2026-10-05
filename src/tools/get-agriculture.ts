@@ -24,8 +24,8 @@ export function registerGetAgriculture(server: McpServer, client: CatastroGPSCli
     },
     async ({ reference, country }) => {
       try {
-        const { data } = await client.getAgriculture(reference, country);
-        return jsonResult({ reference, country: country ?? null, agriculture: data.agro ?? data });
+        const { data, quota } = await client.getAgriculture(reference, country);
+        return jsonResult({ reference, country: country ?? null, agriculture: data.agro ?? data }, quota);
       } catch (error) {
         return handleToolError(error);
       }

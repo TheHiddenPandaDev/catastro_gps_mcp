@@ -2,9 +2,9 @@
   "manifest_version": "0.3",
   "name": "catastro-gps-mcp",
   "display_name": "Catastro GPS",
-  "version": "1.2.2",
-  "description": "Cadastral parcels in 31 European countries and regions: reference, coordinates, Spanish address, geometry, solar, agriculture, market, score and comparison.",
-  "long_description": "One API key for official cadastral data across 29 European countries plus the Basque Country and Navarre. Look up parcels by reference or coordinates, turn a Spanish postal address into a cadastral reference, get parcel outlines as GeoJSON, estimate solar and agricultural potential, read aggregated market prices (France, Italy, Germany), score and compare parcels, and follow how a parcel changes over time. Free tier: 250 calls per month, and failed lookups are not charged.",
+  "version": "1.3.0",
+  "description": "Cadastral parcels from 26 European cadastres plus the Basque Country and Navarre: reference, coordinates, address in 27 countries, Spanish dwellings, geometry, terrain, climate, ground motion, solar, agriculture, market, score and comparison.",
+  "long_description": "One API key for official cadastral data from 26 European cadastres plus the Basque Country and Navarre (Germany: 15 of 16 Lander, not Bavaria; Portugal: not Lisbon, Porto or Coimbra), with Croatian ARKOD and Swedish agricultural parcels and Scotland by coordinates. Look up parcels by reference or coordinates, turn a postal address into ranked parcels in Spain and 26 more countries, list every dwelling of a Spanish building, get parcel outlines as GeoJSON, read relief, protected areas, ERA5-Land climate normals and satellite ground motion (EGMS), estimate solar and agricultural potential, read aggregated market prices (France, Italy, Germany), score and compare parcels, and follow how a parcel changes over time. Every result carries your remaining monthly quota and prepaid balance. Free tier: 250 calls per month, and failed lookups are not charged.",
   "author": {
     "name": "The Hidden Panda",
     "email": "soporte@catastrogps.es",
@@ -18,13 +18,24 @@
     "url": "https://github.com/TheHiddenPandaDev/catastro_gps_mcp"
   },
   "license": "MIT",
-  "keywords": ["cadastre", "catastro", "parcel", "gis", "europe", "real-estate", "solar", "agriculture"],
+  "keywords": [
+    "cadastre",
+    "catastro",
+    "parcel",
+    "gis",
+    "europe",
+    "real-estate",
+    "solar",
+    "agriculture"
+  ],
   "server": {
     "type": "node",
     "entry_point": "build/index.js",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/build/index.js"],
+      "args": [
+        "${__dirname}/build/index.js"
+      ],
       "env": {
         "CATASTROGPS_API_KEY": "${user_config.api_key}",
         "CATASTROGPS_TIMEOUT": "${user_config.timeout_ms}"
@@ -32,17 +43,58 @@
     }
   },
   "tools": [
-    { "name": "get_parcel", "description": "Parcel by cadastral reference or coordinates in 31 European country and region codes" },
-    { "name": "search_address", "description": "Spanish free-text address to cadastral reference" },
-    { "name": "get_boundaries", "description": "Parcel outline as GeoJSON, centroid and area" },
-    { "name": "get_solar_potential", "description": "PVGIS photovoltaic estimate for ES, PT, FR, IT and DE parcels" },
-    { "name": "get_terrain", "description": "Relief (Copernicus DEM) and Natura 2000 / protected areas (EEA) over the parcel for ES, PT, FR, IT and DE" },
-    { "name": "get_ground_motion", "description": "Satellite ground motion (Copernicus EGMS): subsidence or uplift in mm/year for ES, PT, FR, IT and DE parcels" },
-    { "name": "get_agriculture", "description": "Land use, crop, NDVI and prices for rural parcels" },
-    { "name": "get_market_data", "description": "Aggregated price reference: figures in FR, IT and DE (NRW); note only in ES and PT" },
-    { "name": "get_investment_score", "description": "0-100 investment score with qualitative factors for ES, PT, FR, IT and DE parcels" },
-    { "name": "get_value_history", "description": "Area and land-use snapshots recorded since the parcel was first looked up" },
-    { "name": "compare_parcels", "description": "Two or three parcels side by side across ES, PT, FR, IT and DE" }
+    {
+      "name": "get_parcel",
+      "description": "Parcel by cadastral reference or coordinates in 31 European country and region codes"
+    },
+    {
+      "name": "search_address",
+      "description": "Postal address to ranked cadastral parcels in Spain and 26 more countries"
+    },
+    {
+      "name": "get_units",
+      "description": "Every dwelling, shop and garage of a Spanish building (ES, PV, NA), paginated"
+    },
+    {
+      "name": "resolve_reference",
+      "description": "Free: identify whether a text is a reference, coordinates or a place name, and of which country"
+    },
+    {
+      "name": "get_boundaries",
+      "description": "Parcel outline as GeoJSON, centroid and area"
+    },
+    {
+      "name": "get_solar_potential",
+      "description": "PVGIS photovoltaic estimate for ES, PT, FR, IT and DE parcels"
+    },
+    {
+      "name": "get_terrain",
+      "description": "Relief (Copernicus DEM), Natura 2000 / protected areas (EEA) and ERA5-Land climate normals for the parcel"
+    },
+    {
+      "name": "get_ground_motion",
+      "description": "Satellite ground motion (Copernicus EGMS): subsidence or uplift in mm/year over the parcel"
+    },
+    {
+      "name": "get_agriculture",
+      "description": "Land use, crop, NDVI and prices for rural parcels"
+    },
+    {
+      "name": "get_market_data",
+      "description": "Aggregated price reference: figures in FR, IT and DE (NRW); note only in ES and PT"
+    },
+    {
+      "name": "get_investment_score",
+      "description": "0-100 investment score with qualitative factors for ES, PT, FR, IT and DE parcels"
+    },
+    {
+      "name": "get_value_history",
+      "description": "Area and land-use snapshots recorded since the parcel was first looked up"
+    },
+    {
+      "name": "compare_parcels",
+      "description": "Two or three parcels side by side across ES, PT, FR, IT and DE"
+    }
   ],
   "user_config": {
     "api_key": {
@@ -63,7 +115,11 @@
     }
   },
   "compatibility": {
-    "platforms": ["darwin", "win32", "linux"],
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
     "runtimes": {
       "node": ">=18.0.0"
     }
