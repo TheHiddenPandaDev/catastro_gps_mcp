@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.1 (2026-10-05)
+
+- Coverage stated with the real numbers in README, package.json, manifest.json, server.json and the `get_parcel` description: 29 European countries, 31 official cadastres including the Basque Country and Navarre.
+
 ## 1.3.0 (2026-10-05)
 
 - `search_address` now uses `GET /api/search/address/candidates`: ranked candidates with confidence in Spain and 26 more countries (`country`, `limit`), instead of the live Spanish street index only. Sweden and Croatia answer `CNV_COVERAGE`.
