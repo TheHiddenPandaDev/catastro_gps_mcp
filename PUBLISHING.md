@@ -18,8 +18,8 @@ Sigue el orden: cada paso depende del anterior.
 | # | Canal | Qué publica | Necesita | Tiempo |
 |---|-------|-------------|----------|--------|
 | 0 | Decidir namespace | nada | leer §0 | 2 min |
-| 1 | npm | `catastro-gps-mcp@1.3.0` y `catastrogps@1.0.0` | cuenta npm con 2FA | 5 min |
-| 2 | PyPI | `catastrogps==1.0.0` | cuenta PyPI con 2FA + token | 10 min |
+| 1 | npm | `catastro-gps-mcp@1.3.0` y `catastrogps@1.2.0` | cuenta npm con 2FA | 5 min |
+| 2 | PyPI | `catastrogps==1.3.0` | cuenta PyPI con 2FA + token | 10 min |
 | 3 | Registro oficial MCP | `com.parcelgps/catastro-gps` | DNS de parcelgps.com (o GitHub) | 15 min |
 | 4 | Glama | ficha reclamada | GitHub | 5 min |
 | 5 | Smithery | bundle MCPB | cuenta Smithery | 10 min |
@@ -61,13 +61,13 @@ de `catastro-gps-mcp` (1.0.2 ya publicado). El nombre `catastrogps` está libre 
 npm login
 npm whoami
 
-cd ~/Documents/development/thp/catastrato/mcp
+cd ~/thp-repos/catastro_gps_mcp
 git pull
 npm ci
 npm publish --access public
 npm view catastro-gps-mcp version
 
-cd ~/Documents/development/thp/catastrato/sdks/javascript
+cd ~/thp-repos/catastro_gps_sdks/javascript
 git pull
 npm ci
 npm publish --access public
@@ -86,7 +86,7 @@ Requisitos: cuenta en pypi.org con 2FA y un **API token** (Account settings → 
 `catastrogps`). El nombre está libre (comprobado el 29-sep-2026).
 
 ```bash
-cd ~/Documents/development/thp/catastrato/sdks/python
+cd ~/thp-repos/catastro_gps_sdks/python
 python3 -m venv .venv && source .venv/bin/activate
 pip install -U build twine pytest httpx
 pytest -q
@@ -133,7 +133,7 @@ echo "parcelgps.com. IN TXT \"v=MCPv1; k=ed25519; p=${PUBLIC_KEY}\""
 3. Guarda `parcelgps-com.pem` en tu gestor de contraseñas. No va a ningún repo.
 
 ```bash
-cd ~/Documents/development/thp/catastrato/mcp
+cd ~/thp-repos/catastro_gps_mcp
 PRIVATE_KEY="$($OPENSSL pkey -in ~/.mcp-registry/parcelgps-com.pem -noout -text | grep -A3 "priv:" | tail -n +2 | tr -d ' :\n')"
 mcp-publisher login dns --domain parcelgps.com --private-key "${PRIVATE_KEY}"
 mcp-publisher validate
@@ -146,7 +146,7 @@ curl -s "https://registry.modelcontextprotocol.io/v0.1/servers?search=com.parcel
 Primero cambia el namespace (§0) y publica en npm con ese `mcpName`. Después:
 
 ```bash
-cd ~/Documents/development/thp/catastrato/mcp
+cd ~/thp-repos/catastro_gps_mcp
 mcp-publisher login github
 mcp-publisher publish
 ```
@@ -180,7 +180,7 @@ Smithery ya no construye servidores stdio desde `smithery.yaml`: publica una URL
 del repo se queda para Glama y otros índices que aún lo leen.
 
 ```bash
-cd ~/Documents/development/thp/catastrato/mcp
+cd ~/thp-repos/catastro_gps_mcp
 npm ci && npm run build
 npm prune --omit=dev
 npx -y @anthropic-ai/mcpb pack . catastro-gps-mcp-1.3.0.mcpb
