@@ -45,7 +45,7 @@ Use the same `npx -y catastro-gps-mcp` command with `CATASTROGPS_API_KEY` in the
 
 | Tool | What it does | Countries |
 |------|--------------|-----------|
-| `get_parcel` | Parcel by cadastral reference **or** WGS84 coordinates: reference, location, address, municipality, area, land use, outline | All 31 codes (UK and HR: coordinates only) |
+| `get_parcel` | Parcel by cadastral reference **or** WGS84 coordinates: reference, location, address, municipality, area, land use, outline | All 29 countries, Basque Country and Navarre included (UK and HR: coordinates only) |
 | `search_address` | Postal address in free text to ranked parcels, with confidence and whether the number and municipality match | ES (with PV and NA entrances) and FR, IT, DE, AT, NL, BE, PL, CH, CZ, DK, NO, FI, EE, LV, LT, SI, SK, BG, GR, CY, LU, LI, IS, IE, UK, PT |
 | `get_units` | Every unit (dwelling, shop, garage, storage) of a Spanish building: stair, floor, door, use, area, participation, year. Paginated, 200 per page | ES, PV, NA |
 | `resolve_reference` | Free, no quota: is this text a reference, coordinates or a place name, and of which country | All |
