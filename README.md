@@ -2,11 +2,11 @@
 
 <!-- mcp-name: com.parcelgps/catastro-gps -->
 
-Official cadastral parcels for AI agents from **29 European countries (31 official cadastres, including the Basque Country and Navarre)**, with one API key. In Croatia (ARKOD agricultural parcels), Sweden (agricultural blocks) and Scotland (by coordinates) the source is not a full cadastre.
+Official cadastral parcels for AI agents from **29 European countries (including the Basque Country and Navarre foral cadastres)**, with one API key: by cadastral reference in 27, by coordinates in all 29. In Croatia (ARKOD agricultural parcels), Sweden (agricultural blocks) and Scotland (by coordinates) the source is not a full cadastre.
 
 Ask your agent for a parcel by its cadastral reference, by a point on the map or by a postal address. It gets back the reference, location, area, land use and the parcel outline; it can list every dwelling of a Spanish building, read relief, protected areas, climate normals and satellite ground motion, estimate solar and agricultural potential, read aggregated market prices, and score and compare parcels.
 
-- **31 cadastres, one call shape.** `ES`, `PT`, `FR`, `IT`, `DE`, `PL`, `NL`, `CH`... and the two Spanish foral cadastres (`PV`, `NA`) that the central Catastro does not serve.
+- **29 countries, one call shape.** `ES`, `PT`, `FR`, `IT`, `DE`, `PL`, `NL`, `CH`... and the two Spanish foral cadastres (`PV`, `NA`) that the central Catastro does not serve.
 - **The country is optional.** It is detected from the reference format or from the point. When bare digits fit several countries the API says so (`CNV_AMBIGUOUS`) and `resolve_reference` tells you which ones, for free.
 - **Address search in 27 countries.** `"Calle Gran Via 31, Madrid"`, `"8 boulevard du Port, Amiens"` or `"Damrak 1, 1012 LG Amsterdam"` become ranked parcels.
 - **Buildings, not only plots.** `get_units` lists every dwelling, shop and garage of a Spanish building with floor, door, area and participation coefficient.

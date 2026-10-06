@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.2 (2026-10-06)
+
+- Coverage stated the same way as the website: 29 European countries, including the Basque Country and Navarre foral cadastres; by cadastral reference in 27 and by coordinates in all 29 (United Kingdom and Croatia are coordinates only). The "31 official cadastres" count is gone.
+
 ## 1.3.1 (2026-10-05)
 
 - Coverage stated with the real numbers in README, package.json, manifest.json, server.json and the `get_parcel` description: 29 European countries, 31 official cadastres including the Basque Country and Navarre.

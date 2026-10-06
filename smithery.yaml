@@ -17,7 +17,7 @@ startCommand:
   commandFunction: |-
     (config) => ({
       command: 'npx',
-      args: ['-y', 'catastro-gps-mcp@1.3.1'],
+      args: ['-y', 'catastro-gps-mcp@1.3.2'],
       env: {
         CATASTROGPS_API_KEY: config.apiKey,
         CATASTROGPS_TIMEOUT: String(config.timeoutMs ?? 20000)
