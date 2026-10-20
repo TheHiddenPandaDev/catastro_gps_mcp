@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.0.0 (2026-10-20)
+
+- Every tool calls the English v1 API (`/v1/parcels/...`, `/v1/search/...`, `/v1/resolve`) instead of the legacy `/api/...` routes, which answer in Spanish field names and are now deprecated.
+- Breaking: `get_parcel`, `search_address` and `get_units` return `region` instead of `province`; `get_parcel` by coordinates also returns `parcel_reference`.
+- Breaking: the nested blocks passed through from the API are English camelCase: `get_agriculture.agriculture` (`landUse`, `mainCrop`, `ndvi.cropHealth`, `cropPrice`...), `get_terrain.relief`/`protected_areas`/`climate` (`meanPct`, `overlapPct`...) and `get_ground_motion.ground_motion` (`meanMmYear`...).
+- `get_investment_score` ratings are English: `excellent`, `good`, `moderate`, `low`, `very_low`, `no_data`; risk and opportunity factors are English sentences.
+- `get_boundaries` returns GeoJSON for every country (the `outline_lat_lng` ring of non-Spanish parcels is gone; use `get_parcel` for it).
+- Errors read the v1 `{code, message, details}` body; the legacy `{error, data}` body is still understood.
+
 ## 1.3.2 (2026-10-06)
 
 - Coverage stated the same way as the website: 29 European countries, including the Basque Country and Navarre foral cadastres; by cadastral reference in 27 and by coordinates in all 29 (United Kingdom and Croatia are coordinates only). The "31 official cadastres" count is gone.

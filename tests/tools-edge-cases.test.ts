@@ -19,7 +19,7 @@ describe("tool edge cases", () => {
   });
 
   it.each(REFERENCE_COUNTRIES)("get_parcel forwards reference lookups for %s", async (country) => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: { refCatastral: "R", latitud: 1, longitud: 2 } }));
+    fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: { reference: "R", latitude: 1, longitude: 2 } }));
 
     const result = await client.callTool({ name: "get_parcel", arguments: { reference: "R", country } });
 
@@ -28,11 +28,11 @@ describe("tool edge cases", () => {
   });
 
   it("prefers the reference when both reference and coordinates are given", async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: { refCatastral: "R", latitud: 1, longitud: 2 } }));
+    fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: { reference: "R", latitude: 1, longitude: 2 } }));
 
     await client.callTool({ name: "get_parcel", arguments: { reference: "R", latitude: 40, longitude: -3 } });
 
-    expect(lastRequest(fetchMock).url.pathname).toBe("/api/catastro/R");
+    expect(lastRequest(fetchMock).url.pathname).toBe("/v1/parcels/R");
   });
 
   it("rejects out-of-range coordinates at the schema", async () => {
@@ -46,8 +46,8 @@ describe("tool edge cases", () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({
       success: false,
       code: "CNV_COVERAGE",
-      error: "Esta referencia está en un país que todavía no cubrimos",
-      data: { country: "RO", supported: false },
+      message: "This reference or location is in a country we do not cover yet.",
+      details: { country: "RO", supported: false },
     }, 422));
 
     const text = toolText(await client.callTool({ name: "get_parcel", arguments: { latitude: 44.43, longitude: 26.1 } }));
@@ -56,14 +56,14 @@ describe("tool edge cases", () => {
   });
 
   it("tells the agent to switch tools on a place name", async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({ success: false, code: "CNV_PLACE_NAME", error: "Nombre de lugar" }, 422));
+    fetchMock.mockResolvedValueOnce(jsonResponse({ success: false, code: "CNV_PLACE_NAME", message: "This looks like a place name, not a cadastral reference." }, 422));
 
     const text = toolText(await client.callTool({ name: "get_parcel", arguments: { reference: "Zeutern 10385" } }));
     expect(text).toContain("search_address");
   });
 
   it("surfaces an invalid key", async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({ success: false, code: "KEY_AUTH_002", error: "Clave API inválida" }, 401));
+    fetchMock.mockResolvedValueOnce(jsonResponse({ success: false, code: "KEY_AUTH_002", message: "Invalid API key" }, 401));
 
     const text = toolText(await client.callTool({ name: "get_boundaries", arguments: { reference: "R" } }));
     expect(text).toContain("CATASTROGPS_API_KEY");

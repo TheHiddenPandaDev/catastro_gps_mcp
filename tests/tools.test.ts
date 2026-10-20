@@ -61,18 +61,18 @@ describe("MCP tools", () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
         success: true,
         data: {
-          refCatastral: "9872023VH5797S0001WX",
-          pais: "ES",
-          direccion: "CL MAYOR 1",
-          municipio: "MADRID",
-          provincia: "MADRID",
-          latitud: 40.4165,
-          longitud: -3.7038,
-          superficieParcela: 512,
-          uso: "Residencial",
-          anioConstruccion: 1901,
+          reference: "9872023VH5797S0001WX",
+          country: "ES",
+          address: "CL MAYOR 1",
+          municipality: "MADRID",
+          region: "MADRID",
+          latitude: 40.4165,
+          longitude: -3.7038,
+          parcelArea: 512,
+          use: "Residencial",
+          yearBuilt: 1901,
           googleMapsUrl: "https://maps.google.com/?q=40.4165,-3.7038",
-          poligono: [[40.1, -3.1], [40.2, -3.2], [40.1, -3.1]],
+          polygon: [[40.1, -3.1], [40.2, -3.2], [40.1, -3.1]],
         },
       }));
 
@@ -92,7 +92,7 @@ describe("MCP tools", () => {
     });
 
     it("passes the country hint through for foral cadastres", async () => {
-      fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: { refCatastral: "X", latitud: 42.8, longitud: -1.6 } }));
+      fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: { reference: "X", latitude: 42.8, longitude: -1.6 } }));
       await client.callTool({ name: "get_parcel", arguments: { reference: "X", country: "NA" } });
 
       expect(lastRequest(fetchMock).url.searchParams.get("country")).toBe("NA");
@@ -102,10 +102,11 @@ describe("MCP tools", () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
         success: true,
         data: {
-          referenciaCatastral: "146510_8.0502.1",
-          pais: "PL",
-          municipio: "Warszawa",
-          coordenadas: { latitud: 52.23, longitud: 21.012 },
+          reference: "146510_8.0502.1",
+          country: "PL",
+          municipality: "Warszawa",
+          latitude: 52.23,
+          longitude: 21.012,
           googleMapsUrl: "https://maps.google.com/?q=52.23,21.012",
         },
       }));
@@ -113,13 +114,13 @@ describe("MCP tools", () => {
       const result = await client.callTool({ name: "get_parcel", arguments: { latitude: 52.23, longitude: 21.012 } });
 
       expect(toolJson(result)).toMatchObject({ reference: "146510_8.0502.1", country: "PL", latitude: 52.23 });
-      expect(lastRequest(fetchMock).url.pathname).toBe("/api/search/coordinates");
+      expect(lastRequest(fetchMock).url.pathname).toBe("/v1/search/coordinates");
     });
 
     it("keeps a longitude of zero", async () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
         success: true,
-        data: { referenciaCatastral: "R", coordenadas: { latitud: 51.48, longitud: 0 }, googleMapsUrl: "u" },
+        data: { reference: "R", latitude: 51.48, longitude: 0, googleMapsUrl: "u" },
       }));
 
       const result = await client.callTool({ name: "get_parcel", arguments: { latitude: 51.48, longitude: 0, country: "UK" } });
@@ -153,8 +154,8 @@ describe("MCP tools", () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
         success: false,
         code: "CNV_AMBIGUOUS",
-        error: "Esta referencia podría ser de varios países",
-        data: { reference: "05102200100005", candidates: [{ country: "DE" }, { country: "PT" }] },
+        message: "This reference could belong to several countries.",
+        details: { reference: "05102200100005", candidates: [{ country: "DE" }, { country: "PT" }] },
       }, 300));
 
       const result = await client.callTool({ name: "get_parcel", arguments: { reference: "05102200100005" } });
@@ -171,12 +172,12 @@ describe("MCP tools", () => {
       fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({
         success: true,
         data: {
-          consulta: { texto: "Calle Gran Via 31, Madrid" },
-          candidatos: [{
-            refCatastral: "0847106VK4704F", pais: "ES", direccion: "CL GRAN VIA 31", numero: 31,
-            codigoPostal: "28013", municipio: "Madrid", provincia: "Madrid", latitud: 40.42, longitud: -3.70,
-            confianza: 0.95, coincideNumero: true, coincideMunicipio: true, enCopia: true, uso: "Residencial",
-            viviendas: 24, anioConstruccion: 1925,
+          query: { text: "Calle Gran Via 31, Madrid" },
+          candidates: [{
+            reference: "0847106VK4704F", country: "ES", address: "CL GRAN VIA 31", number: 31,
+            postalCode: "28013", municipality: "Madrid", region: "Madrid", latitude: 40.42, longitude: -3.70,
+            confidence: 0.95, numberMatches: true, municipalityMatches: true, inOwnCopy: true, use: "Residencial",
+            dwellings: 24, yearBuilt: 1925,
           }],
           attribution: "Catastro",
         },
@@ -204,13 +205,13 @@ describe("MCP tools", () => {
         }],
       });
       const req = lastRequest(fetchMock);
-      expect(req.url.pathname).toBe("/api/search/address/candidates");
+      expect(req.url.pathname).toBe("/v1/search/address/candidates");
       expect(req.url.searchParams.get("limit")).toBe("3");
       expect(req.url.searchParams.has("country")).toBe(false);
     });
 
     it("searches other countries and tolerates a null list", async () => {
-      fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: { candidatos: null } }));
+      fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: { candidates: null } }));
 
       const body = toolJson(await client.callTool({
         name: "search_address",
@@ -223,7 +224,7 @@ describe("MCP tools", () => {
 
     it("rejects Sweden and Croatia at the schema", async () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
-        success: false, code: "CNV_COVERAGE", error: "No address search", data: { supportedCountries: ["ES", "FR"] },
+        success: false, code: "CNV_COVERAGE", message: "No address search", details: { supportedCountries: ["ES", "FR"] },
       }, 422));
 
       const result = await client.callTool({ name: "search_address", arguments: { address: "Storgatan 1, Umea", country: "SE" } });
@@ -244,7 +245,7 @@ describe("MCP tools", () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
         success: true,
         data: {
-          refcat: "9872023VH5797S",
+          reference: "9872023VH5797S",
           geojson: { type: "Feature", geometry: { type: "Polygon", coordinates: [] } },
           centroid: { latitude: 40.41, longitude: -3.7 },
           area: 512,
@@ -256,14 +257,18 @@ describe("MCP tools", () => {
       expect(body.geojson).toBeDefined();
     });
 
-    it("normalises the ring shape used by the other countries", async () => {
+    it("returns the same GeoJSON shape for the other countries", async () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
         success: true,
-        data: { refCatastral: "CZ1", pais: "CZ", latitud: 50.08, longitud: 14.42, superficieParcela: 300, poligono: [[50, 14]] },
+        data: {
+          reference: "CZ1", country: "CZ", centroid: { latitude: 50.08, longitude: 14.42 }, area: 300,
+          geojson: { type: "Feature", geometry: { type: "Polygon", coordinates: [[[14, 50], [14.1, 50], [14, 50.1], [14, 50]]] } },
+        },
       }));
 
       const body = toolJson(await client.callTool({ name: "get_boundaries", arguments: { reference: "CZ1", country: "CZ" } }));
-      expect(body).toMatchObject({ reference: "CZ1", country: "CZ", area_m2: 300, outline_lat_lng: [[50, 14]] });
+      expect(body).toMatchObject({ reference: "CZ1", country: "CZ", latitude: 50.08, area_m2: 300 });
+      expect(lastRequest(fetchMock).url.pathname).toBe("/v1/parcels/CZ1/polygon");
     });
   });
 
@@ -272,32 +277,32 @@ describe("MCP tools", () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
         success: true,
         data: {
-          refcat: "30024A16000286",
+          reference: "30024A16000286",
           country: "ES",
           status: "ok",
           period: { from: "2020-01", to: "2024-12", label: "2020-2024" },
-          ground_motion: {
-            class: "severe_subsidence", worst_class: "severe_subsidence",
-            vertical: { mean_mm_year: -40.9, max_subsidence_mm_year: -40.9, max_uplift_mm_year: 0 },
-            east_west: { mean_mm_year: -5.1 },
-            yearly_displacement: [{ year: 2020, mm: -17.9 }, { year: 2024, mm: -179.8 }],
-            cells_with_data: 1, cells_considered: 1, coverage_pct: 100, basis: "parcel", cell_size_m: 100,
+          groundMotion: {
+            class: "severe_subsidence", worstClass: "severe_subsidence",
+            vertical: { meanMmYear: -40.9, maxSubsidenceMmYear: -40.9, maxUpliftMmYear: 0 },
+            eastWest: { meanMmYear: -5.1 },
+            yearlyDisplacement: [{ year: 2020, mm: -17.9 }, { year: 2024, mm: -179.8 }],
+            cellsWithData: 1, cellsConsidered: 1, coveragePct: 100, basis: "parcel", cellSizeM: 100,
           },
           source: { name: "European Ground Motion Service (EGMS) L3 Ortho", provider: "Copernicus Land Monitoring Service",
             license: "Copernicus data policy", attribution: "Contains modified Copernicus Land Monitoring Service information",
             url: "https://land.copernicus.eu" },
-          calculated_at: "2026-10-01T06:14:34Z",
+          calculatedAt: "2026-10-01T06:14:34Z",
           provenance: "1",
         },
       }));
 
       const body = toolJson(await client.callTool({ name: "get_ground_motion", arguments: { reference: "30024A16000286", country: "ES" } }));
-      expect(fetchMock.mock.calls[0][0]).toContain("/api/catastro/30024A16000286/ground-motion?country=ES");
+      expect(fetchMock.mock.calls[0][0]).toContain("/v1/parcels/30024A16000286/ground-motion?country=ES");
       expect(body).toMatchObject({
         reference: "30024A16000286",
         status: "ok",
         period: "2020-2024",
-        ground_motion: { class: "severe_subsidence", vertical: { mean_mm_year: -40.9 } },
+        ground_motion: { class: "severe_subsidence", vertical: { meanMmYear: -40.9 } },
         source: { attribution: "Contains modified Copernicus Land Monitoring Service information" },
       });
     });
@@ -306,10 +311,10 @@ describe("MCP tools", () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
         success: true,
         data: {
-          refcat: "X", country: "FR", status: "no_data", reason: "no_reflectors",
+          reference: "X", country: "FR", status: "no_data", reason: "no_reflectors",
           period: { from: "2020-01", to: "2024-12", label: "2020-2024" },
           source: { name: "EGMS", provider: "CLMS", license: "Copernicus", attribution: "Copernicus", url: "https://land.copernicus.eu" },
-          calculated_at: "2026-10-01T06:14:34Z", provenance: "1",
+          calculatedAt: "2026-10-01T06:14:34Z", provenance: "1",
         },
       }));
       const body = toolJson(await client.callTool({ name: "get_ground_motion", arguments: { reference: "X", country: "FR" } }));
@@ -323,35 +328,35 @@ describe("MCP tools", () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
         success: true,
         data: {
-          refcat: "10194A00110004",
+          reference: "10194A00110004",
           country: "ES",
           relief: {
             status: "ok",
-            elevation_m: { mean: 365.8, min: 212.3, max: 506.6 },
-            slope: { mean_pct: 36.5, mean_deg: 20, max_pct: 71.6, class: "very_steep", max_class: "very_steep",
-              share_over_10_pct: 98.4, classes_pct: { flat: 0.2 } },
-            aspect: { dominant: "N", dominant_share_pct: 75.3, mean_deg: 0, flat_share_pct: 0.2, sectors_pct: { N: 75.3 } },
-            sample: { method: "parcel", cells: 1448, resolution_m: 31 },
+            elevationM: { mean: 365.8, min: 212.3, max: 506.6 },
+            slope: { meanPct: 36.5, meanDeg: 20, maxPct: 71.6, class: "very_steep", maxClass: "very_steep",
+              shareOver10Pct: 98.4, classesPct: { flat: 0.2 } },
+            aspect: { dominant: "N", dominantSharePct: 75.3, meanDeg: 0, flatSharePct: 0.2, sectorsPct: { N: 75.3 } },
+            sample: { method: "parcel", cells: 1448, resolutionM: 31 },
             source: { name: "Copernicus DEM GLO-30", provider: "Copernicus / ESA", license: "Copernicus DEM licence",
               attribution: "© DLR", url: "https://dataspace.copernicus.eu" },
           },
-          protected_areas: {
-            status: "ok", intersects: true, inside: true, max_overlap_pct: 100,
-            natura2000: [{ code: "ES0000014", name: "Monfragüe y las Dehesas del Entorno", type: "SPA", country: "ES", overlap_pct: 100 }],
+          protectedAreas: {
+            status: "ok", intersects: true, inside: true, maxOverlapPct: 100,
+            natura2000: [{ code: "ES0000014", name: "Monfragüe y las Dehesas del Entorno", type: "SPA", country: "ES", overlapPct: 100 }],
             national: [], method: "parcel",
             sources: [{ name: "Natura 2000", provider: "EEA", license: "CC BY 4.0", attribution: "© EEA", url: "https://sdi.eea.europa.eu" }],
           },
-          calculated_at: "2026-09-30T18:57:29Z",
+          calculatedAt: "2026-09-30T18:57:29Z",
           provenance: "1",
         },
       }));
 
       const body = toolJson(await client.callTool({ name: "get_terrain", arguments: { reference: "10194A00110004", country: "ES" } }));
-      expect(fetchMock.mock.calls[0][0]).toContain("/api/catastro/10194A00110004/terrain?country=ES");
+      expect(fetchMock.mock.calls[0][0]).toContain("/v1/parcels/10194A00110004/terrain?country=ES");
       expect(body).toMatchObject({
         reference: "10194A00110004",
-        relief: { slope: { mean_pct: 36.5 }, aspect: { dominant: "N" } },
-        protected_areas: { inside: true, natura2000: [{ type: "SPA", overlap_pct: 100 }] },
+        relief: { slope: { meanPct: 36.5 }, aspect: { dominant: "N" } },
+        protected_areas: { inside: true, natura2000: [{ type: "SPA", overlapPct: 100 }] },
       });
     });
   });
@@ -361,18 +366,18 @@ describe("MCP tools", () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
         success: true,
         data: {
-          kwh_year: 7200,
-          kw_instalables: 5,
-          ahorro_anual_eur: 900,
-          amortizacion_anos: 7.5,
-          co2_evitado_kg: 2100,
-          irradiacion_media: 5.1,
-          nota_solar: 8,
-          orientacion_optima: "Sur",
-          angulo_inclinacion: 33,
-          disponible: true,
-          estado: "ok",
-          fuente: "PVGIS",
+          annualProductionKwh: 7200,
+          installableKw: 5,
+          annualSavingsEur: 900,
+          paybackYears: 7.5,
+          co2AvoidedKg: 2100,
+          irradiationKwhM2: 5.1,
+          solarGrade: 8,
+          optimalOrientation: "south",
+          tiltAngleDeg: 33,
+          available: true,
+          status: "ok",
+          source: "PVGIS",
         },
       }));
 
@@ -395,14 +400,15 @@ describe("MCP tools", () => {
   });
 
   describe("get_agriculture", () => {
-    it("unwraps the agro envelope the API returns", async () => {
+    it("returns the English agriculture block from /agriculture", async () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
         success: true,
-        data: { agro: { uso_suelo: "TA", cultivo_principal: "Cebada", ndvi: { valor_medio: 0.61 } } },
+        data: { landUse: "TA", mainCrop: "Cebada", ndvi: { mean: 0.61, cropHealth: "good" } },
       }));
 
       const body = toolJson(await client.callTool({ name: "get_agriculture", arguments: { reference: "R", country: "ES" } }));
-      expect(body.agriculture).toMatchObject({ uso_suelo: "TA", cultivo_principal: "Cebada" });
+      expect(body.agriculture).toMatchObject({ landUse: "TA", mainCrop: "Cebada", ndvi: { cropHealth: "good" } });
+      expect(lastRequest(fetchMock).url.pathname).toBe("/v1/parcels/R/agriculture");
     });
   });
 
@@ -411,16 +417,16 @@ describe("MCP tools", () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
         success: true,
         data: {
-          precio_estimado_eur: 250000,
-          precio_m2_eur: 3100,
-          num_transacciones: 4,
-          fecha_ultima_transaccion: "2025-06-01",
-          granularidad: "parcelle",
-          fuente: "DVF",
-          transacciones_historial: [{ valeur_fonciere: 180000, adresse: "1 RUE X" }],
-          disponible: true,
-          estado: "ok",
-          data_quality: "real",
+          estimatedPriceEur: 250000,
+          pricePerM2Eur: 3100,
+          salesCount: 4,
+          lastSaleDate: "2025-06-01",
+          granularity: "parcel",
+          source: "DVF",
+          sales: [{ priceEur: 180000, address: "1 RUE X" }],
+          available: true,
+          status: "ok",
+          dataQuality: "real",
         },
       }));
 
@@ -429,21 +435,21 @@ describe("MCP tools", () => {
       const req = lastRequest(fetchMock);
 
       expect(req.method).toBe("GET");
-      expect(req.url.pathname).toBe("/api/catastro/75056000AB0001/market");
+      expect(req.url.pathname).toBe("/v1/parcels/75056000AB0001/market");
       expect(req.url.searchParams.get("country")).toBe("FR");
       expect(body).toMatchObject({ available: true, has_price_figures: true, price_per_m2_eur: 3100, sales_count: 4, source: "DVF" });
-      expect(toolText(result)).not.toContain("valeur_fonciere");
+      expect(toolText(result)).not.toContain("priceEur");
       expect(toolText(result)).not.toContain("1 RUE X");
     });
 
     it("says plainly when a country has no price figures", async () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
         success: true,
-        data: { disponible: true, estado: "referencia", fuente: "Registradores de la Propiedad", mensaje_usuario: "Datos agregados por zona." },
+        data: { available: true, status: "reference_only", source: "Registradores de la Propiedad", message: "No official data." },
       }));
 
       const body = toolJson(await client.callTool({ name: "get_market_data", arguments: { reference: "9872023VH5797S", country: "ES" } }));
-      expect(body).toMatchObject({ has_price_figures: false, price_per_m2_eur: null, note: "Datos agregados por zona." });
+      expect(body).toMatchObject({ has_price_figures: false, price_per_m2_eur: null, note: "No official data." });
     });
 
     it("rejects countries the market endpoint does not cover", async () => {
@@ -459,29 +465,27 @@ describe("MCP tools", () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
         success: true,
         data: {
-          score_inversion: {
-            puntuacion: 72.5,
-            clasificacion: "bueno",
-            recomendacion: "Buen potencial de inversión.",
-            componentes: { viabilidad_solar: 8.1, potencial_agricola: 5.5, valor_mercado: 2.3, demanda_terreno: 0, estabilidad_politica: 0 },
-            factores_riesgo: ["Sin datos de mercado inmobiliario"],
-            factores_oportunidad: ["Buena irradiación solar"],
-          },
+          score: 72.5,
+          rating: "good",
+          recommendation: "Good investment potential. Several indicators are favourable.",
+          components: { solar: 8.1, agriculture: 5.5, market: 2.3, accessibility: 0, risk: 0 },
+          riskFactors: ["No real-estate market data"],
+          opportunityFactors: ["Good solar irradiation"],
         },
       }));
 
       const result = await client.callTool({ name: "get_investment_score", arguments: { reference: "9872023VH5797S", country: "ES" } });
       const body = toolJson(result);
 
-      expect(lastRequest(fetchMock).url.pathname).toBe("/api/catastro/9872023VH5797S/score");
+      expect(lastRequest(fetchMock).url.pathname).toBe("/v1/parcels/9872023VH5797S/score");
       expect(body).toMatchObject({
         score: 72.5,
-        rating: "bueno",
+        rating: "good",
         factors: { solar: "high", agriculture: "medium", market: "low", accessibility: "not_available", risk: "not_available" },
-        risk_factors: ["Sin datos de mercado inmobiliario"],
+        risk_factors: ["No real-estate market data"],
       });
       expect(toolText(result)).not.toContain("8.1");
-      expect(toolText(result)).not.toContain("componentes");
+      expect(toolText(result)).not.toContain("components");
     });
   });
 
@@ -490,20 +494,20 @@ describe("MCP tools", () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
         success: true,
         data: {
-          refcat: "9872023VH5797S",
+          reference: "9872023VH5797S",
           country: "ES",
           entries: [
-            { fecha_captura: "2026-09-01", superficie: 520, uso: "Residencial", valor_catastral: 0, fuente: "catastro_api" },
-            { fecha_captura: "2026-06-01", superficie: 512, uso: "Residencial", valor_catastral: 0, fuente: "catastro_api" },
+            { capturedOn: "2026-09-01", area: 520, use: "Residencial", cadastralValueEur: 0, source: "catastro_api" },
+            { capturedOn: "2026-06-01", area: 512, use: "Residencial", cadastralValueEur: 0, source: "catastro_api" },
           ],
           totalEntries: 2,
-          variacionPct: 1.5625,
+          areaChangePct: 1.5625,
         },
       }));
 
       const body = toolJson(await client.callTool({ name: "get_value_history", arguments: { reference: "9872023VH5797S", country: "ES" } }));
 
-      expect(lastRequest(fetchMock).url.pathname).toBe("/api/catastro/9872023VH5797S/value-history");
+      expect(lastRequest(fetchMock).url.pathname).toBe("/v1/parcels/9872023VH5797S/value-history");
       expect(body).toMatchObject({ reference: "9872023VH5797S", country: "ES", total: 2, change_pct: 1.5625 });
       expect((body.snapshots as unknown[])[0]).toEqual({
         date: "2026-09-01", area_m2: 520, land_use: "Residencial", cadastral_value_eur: null, source: "catastro_api",
@@ -513,7 +517,7 @@ describe("MCP tools", () => {
     it("returns an empty list for a parcel nobody looked up yet", async () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
         success: true,
-        data: { refcat: "R", country: "AT", entries: null, totalEntries: 0, variacionPct: null },
+        data: { reference: "R", country: "AT", entries: null, totalEntries: 0, areaChangePct: null },
       }));
 
       const body = toolJson(await client.callTool({ name: "get_value_history", arguments: { reference: "R", country: "AT" } }));
@@ -527,16 +531,16 @@ describe("MCP tools", () => {
         success: true,
         data: {
           total: 2,
-          comparacion: [
+          parcels: [
             {
-              ref_catastral: "9872023VH5797S",
+              reference: "9872023VH5797S",
               country: "ES",
-              parcela: { latitud: 40.41, longitud: -3.7, superficieParcela: 512, uso: "Residencial", municipio: "MADRID" },
-              solar: { disponible: true, kwh_year: 7200, kw_instalables: 5, nota_solar: 4 },
-              agro: { disponible: true, es_agricola: false },
-              score: { score_global: 64, clasificacion: "bueno", disponible: true, componentes: { solar: { score: 80, peso: 0.2 } } },
+              parcel: { latitude: 40.41, longitude: -3.7, parcelArea: 512, use: "Residencial", municipality: "MADRID" },
+              solar: { available: true, annualProductionKwh: 7200, installableKw: 5, solarGrade: 4 },
+              agriculture: { available: true, isAgricultural: false },
+              score: { score: 64, rating: "good", available: true },
             },
-            { ref_catastral: "NOPE", country: "FR", error: "Parcel not found." },
+            { reference: "NOPE", country: "FR", error: "Parcel not found." },
           ],
         },
       }));
@@ -549,17 +553,17 @@ describe("MCP tools", () => {
       const req = lastRequest(fetchMock);
 
       expect(req.method).toBe("POST");
-      expect(req.url.pathname).toBe("/api/catastro/compare");
+      expect(req.url.pathname).toBe("/v1/parcels/compare");
       expect(body.total).toBe(2);
       expect((body.parcels as unknown[])[0]).toMatchObject({
         reference: "9872023VH5797S",
         area_m2: 512,
         solar: { production_kwh_year: 7200 },
         agriculture: { is_agricultural: false },
-        score: { value: 64, rating: "bueno" },
+        score: { value: 64, rating: "good" },
       });
       expect((body.parcels as unknown[])[1]).toEqual({ reference: "NOPE", country: "FR", error: "Parcel not found." });
-      expect(toolText(result)).not.toContain("peso");
+      expect(lastRequest(fetchMock).body).toEqual({ parcels: [{ reference: "9872023VH5797S", country: "ES" }, { reference: "NOPE", country: "FR" }] });
     });
 
     it("refuses the Basque Country and Navarre before spending a call", async () => {
@@ -581,7 +585,7 @@ describe("MCP tools", () => {
   });
 
   it("explains a rejected key on the reopened tools", async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({ success: false, code: "UNAUTHORIZED", error: "No autorizado" }, 401));
+    fetchMock.mockResolvedValueOnce(jsonResponse({ success: false, code: "UNAUTHORIZED", message: "A valid X-API-Key header is required." }, 401));
 
     const result = await client.callTool({ name: "get_investment_score", arguments: { reference: "R", country: "FR" } });
 
@@ -590,7 +594,7 @@ describe("MCP tools", () => {
   });
 
   it("turns quota exhaustion into an upgrade hint", async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({ success: false, code: "KEY_AUTH_004", error: "Cuota mensual agotada (100/100)" }, 429));
+    fetchMock.mockResolvedValueOnce(jsonResponse({ success: false, code: "KEY_AUTH_004", message: "Monthly quota used up (100/100)." }, 429));
 
     const result = await client.callTool({ name: "get_parcel", arguments: { reference: "R" } });
 

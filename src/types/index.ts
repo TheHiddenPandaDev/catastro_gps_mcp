@@ -51,9 +51,7 @@ export const COUNTRY_CODES_TEXT =
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
-  error?: string;
-  code?: string;
-  searchesRemaining?: number;
+  remainingSearches?: number;
   quota?: Quota;
 }
 
@@ -79,102 +77,110 @@ export interface Quota {
   };
 }
 
-export interface ParcelData {
-  refCatastral: string;
-  pais?: string;
-  direccion?: string;
-  codigoPostal?: string;
-  municipio?: string;
-  provincia?: string;
-  latitud: number;
-  longitud: number;
-  googleMapsUrl: string;
-  uso?: string;
-  clase?: string;
-  superficieConstruida?: number;
-  superficieParcela?: number;
-  anioConstruccion?: number;
-  coefParticipacion?: string;
-  fuenteDatos?: string;
-  poligono?: number[][];
-  availableFields?: Record<string, boolean>;
+export interface AvailableFields {
+  use?: boolean;
+  landClass?: boolean;
+  yearBuilt?: boolean;
+  builtArea?: boolean;
+  ownershipShare?: boolean;
+  dwellings?: boolean;
+  floors?: boolean;
+  address?: boolean;
+  addressSearch?: boolean;
 }
 
-export interface CoordinatesSearchData {
-  referenciaCatastral: string;
-  refCatastral?: string;
-  refCat14?: string;
-  pais?: string;
-  direccion?: string;
-  codigoPostal?: string;
-  municipio?: string;
-  provincia?: string;
-  tipoInmueble?: string;
-  superficieParcela?: number;
-  coordenadas: { latitud: number; longitud: number };
-  googleMapsUrl: string;
+export interface ParcelData {
+  reference: string;
+  parcelReference?: string;
+  country?: string;
+  address?: string;
+  postalCode?: string;
+  municipality?: string;
+  region?: string;
+  latitude: number;
+  longitude: number;
+  googleMapsUrl?: string;
+  propertyType?: string;
+  use?: string;
+  landClass?: string;
+  builtArea?: number;
+  parcelArea?: number;
+  yearBuilt?: number;
+  ownershipShare?: number;
+  staircase?: string;
+  floor?: string;
+  door?: string;
+  dwellings?: number;
+  floors?: number;
+  source?: string;
+  fromOwnCopy?: boolean;
+  polygon?: number[][];
+  availableFields?: AvailableFields;
 }
+
+export type CoordinatesSearchData = ParcelData;
 
 export interface AddressCandidate {
-  refCatastral: string;
-  pais?: string;
-  direccion?: string;
-  numero?: number;
-  codigoPostal?: string;
-  municipio?: string;
-  provincia?: string;
-  latitud?: number;
-  longitud?: number;
-  confianza?: number;
-  coincideNumero?: boolean;
-  coincideMunicipio?: boolean;
-  enCopia?: boolean;
-  direccionCatastro?: string;
-  uso?: string;
-  viviendas?: number;
-  anioConstruccion?: number;
+  reference: string;
+  country?: string;
+  address?: string;
+  number?: number;
+  postalCode?: string;
+  municipality?: string;
+  region?: string;
+  latitude?: number;
+  longitude?: number;
+  confidence?: number;
+  numberMatches?: boolean;
+  municipalityMatches?: boolean;
+  inOwnCopy?: boolean;
+  cadastreAddress?: string;
+  use?: string;
+  dwellings?: number;
+  yearBuilt?: number;
 }
 
 export interface AddressCandidatesData {
-  consulta?: { texto?: string; calle?: string; numero?: number; municipio?: string; codigoPostal?: string };
-  candidatos: AddressCandidate[] | null;
+  query?: { text?: string; street?: string; number?: number; municipality?: string; postalCode?: string };
+  candidates: AddressCandidate[] | null;
   attribution?: string;
 }
 
 export interface Unit {
-  refCatastral: string;
-  escalera?: string;
-  planta?: string;
-  puerta?: string;
-  uso?: string;
-  superficie?: number;
-  descripcion?: string;
-  participacion?: number;
-  anio?: number;
-  direccion?: string;
+  reference: string;
+  staircase?: string;
+  floor?: string;
+  door?: string;
+  use?: string;
+  area?: number;
+  description?: string;
+  ownershipShare?: number;
+  yearBuilt?: number;
+  address?: string;
 }
 
 export interface Construction {
-  escalera?: string;
-  planta?: string;
-  puerta?: string;
-  uso?: string;
-  superficie?: number;
-  descripcion?: string;
+  staircase?: string;
+  floor?: string;
+  door?: string;
+  use?: string;
+  area?: number;
+  description?: string;
 }
 
 export interface UnitsPageData {
-  refCatastral: string;
-  direccion?: string;
-  codigoPostal?: string;
-  municipio?: string;
-  provincia?: string;
-  usoGeneral?: string;
-  anioConstruccion?: number;
-  totalUnidades?: number;
-  totalUnidadesFinca?: number;
-  unidades: Unit[] | null;
-  construcciones?: Construction[] | null;
+  reference: string;
+  address?: string;
+  postalCode?: string;
+  municipality?: string;
+  region?: string;
+  mainUse?: string;
+  totalArea?: number;
+  yearBuilt?: number;
+  unitCount?: number;
+  propertyUnitCount?: number;
+  units: Unit[] | null;
+  constructions?: Construction[] | null;
   truncated?: boolean;
   nextCursor?: string;
   dataSource?: string;
@@ -197,16 +203,14 @@ export interface ResolveData {
 }
 
 export interface PolygonData {
-  refcat?: string;
-  refCatastral?: string;
-  pais?: string;
-  latitud?: number;
-  longitud?: number;
+  reference: string;
+  country?: string;
   centroid?: { latitude: number; longitude: number };
   area?: number;
-  superficieParcela?: number;
-  poligono?: number[][];
   geojson?: unknown;
+  officialRecordUrl?: string;
+  cadastreUrl?: string;
+  googleMapsUrl?: string;
 }
 
 export interface TerrainSource {
@@ -225,48 +229,48 @@ export interface TerrainSite {
   type?: string;
   designation?: string;
   country: string;
-  overlap_pct: number | null;
+  overlapPct: number | null;
 }
 
 export interface ClimatePeriod {
-  start_year: number;
-  end_year: number;
-  mean_temp_c?: number;
-  annual_precip_mm?: number;
-  frost_days_per_year?: number;
-  hot_days_per_year?: number;
+  startYear: number;
+  endYear: number;
+  meanTempC?: number;
+  annualPrecipMm?: number;
+  frostDaysPerYear?: number;
+  hotDaysPerYear?: number;
 }
 
 export interface TerrainData {
-  refcat: string;
+  reference: string;
   country: string;
   relief: {
     status: "ok" | "no_data" | "unavailable";
-    elevation_m?: { mean: number; min: number; max: number };
+    elevationM?: { mean: number; min: number; max: number };
     slope?: {
-      mean_pct: number;
-      mean_deg: number;
-      max_pct: number;
+      meanPct: number;
+      meanDeg: number;
+      maxPct: number;
       class: string;
-      max_class: string;
-      share_over_10_pct: number;
-      classes_pct: Record<string, number>;
+      maxClass: string;
+      shareOver10Pct: number;
+      classesPct: Record<string, number>;
     };
     aspect?: {
       dominant: string;
-      dominant_share_pct: number;
-      mean_deg: number | null;
-      flat_share_pct: number;
-      sectors_pct: Record<string, number>;
+      dominantSharePct: number;
+      meanDeg: number | null;
+      flatSharePct: number;
+      sectorsPct: Record<string, number>;
     };
-    sample?: { method: string; cells: number; resolution_m: number };
+    sample?: { method: string; cells: number; resolutionM: number };
     source: TerrainSource;
   };
-  protected_areas: {
+  protectedAreas: {
     status: "ok" | "no_data" | "unavailable";
     intersects?: boolean;
     inside?: boolean;
-    max_overlap_pct?: number | null;
+    maxOverlapPct?: number | null;
     natura2000?: TerrainSite[];
     national?: TerrainSite[];
     method?: string;
@@ -277,146 +281,147 @@ export interface TerrainData {
     baseline?: ClimatePeriod;
     recent?: ClimatePeriod;
     change?: {
-      mean_temp_c?: number;
-      annual_precip_mm?: number;
-      annual_precip_pct?: number;
-      frost_days_per_year?: number;
-      hot_days_per_year?: number;
+      meanTempC?: number;
+      annualPrecipMm?: number;
+      annualPrecipPct?: number;
+      frostDaysPerYear?: number;
+      hotDaysPerYear?: number;
     };
-    frost_threshold_c?: number;
-    hot_threshold_c?: number;
-    cell?: { lat: number; lng: number; resolution_deg: number };
+    frostThresholdC?: number;
+    hotThresholdC?: number;
+    cell?: { lat: number; lng: number; resolutionDeg: number };
     source?: TerrainSource;
   };
-  calculated_at: string;
+  calculatedAt: string;
   provenance: string;
 }
 
 export interface GroundMotionData {
-  refcat: string;
+  reference: string;
   country: string;
   status: "ok" | "no_data" | "unavailable";
   reason?: "no_reflectors" | "outside_coverage" | "parcel_too_large";
   period: { from: string; to: string; label: string };
-  ground_motion?: {
+  groundMotion?: {
     class: string;
-    worst_class: string;
+    worstClass: string;
     vertical: {
-      mean_mm_year: number;
-      max_subsidence_mm_year: number;
-      max_uplift_mm_year: number;
-      std_mm_year?: number;
-      acceleration_mm_year2?: number;
-      rmse_mm?: number;
+      meanMmYear: number;
+      maxSubsidenceMmYear: number;
+      maxUpliftMmYear: number;
+      stdMmYear?: number;
+      accelerationMmYear2?: number;
+      rmseMm?: number;
     };
-    east_west?: { mean_mm_year: number; std_mm_year?: number };
-    yearly_displacement?: Array<{ year: number; mm: number }>;
-    cells_with_data: number;
-    cells_considered: number;
-    coverage_pct: number;
+    eastWest?: { meanMmYear: number; stdMmYear?: number };
+    yearlyDisplacement?: Array<{ year: number; mm: number }>;
+    cellsWithData: number;
+    cellsConsidered: number;
+    coveragePct: number;
     basis: "parcel" | "surroundings";
-    cell_size_m: number;
+    cellSizeM: number;
   };
   source: TerrainSource;
-  calculated_at: string;
+  calculatedAt: string;
   provenance: string;
 }
 
 export interface SolarData {
-  kwh_year: number;
-  kw_instalables: number;
-  ahorro_anual_eur: number;
-  amortizacion_anos: number;
-  co2_evitado_kg: number;
-  irradiacion_media: number;
-  nota_solar: number;
-  orientacion_optima?: string;
-  angulo_inclinacion?: number;
-  costo_instalacion_eur?: number;
-  disponible: boolean;
-  estado: string;
-  fuente?: string;
+  available: boolean;
+  status: string;
+  annualProductionKwh: number;
+  installableKw: number;
+  annualSavingsEur: number;
+  paybackYears: number;
+  co2AvoidedKg: number;
+  irradiationKwhM2: number;
+  solarGrade: number;
+  optimalOrientation?: string;
+  tiltAngleDeg?: number;
+  installationCostEur?: number;
+  source?: string;
 }
 
-export interface AgroData {
-  agro?: Record<string, unknown>;
-}
+export type AgroData = Record<string, unknown>;
 
 export interface MarketData {
-  precio_estimado_eur?: number;
-  precio_m2_eur?: number;
-  num_transacciones?: number;
-  fecha_ultima_transaccion?: string;
-  granularidad?: string;
-  granularidad_display?: string;
-  fuente?: string;
-  transacciones_historial?: unknown[];
-  disponible: boolean;
-  estado?: string;
-  mensaje_usuario?: string;
-  data_quality?: string;
-  fecha_actualizacion?: string;
+  available: boolean;
+  status?: string;
+  estimatedPriceEur?: number;
+  pricePerM2Eur?: number;
+  salesCount?: number;
+  lastSaleDate?: string;
+  granularity?: string;
+  source?: string;
+  message?: string;
+  dataQuality?: string;
+  updatedAt?: string;
 }
 
 export interface ScoreData {
-  score_inversion: {
-    puntuacion: number;
-    clasificacion: string;
-    recomendacion?: string;
-    componentes?: Record<string, number>;
-    factores_riesgo?: string[];
-    factores_oportunidad?: string[];
-  };
+  score: number;
+  rating: string;
+  recommendation?: string;
+  components?: Record<string, number>;
+  availableComponents?: Record<string, boolean>;
+  riskFactors?: string[];
+  opportunityFactors?: string[];
 }
 
 export interface ValueHistoryEntry {
-  parcel_ref?: string;
+  id?: string;
+  reference?: string;
   country?: string;
-  valor_catastral?: number;
-  superficie?: number;
-  uso?: string;
-  fecha_captura?: string;
-  fuente?: string;
+  cadastralValueEur?: number;
+  area?: number;
+  use?: string;
+  capturedOn?: string;
+  source?: string;
+  createdAt?: string;
 }
 
 export interface ValueHistoryData {
-  refcat: string;
+  reference: string;
   country: string;
   entries: ValueHistoryEntry[] | null;
   totalEntries: number;
-  variacionPct: number | null;
+  areaChangePct: number | null;
 }
 
 export interface CompareItem {
-  ref_catastral: string;
+  reference: string;
   country: string;
-  parcela?: Partial<ParcelData>;
+  parcel?: Partial<ParcelData>;
   solar?: Partial<SolarData>;
-  agro?: {
-    es_agricola?: boolean;
-    disponible?: boolean;
-    uso_suelo?: { descripcion?: string; grupo?: string };
+  agriculture?: {
+    available?: boolean;
+    status?: string;
+    isAgricultural?: boolean;
+    landUse?: string;
+    cropGroup?: string;
+    crop?: string;
+    areaHa?: number;
   };
   score?: {
-    score_global?: number;
-    clasificacion?: string;
-    disponible?: boolean;
+    available?: boolean;
+    score?: number;
+    rating?: string;
   };
   error?: string;
 }
 
 export interface CompareData {
-  comparacion: CompareItem[];
+  parcels: CompareItem[];
   total: number;
 }
 
 export interface ApiErrorResponse {
   success: false;
-  error?: string;
-  message?: string;
   code?: string;
+  message?: string;
+  error?: string;
+  details?: unknown;
   data?: unknown;
-  parsed?: unknown;
 }
 
 export interface ServerConfig {

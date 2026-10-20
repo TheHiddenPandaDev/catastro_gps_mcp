@@ -22,17 +22,17 @@ describe("tools added or widened in 1.3", () => {
       fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({
         success: true,
         data: {
-          refCatastral: "0745901TG4304N",
-          direccion: "AV JOSE RODRIGUEZ DE LA BORBOLLA 10",
-          municipio: "DOS HERMANAS",
-          provincia: "SEVILLA",
-          totalUnidades: 1,
-          totalUnidadesFinca: 312,
-          unidades: [{
-            refCatastral: "0745901TG4304N0002KH", escalera: "1", planta: "02", puerta: "B", uso: "Residencial",
-            superficie: 92, descripcion: "VIVIENDA", participacion: 0.31, anio: 1975,
+          reference: "0745901TG4304N",
+          address: "AV JOSE RODRIGUEZ DE LA BORBOLLA 10",
+          municipality: "DOS HERMANAS",
+          region: "SEVILLA",
+          unitCount: 1,
+          propertyUnitCount: 312,
+          units: [{
+            reference: "0745901TG4304N0002KH", staircase: "1", floor: "02", door: "B", use: "Residencial",
+            area: 92, description: "VIVIENDA", ownershipShare: 0.31, yearBuilt: 1975,
           }],
-          construcciones: [{ escalera: "", planta: "-1", puerta: "", uso: "Almacen", superficie: 40, descripcion: "TRASTERO" }],
+          constructions: [{ staircase: "", floor: "-1", door: "", use: "Almacen", area: 40, description: "TRASTERO" }],
           truncated: true,
           nextCursor: "0745901TG4304N0002KH",
           dataSource: "clone",
@@ -43,7 +43,7 @@ describe("tools added or widened in 1.3", () => {
 
       const body = toolJson(await client.callTool({ name: "get_units", arguments: { reference: "0745901TG4304N" } }));
 
-      expect(lastRequest(fetchMock).url.pathname).toBe("/api/catastro/0745901TG4304N/units");
+      expect(lastRequest(fetchMock).url.pathname).toBe("/v1/parcels/0745901TG4304N/units");
       expect(body).toMatchObject({
         reference: "0745901TG4304N",
         total_units_in_finca: 312,
@@ -60,7 +60,7 @@ describe("tools added or widened in 1.3", () => {
     it("passes country and cursor and copes with an empty last page", async () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
         success: true,
-        data: { refCatastral: "020-3-657", unidades: null, truncated: false, nextCursor: "ZZZZZZ" },
+        data: { reference: "020-3-657", units: null, truncated: false, nextCursor: "ZZZZZZ" },
       }));
 
       const body = toolJson(await client.callTool({
@@ -218,8 +218,8 @@ describe("tools added or widened in 1.3", () => {
   describe("ambiguity and place names keep their details", () => {
     it("lists the candidate countries", async () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
-        success: false, code: "CNV_AMBIGUOUS", error: "Several countries",
-        data: { reference: "123", candidates: [{ country: "LV", confidence: 0.5, supported: true }] },
+        success: false, code: "CNV_AMBIGUOUS", message: "Several countries",
+        details: { reference: "123", candidates: [{ country: "LV", confidence: 0.5, supported: true }] },
       }, 300));
       const text = toolText(await client.callTool({ name: "get_parcel", arguments: { reference: "123" } }));
       expect(text).toContain("\"country\": \"LV\"");
@@ -227,11 +227,11 @@ describe("tools added or widened in 1.3", () => {
 
     it("keeps the geocoded location of a place name", async () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
-        success: false, code: "CNV_PLACE_NAME", error: "Place name",
-        data: { query: "Zeutern 10385", place: "Zeutern", parcelNumber: "10385", location: { lat: 49.2, lng: 8.6 } },
+        success: false, code: "CNV_PLACE_NAME", message: "Place name",
+        details: { query: "Zeutern 10385", place: "Zeutern", parcelNumber: "10385", location: { latitude: 49.2, longitude: 8.6 } },
       }, 422));
       const text = toolText(await client.callTool({ name: "get_parcel", arguments: { reference: "Zeutern 10385" } }));
-      expect(text).toContain("\"lat\": 49.2");
+      expect(text).toContain("\"latitude\": 49.2");
     });
   });
 });

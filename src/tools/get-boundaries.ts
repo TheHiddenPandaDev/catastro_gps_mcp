@@ -25,12 +25,11 @@ export function registerGetBoundaries(server: McpServer, client: CatastroGPSClie
       try {
         const { data: d, quota } = await client.getPolygon(reference, country);
         return jsonResult(compact({
-          reference: d.refCatastral || d.refcat || reference,
-          country: d.pais || country,
-          latitude: d.latitud ?? d.centroid?.latitude,
-          longitude: d.longitud ?? d.centroid?.longitude,
-          area_m2: d.area || d.superficieParcela,
-          outline_lat_lng: d.poligono,
+          reference: d.reference || reference,
+          country: d.country || country,
+          latitude: d.centroid?.latitude,
+          longitude: d.centroid?.longitude,
+          area_m2: d.area,
           geojson: d.geojson,
         }), quota);
       } catch (error) {

@@ -6,26 +6,26 @@ import { handleToolError, jsonResult } from "./shared.js";
 
 function summarize(item: CompareItem) {
   if (item.error) {
-    return { reference: item.ref_catastral, country: item.country, error: item.error };
+    return { reference: item.reference, country: item.country, error: item.error };
   }
-  const parcel = item.parcela ?? {};
+  const parcel = item.parcel ?? {};
   const solar = item.solar;
-  const agro = item.agro;
+  const agro = item.agriculture;
   return {
-    reference: item.ref_catastral,
+    reference: item.reference,
     country: item.country,
-    latitude: parcel.latitud ?? null,
-    longitude: parcel.longitud ?? null,
-    area_m2: parcel.superficieParcela || null,
-    land_use: parcel.uso || null,
-    municipality: parcel.municipio || null,
-    solar: solar?.disponible
-      ? { production_kwh_year: solar.kwh_year ?? null, installable_kwp: solar.kw_instalables ?? null, solar_grade: solar.nota_solar ?? null }
+    latitude: parcel.latitude ?? null,
+    longitude: parcel.longitude ?? null,
+    area_m2: parcel.parcelArea || null,
+    land_use: parcel.use || null,
+    municipality: parcel.municipality || null,
+    solar: solar?.available
+      ? { production_kwh_year: solar.annualProductionKwh ?? null, installable_kwp: solar.installableKw ?? null, solar_grade: solar.solarGrade ?? null }
       : null,
-    agriculture: agro?.disponible
-      ? { is_agricultural: agro.es_agricola ?? null, land_use: agro.uso_suelo?.descripcion || null, crop_group: agro.uso_suelo?.grupo || null }
+    agriculture: agro?.available
+      ? { is_agricultural: agro.isAgricultural ?? null, land_use: agro.landUse || null, crop_group: agro.cropGroup || null }
       : null,
-    score: item.score?.disponible ? { value: item.score.score_global ?? null, rating: item.score.clasificacion ?? null } : null,
+    score: item.score?.available ? { value: item.score.score ?? null, rating: item.score.rating ?? null } : null,
   };
 }
 
@@ -57,7 +57,7 @@ export function registerCompareParcels(server: McpServer, client: CatastroGPSCli
     async ({ parcels }) => {
       try {
         const { data, quota } = await client.compareParcels(parcels);
-        const items = data.comparacion ?? [];
+        const items = data.parcels ?? [];
         return jsonResult({ total: data.total ?? items.length, parcels: items.map(summarize) }, quota);
       } catch (error) {
         return handleToolError(error);

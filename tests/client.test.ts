@@ -31,7 +31,7 @@ describe("CatastroGPSClient", () => {
 
     const req = lastRequest(fetchMock);
     expect(req.method).toBe("GET");
-    expect(req.url.pathname).toBe("/api/catastro/9872023VH5797S0001WX");
+    expect(req.url.pathname).toBe("/v1/parcels/9872023VH5797S0001WX");
     expect(req.url.searchParams.has("country")).toBe(false);
   });
 
@@ -40,7 +40,7 @@ describe("CatastroGPSClient", () => {
     await client.getParcelByReference("146510_8.0502.1 / 3", "PL");
 
     const req = lastRequest(fetchMock);
-    expect(req.url.pathname).toBe("/api/catastro/146510_8.0502.1%20%2F%203");
+    expect(req.url.pathname).toBe("/v1/parcels/146510_8.0502.1%20%2F%203");
     expect(req.url.searchParams.get("country")).toBe("PL");
   });
 
@@ -50,7 +50,7 @@ describe("CatastroGPSClient", () => {
 
     const req = lastRequest(fetchMock);
     expect(req.method).toBe("GET");
-    expect(req.url.pathname).toBe("/api/search/coordinates");
+    expect(req.url.pathname).toBe("/v1/search/coordinates");
     expect(req.url.searchParams.get("lat")).toBe("52.23");
     expect(req.url.searchParams.get("lng")).toBe("21.012");
     expect(req.url.searchParams.get("country")).toBe("PL");
@@ -62,7 +62,7 @@ describe("CatastroGPSClient", () => {
 
     const req = lastRequest(fetchMock);
     expect(req.method).toBe("GET");
-    expect(req.url.pathname).toBe("/api/search/address/candidates");
+    expect(req.url.pathname).toBe("/v1/search/address/candidates");
     expect(req.url.searchParams.get("q")).toBe("8 boulevard du Port, Amiens");
     expect(req.url.searchParams.get("country")).toBe("FR");
     expect(req.url.searchParams.get("limit")).toBe("3");
@@ -74,7 +74,7 @@ describe("CatastroGPSClient", () => {
     await client.getUnits("020-3-657", "PV", "N0714723L");
 
     const req = lastRequest(fetchMock);
-    expect(req.url.pathname).toBe("/api/catastro/020-3-657/units");
+    expect(req.url.pathname).toBe("/v1/parcels/020-3-657/units");
     expect(req.url.searchParams.get("country")).toBe("PV");
     expect(req.url.searchParams.get("cursor")).toBe("N0714723L");
   });
@@ -84,7 +84,7 @@ describe("CatastroGPSClient", () => {
     await client.resolve("05102200100005", "DE");
 
     const req = lastRequest(fetchMock);
-    expect(req.url.pathname).toBe("/api/resolve");
+    expect(req.url.pathname).toBe("/v1/resolve");
     expect(req.url.searchParams.get("q")).toBe("05102200100005");
     expect(req.url.searchParams.get("hint")).toBe("DE");
   });
@@ -97,7 +97,7 @@ describe("CatastroGPSClient", () => {
     await client[method]("BE1", "BE", { lat: 50.848139, lng: 4.353613 });
 
     const req = lastRequest(fetchMock);
-    expect(req.url.pathname).toBe(`/api/catastro/BE1${suffix}`);
+    expect(req.url.pathname).toBe(`/v1/parcels/BE1${suffix}`);
     expect(req.url.searchParams.get("lat")).toBe("50.848139");
     expect(req.url.searchParams.get("lng")).toBe("4.353613");
     expect(req.url.searchParams.get("country")).toBe("BE");
@@ -106,7 +106,7 @@ describe("CatastroGPSClient", () => {
   it.each([
     ["getPolygon", "/polygon"],
     ["getSolarPotential", "/solar"],
-    ["getAgriculture", "/agro"],
+    ["getAgriculture", "/agriculture"],
     ["getMarketData", "/market"],
     ["getInvestmentScore", "/score"],
     ["getValueHistory", "/value-history"],
@@ -114,10 +114,10 @@ describe("CatastroGPSClient", () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: {} }));
     await client[method]("REF1", "ES");
 
-    expect(lastRequest(fetchMock).url.pathname).toBe(`/api/catastro/REF1${suffix}`);
+    expect(lastRequest(fetchMock).url.pathname).toBe(`/v1/parcels/REF1${suffix}`);
   });
 
-  it("sends compare requests in the backend's snake_case shape", async () => {
+  it("sends compare requests in the v1 English shape", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: {} }));
     await client.compareParcels([
       { reference: "A", country: "ES" },
@@ -125,11 +125,11 @@ describe("CatastroGPSClient", () => {
     ]);
 
     const req = lastRequest(fetchMock);
-    expect(req.url.pathname).toBe("/api/catastro/compare");
+    expect(req.url.pathname).toBe("/v1/parcels/compare");
     expect(req.body).toEqual({
-      parcelas: [
-        { ref_catastral: "A", country: "ES" },
-        { ref_catastral: "B", country: "FR" },
+      parcels: [
+        { reference: "A", country: "ES" },
+        { reference: "B", country: "FR" },
       ],
     });
   });
@@ -137,25 +137,60 @@ describe("CatastroGPSClient", () => {
   it("turns API errors into typed errors that keep the code, status and details", async () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse(
-        { success: false, code: "CNV_AMBIGUOUS", error: "Varios países", data: { candidates: [{ country: "DE" }, { country: "PT" }] } },
+        {
+          success: false,
+          code: "CNV_AMBIGUOUS",
+          message: "This reference could belong to several countries.",
+          details: { candidates: [{ country: "DE" }, { country: "PT" }] },
+        },
         300,
       ),
     );
 
     const error = await client.getParcelByReference("05102200100005").catch((e: unknown) => e);
     expect(error).toBeInstanceOf(CatastroGPSApiError);
-    expect(error).toMatchObject({ code: "CNV_AMBIGUOUS", status: 300, message: "Varios países" });
+    expect(error).toMatchObject({ code: "CNV_AMBIGUOUS", status: 300, message: "This reference could belong to several countries." });
     expect((error as CatastroGPSApiError).details).toEqual({ candidates: [{ country: "DE" }, { country: "PT" }] });
   });
 
   it("keeps the details of a coverage error", async () => {
     fetchMock.mockResolvedValueOnce(
-      jsonResponse({ success: false, code: "CNV_COVERAGE", error: "no", data: { supportedCountries: ["ES", "FR"] } }, 422),
+      jsonResponse({ success: false, code: "CNV_COVERAGE", message: "no", details: { supportedCountries: ["ES", "FR"] } }, 422),
     );
 
     const error = (await client.searchAddressCandidates("Storgatan 1", "SE").catch((e: unknown) => e)) as CatastroGPSApiError;
     expect(error.code).toBe("CNV_COVERAGE");
     expect(error.details).toEqual({ supportedCountries: ["ES", "FR"] });
+  });
+
+  it("still reads a legacy error body with error and data", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ success: false, code: "NOT_FOUND", error: "legacy text", data: { reference: "X" } }, 404),
+    );
+
+    const error = (await client.getParcelByReference("X").catch((e: unknown) => e)) as CatastroGPSApiError;
+    expect(error).toMatchObject({ code: "NOT_FOUND", status: 404, message: "legacy text" });
+    expect(error.details).toEqual({ reference: "X" });
+  });
+
+  it("calls only v1 paths", async () => {
+    fetchMock.mockImplementation(async () => jsonResponse({ success: true, data: {} }));
+    await client.getParcelByReference("R");
+    await client.getUnits("R");
+    await client.getPolygon("R");
+    await client.getSolarPotential("R");
+    await client.getAgriculture("R");
+    await client.getMarketData("R");
+    await client.getInvestmentScore("R");
+    await client.getValueHistory("R");
+    await client.getTerrain("R");
+    await client.getGroundMotion("R");
+    await client.getParcelByCoordinates(1, 2);
+    await client.searchAddressCandidates("x");
+    await client.resolve("x");
+    await client.compareParcels([{ reference: "A", country: "ES" }, { reference: "B", country: "ES" }]);
+    const paths = fetchMock.mock.calls.map(([url]) => new URL(String(url)).pathname);
+    expect(paths.every((path) => path.startsWith("/v1/"))).toBe(true);
   });
 
   it("falls back to an HTTP code when the error body is not JSON", async () => {
@@ -309,6 +344,6 @@ describe("CatastroGPSClient", () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: {} }));
     await trailing.getParcelByReference("R");
 
-    expect(lastRequest(fetchMock).url.toString()).toBe("https://api.example.test/api/catastro/R");
+    expect(lastRequest(fetchMock).url.toString()).toBe("https://api.example.test/v1/parcels/R");
   });
 });

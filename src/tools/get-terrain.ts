@@ -37,12 +37,12 @@ export function registerGetTerrain(server: McpServer, client: CatastroGPSClient)
       try {
         const { data, quota } = await client.getTerrain(reference, country, point);
         return jsonResult({
-          reference: data.refcat,
+          reference: data.reference,
           country: data.country,
           relief: data.relief,
-          protected_areas: data.protected_areas,
+          protected_areas: data.protectedAreas,
           climate: data.climate ?? null,
-          calculated_at: data.calculated_at,
+          calculated_at: data.calculatedAt,
         }, quota);
       } catch (caught) {
         return handleToolError(caught);
