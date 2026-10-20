@@ -28,21 +28,21 @@ export function registerGetMarket(server: McpServer, client: CatastroGPSClient):
     async ({ reference, country }) => {
       try {
         const { data: d, quota } = await client.getMarketData(reference, country);
-        const hasFigures = (d.precio_m2_eur ?? 0) > 0 || (d.precio_estimado_eur ?? 0) > 0;
+        const hasFigures = (d.pricePerM2Eur ?? 0) > 0 || (d.estimatedPriceEur ?? 0) > 0;
         return jsonResult({
           reference,
           country: country ?? null,
-          available: d.disponible,
+          available: d.available,
           has_price_figures: hasFigures,
-          price_per_m2_eur: d.precio_m2_eur || null,
-          estimated_value_eur: d.precio_estimado_eur || null,
-          sales_count: d.num_transacciones || null,
-          last_sale_date: d.fecha_ultima_transaccion || null,
-          granularity: d.granularidad_display || d.granularidad || null,
-          data_quality: d.data_quality ?? null,
-          updated: d.fecha_actualizacion || null,
-          source: d.fuente ?? null,
-          note: d.mensaje_usuario ?? null,
+          price_per_m2_eur: d.pricePerM2Eur || null,
+          estimated_value_eur: d.estimatedPriceEur || null,
+          sales_count: d.salesCount || null,
+          last_sale_date: d.lastSaleDate || null,
+          granularity: d.granularity || null,
+          data_quality: d.dataQuality ?? null,
+          updated: d.updatedAt || null,
+          source: d.source ?? null,
+          note: d.message || null,
         }, quota);
       } catch (error) {
         return handleToolError(error);

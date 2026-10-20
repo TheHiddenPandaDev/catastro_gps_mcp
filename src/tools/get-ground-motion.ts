@@ -36,14 +36,14 @@ export function registerGetGroundMotion(server: McpServer, client: CatastroGPSCl
       try {
         const { data, quota } = await client.getGroundMotion(reference, country, point);
         return jsonResult({
-          reference: data.refcat,
+          reference: data.reference,
           country: data.country,
           status: data.status,
           reason: data.reason,
           period: data.period?.label,
-          ground_motion: data.ground_motion,
+          ground_motion: data.groundMotion,
           source: data.source,
-          calculated_at: data.calculated_at,
+          calculated_at: data.calculatedAt,
         }, quota);
       } catch (caught) {
         return handleToolError(caught);

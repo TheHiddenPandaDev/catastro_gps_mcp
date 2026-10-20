@@ -9,21 +9,21 @@ const MAX_LIMIT = 10;
 
 function candidate(item: AddressCandidate) {
   return compact({
-    reference: item.refCatastral,
-    country: item.pais,
-    address: item.direccion,
-    number: item.numero,
-    postal_code: item.codigoPostal,
-    municipality: item.municipio,
-    province: item.provincia,
-    latitude: item.latitud,
-    longitude: item.longitud,
-    confidence: item.confianza,
-    number_matches: item.coincideNumero,
-    municipality_matches: item.coincideMunicipio,
-    use: item.uso,
-    dwellings: item.viviendas,
-    construction_year: item.anioConstruccion,
+    reference: item.reference,
+    country: item.country,
+    address: item.address,
+    number: item.number,
+    postal_code: item.postalCode,
+    municipality: item.municipality,
+    region: item.region,
+    latitude: item.latitude,
+    longitude: item.longitude,
+    confidence: item.confidence,
+    number_matches: item.numberMatches,
+    municipality_matches: item.municipalityMatches,
+    use: item.use,
+    dwellings: item.dwellings,
+    construction_year: item.yearBuilt,
   });
 }
 
@@ -59,9 +59,9 @@ export function registerSearchAddress(server: McpServer, client: CatastroGPSClie
     async ({ address, country, limit }) => {
       try {
         const { data, quota } = await client.searchAddressCandidates(address, country, limit);
-        const candidates = data.candidatos ?? [];
+        const candidates = data.candidates ?? [];
         return jsonResult({
-          query: data.consulta?.texto ?? address,
+          query: data.query?.text ?? address,
           country: country ?? "ES",
           total: candidates.length,
           candidates: candidates.map(candidate),

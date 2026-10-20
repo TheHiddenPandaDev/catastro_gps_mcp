@@ -6,26 +6,26 @@ import { compact, handleToolError, jsonResult } from "./shared.js";
 
 function unit(item: Unit) {
   return compact({
-    reference: item.refCatastral,
-    stair: item.escalera,
-    floor: item.planta,
-    door: item.puerta,
-    use: item.uso,
-    area_m2: item.superficie,
-    participation_pct: item.participacion,
-    year: item.anio,
-    description: item.descripcion,
+    reference: item.reference,
+    stair: item.staircase,
+    floor: item.floor,
+    door: item.door,
+    use: item.use,
+    area_m2: item.area,
+    participation_pct: item.ownershipShare,
+    year: item.yearBuilt,
+    description: item.description,
   });
 }
 
 function construction(item: Construction) {
   return compact({
-    stair: item.escalera,
-    floor: item.planta,
-    door: item.puerta,
-    use: item.uso,
-    area_m2: item.superficie,
-    description: item.descripcion,
+    stair: item.staircase,
+    floor: item.floor,
+    door: item.door,
+    use: item.use,
+    area_m2: item.area,
+    description: item.description,
   });
 }
 
@@ -54,19 +54,19 @@ export function registerGetUnits(server: McpServer, client: CatastroGPSClient): 
     async ({ reference, country, cursor }) => {
       try {
         const { data, quota } = await client.getUnits(reference, country, cursor);
-        const units = data.unidades ?? [];
+        const units = data.units ?? [];
         return jsonResult(compact({
-          reference: data.refCatastral,
-          address: data.direccion,
-          postal_code: data.codigoPostal,
-          municipality: data.municipio,
-          province: data.provincia,
-          general_use: data.usoGeneral,
-          construction_year: data.anioConstruccion,
-          total_units_in_finca: data.totalUnidadesFinca ?? units.length,
+          reference: data.reference,
+          address: data.address,
+          postal_code: data.postalCode,
+          municipality: data.municipality,
+          region: data.region,
+          general_use: data.mainUse,
+          construction_year: data.yearBuilt,
+          total_units_in_finca: data.propertyUnitCount ?? units.length,
           units_in_page: units.length,
           units: units.map(unit),
-          constructions: (data.construcciones ?? []).map(construction),
+          constructions: (data.constructions ?? []).map(construction),
           truncated: data.truncated ?? false,
           next_cursor: data.truncated ? data.nextCursor : undefined,
           data_source: data.dataSource,

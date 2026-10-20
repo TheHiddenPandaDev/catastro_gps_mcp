@@ -6,13 +6,7 @@ import { handleToolError, jsonResult } from "./shared.js";
 
 type FactorLevel = "high" | "medium" | "low" | "not_available";
 
-const FACTOR_NAMES: Record<string, string> = {
-  viabilidad_solar: "solar",
-  potencial_agricola: "agriculture",
-  valor_mercado: "market",
-  demanda_terreno: "accessibility",
-  estabilidad_politica: "risk",
-};
+const FACTOR_NAMES = ["solar", "agriculture", "market", "accessibility", "risk"] as const;
 
 const HIGH_FROM = 7;
 const MEDIUM_FROM = 4;
@@ -26,8 +20,8 @@ export function factorLevel(value: number | undefined): FactorLevel {
 
 export function qualitativeFactors(components: Record<string, number> | undefined): Record<string, FactorLevel> {
   const factors: Record<string, FactorLevel> = {};
-  for (const [apiName, name] of Object.entries(FACTOR_NAMES)) {
-    factors[name] = factorLevel(components?.[apiName]);
+  for (const name of FACTOR_NAMES) {
+    factors[name] = factorLevel(components?.[name]);
   }
   return factors;
 }
@@ -38,8 +32,8 @@ export function registerGetScore(server: McpServer, client: CatastroGPSClient): 
     {
       title: "Get Investment Score",
       description:
-        "Investment score (0-100) for a parcel with a rating (excelente, bueno, moderado, bajo, " +
-        "muy_bajo) and qualitative factor levels (high/medium/low/not_available), never the formula. " +
+        "Investment score (0-100) for a parcel with a rating (excellent, good, moderate, low, " +
+        "very_low or no_data) and qualitative factor levels (high/medium/low/not_available), never the formula. " +
         "Built from the data the API can gather for that country: solar potential (PVGIS) and " +
         "agricultural use in ES, PV, NA, PT, FR, IT and DE; the market factor only in France, Italy " +
         "and Germany (North Rhine-Westphalia). Accessibility and risk are not computed yet and come " +
@@ -56,16 +50,16 @@ export function registerGetScore(server: McpServer, client: CatastroGPSClient): 
     async ({ reference, country }) => {
       try {
         const { data, quota } = await client.getInvestmentScore(reference, country);
-        const s = data.score_inversion;
+        const s = data;
         return jsonResult({
           reference,
           country: country ?? null,
-          score: s.puntuacion,
-          rating: s.clasificacion,
-          recommendation: s.recomendacion ?? null,
-          factors: qualitativeFactors(s.componentes),
-          risk_factors: s.factores_riesgo ?? [],
-          opportunity_factors: s.factores_oportunidad ?? [],
+          score: s.score,
+          rating: s.rating,
+          recommendation: s.recommendation ?? null,
+          factors: qualitativeFactors(s.components),
+          risk_factors: s.riskFactors ?? [],
+          opportunity_factors: s.opportunityFactors ?? [],
           note: "Score based on the data available for this parcel. Factor levels are qualitative.",
         }, quota);
       } catch (error) {

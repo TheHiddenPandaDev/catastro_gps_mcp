@@ -29,17 +29,17 @@ export function registerGetValueHistory(server: McpServer, client: CatastroGPSCl
         const { data, quota } = await client.getValueHistory(reference, country);
         const entries = data.entries ?? [];
         return jsonResult({
-          reference: data.refcat ?? reference,
+          reference: data.reference ?? reference,
           country: data.country ?? country ?? null,
           snapshots: entries.map((entry) => ({
-            date: entry.fecha_captura ?? null,
-            area_m2: entry.superficie ?? null,
-            land_use: entry.uso || null,
-            cadastral_value_eur: entry.valor_catastral ? entry.valor_catastral : null,
-            source: entry.fuente ?? null,
+            date: entry.capturedOn ?? null,
+            area_m2: entry.area ?? null,
+            land_use: entry.use || null,
+            cadastral_value_eur: entry.cadastralValueEur ? entry.cadastralValueEur : null,
+            source: entry.source ?? null,
           })),
           total: data.totalEntries ?? entries.length,
-          change_pct: data.variacionPct ?? null,
+          change_pct: data.areaChangePct ?? null,
         }, quota);
       } catch (error) {
         return handleToolError(error);

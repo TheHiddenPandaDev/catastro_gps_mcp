@@ -137,13 +137,15 @@ What a `get_parcel` call returns (shortened; values are illustrative):
   "longitude": -3.7038,
   "address": "CL MAYOR 1",
   "municipality": "MADRID",
-  "province": "MADRID",
+  "region": "MADRID",
   "area_m2": 512,
   "land_use": "Residencial",
   "outline_lat_lng": [[40.41662, -3.70391], [40.41671, -3.70362], "..."],
   "google_maps_url": "https://maps.google.com/?q=40.4165,-3.7038"
 }
 ```
+
+Every call goes to the English v1 REST API (`https://api.parcelgps.com/v1/...`), so nested blocks such as `agriculture`, `relief` or `ground_motion` use the same English camelCase field names as the [API docs](https://www.parcelgps.com/en/api/docs).
 
 Errors come back as a code plus a sentence the agent can act on, for example:
 

@@ -25,19 +25,19 @@ export function registerGetSolar(server: McpServer, client: CatastroGPSClient): 
       try {
         const { data: d, quota } = await client.getSolarPotential(reference, country);
         return jsonResult({
-          available: d.disponible,
-          status: d.estado,
-          installable_kwp: d.kw_instalables,
-          production_kwh_year: d.kwh_year,
-          savings_eur_year: d.ahorro_anual_eur,
-          payback_years: d.amortizacion_anos,
-          installation_cost_eur: d.costo_instalacion_eur ?? null,
-          co2_avoided_kg_year: d.co2_evitado_kg,
-          mean_irradiation: d.irradiacion_media,
-          solar_grade: d.nota_solar,
-          optimal_orientation: d.orientacion_optima ?? null,
-          optimal_tilt_deg: d.angulo_inclinacion ?? null,
-          source: d.fuente ?? "PVGIS",
+          available: d.available,
+          status: d.status,
+          installable_kwp: d.installableKw,
+          production_kwh_year: d.annualProductionKwh,
+          savings_eur_year: d.annualSavingsEur,
+          payback_years: d.paybackYears,
+          installation_cost_eur: d.installationCostEur ?? null,
+          co2_avoided_kg_year: d.co2AvoidedKg,
+          mean_irradiation: d.irradiationKwhM2,
+          solar_grade: d.solarGrade,
+          optimal_orientation: d.optimalOrientation ?? null,
+          optimal_tilt_deg: d.tiltAngleDeg ?? null,
+          source: d.source ?? "PVGIS",
         }, quota);
       } catch (error) {
         return handleToolError(error);

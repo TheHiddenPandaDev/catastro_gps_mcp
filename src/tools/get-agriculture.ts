@@ -13,7 +13,7 @@ export function registerGetAgriculture(server: McpServer, client: CatastroGPSCli
         "Agricultural context for a rural parcel: land use and main crop from the agricultural " +
         "parcel registry (SIGPAC in Spain, with slope, altitude and irrigation), vegetation index " +
         "(NDVI) and a reference crop price when available. Richest in Spain; also Portugal, France, " +
-        "Italy and Germany. Field names are returned in Spanish, as the API sends them.",
+        "Italy and Germany. Values from official registries (land use, crop) stay in the source language.",
       inputSchema: {
         reference: z.string().min(1).describe("Official cadastral reference of a rural parcel"),
         country: z
@@ -25,7 +25,7 @@ export function registerGetAgriculture(server: McpServer, client: CatastroGPSCli
     async ({ reference, country }) => {
       try {
         const { data, quota } = await client.getAgriculture(reference, country);
-        return jsonResult({ reference, country: country ?? null, agriculture: data.agro ?? data }, quota);
+        return jsonResult({ reference, country: country ?? null, agriculture: data }, quota);
       } catch (error) {
         return handleToolError(error);
       }

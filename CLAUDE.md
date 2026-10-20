@@ -59,23 +59,25 @@ mcp/
 | Cliente HTTP | Fetch nativo |
 | Auth | API key en header `X-API-Key` |
 
-## Tools disponibles (1.3.0)
+## Tools disponibles (2.0.0)
+
+Desde 2.0.0 todo va contra la API v1 en inglés (`/v1/...`); las rutas `/api/...` siguen vivas para la web/app pero están deprecadas para clientes de API.
 
 | Tool | Endpoint backend | Países |
 |------|------------------|--------|
-| `get_parcel` | `GET /api/catastro/:ref` · `GET /api/search/coordinates` | 31 códigos (`wiredCountries`); UK y HR solo coordenadas |
-| `search_address` | `GET /api/search/address/candidates?q=&country=&limit=` | ES (con PV/NA) + 26 países del enum de la OpenAPI; SE/HR → `CNV_COVERAGE` |
-| `get_units` | `GET /api/catastro/:ref/units?country=&cursor=` | ES, PV, NA. Cobra una unidad por unidad servida |
-| `resolve_reference` | `GET /api/resolve?q=&hint=` | Todos; sin auth, no gasta cuota |
-| `get_boundaries` | `GET /api/catastro/:ref/polygon` | 30 (todos menos UK) |
-| `get_solar_potential` | `GET /api/catastro/:ref/solar` | ES, PV, NA, PT, FR, IT, DE |
-| `get_terrain` | `GET /api/catastro/:ref/terrain?lat=&lng=` | Todos los de referencia menos HR; fuera de los 7, `lat`/`lng` obligatorios. Incluye `climate` (ERA5-Land) |
-| `get_ground_motion` | `GET /api/catastro/:ref/ground-motion?lat=&lng=` | Igual que terrain (el backend usa `terrainLocation` en los dos) |
-| `get_agriculture` | `GET /api/catastro/:ref/agro` | ES, PV, NA, PT, FR, IT, DE |
-| `get_market_data` | `GET /api/catastro/:ref/market` | Cifras: FR (DVF), IT (OMI), DE (BORIS, solo NRW). ES/PV/NA/PT: nota sin cifras |
-| `get_investment_score` | `GET /api/catastro/:ref/score` | ES, PV, NA, PT, FR, IT, DE |
-| `get_value_history` | `GET /api/catastro/:ref/value-history` | ES, PV, NA, PT, FR, IT, DE, AT (donde `GetByRefcat` graba) |
-| `compare_parcels` | `POST /api/catastro/compare` `{parcelas:[{ref_catastral,country}]}` | ES, PT, FR, IT, DE (PV/NA caen al Catastro común y fallan) |
+| `get_parcel` | `GET /v1/parcels/:ref` · `GET /v1/search/coordinates` | 31 códigos (`wiredCountries`); UK y HR solo coordenadas |
+| `search_address` | `GET /v1/search/address/candidates?q=&country=&limit=` | ES (con PV/NA) + 26 países del enum de la OpenAPI; SE/HR → `CNV_COVERAGE` |
+| `get_units` | `GET /v1/parcels/:ref/units?country=&cursor=` | ES, PV, NA. Cobra una unidad por unidad servida |
+| `resolve_reference` | `GET /v1/resolve?q=&hint=` | Todos; sin auth, no gasta cuota |
+| `get_boundaries` | `GET /v1/parcels/:ref/polygon` | 30 (todos menos UK) |
+| `get_solar_potential` | `GET /v1/parcels/:ref/solar` | ES, PV, NA, PT, FR, IT, DE |
+| `get_terrain` | `GET /v1/parcels/:ref/terrain?lat=&lng=` | Todos los de referencia menos HR; fuera de los 7, `lat`/`lng` obligatorios. Incluye `climate` (ERA5-Land) |
+| `get_ground_motion` | `GET /v1/parcels/:ref/ground-motion?lat=&lng=` | Igual que terrain (el backend usa `terrainLocation` en los dos) |
+| `get_agriculture` | `GET /v1/parcels/:ref/agriculture` | ES, PV, NA, PT, FR, IT, DE |
+| `get_market_data` | `GET /v1/parcels/:ref/market` | Cifras: FR (DVF), IT (OMI), DE (BORIS, solo NRW). ES/PV/NA/PT: nota sin cifras |
+| `get_investment_score` | `GET /v1/parcels/:ref/score` | ES, PV, NA, PT, FR, IT, DE |
+| `get_value_history` | `GET /v1/parcels/:ref/value-history` | ES, PV, NA, PT, FR, IT, DE, AT (donde `GetByRefcat` graba) |
+| `compare_parcels` | `POST /v1/parcels/compare` `{parcels:[{reference,country}]}` | ES, PT, FR, IT, DE (PV/NA caen al Catastro común y fallan) |
 
 Cuota: el cliente lee de cada respuesta `X-Quota-*` (mensual), `X-Quota-Overage`/`-Balance`/`-Overage-Unit-Price`/
 `-Overage-Remaining` (saldo prepagado), `X-RateLimit-*` (ráfaga por minuto) y `X-Quota-Finca-Cap*` (tope por finca en
@@ -87,7 +89,7 @@ optionalAuthMiddleware, proOrApiKey`): entran con API key de organización (cons
 en los "no encontrado") o con JWT Pro. Desde el backend de sep-2026; antes `market`, `score`,
 `value-history` y `compare` iban por `RegisterProRoutes` y con API key daban 401.
 
-Coordenadas: siempre `GET /api/search/coordinates`. El `POST` antiguo solo despacha 8 países y
+Coordenadas: siempre `GET /v1/search/coordinates`. El `POST` antiguo solo despacha 8 países y
 manda el resto a España.
 
 ## Países soportados

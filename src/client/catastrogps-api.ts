@@ -157,9 +157,9 @@ export class CatastroGPSClient {
         const errorBody = (await response.json().catch(() => ({}))) as Partial<ApiErrorResponse>;
         throw new CatastroGPSApiError(
           errorBody.code || `HTTP_${response.status}`,
-          errorBody.error || errorBody.message || `API returned ${response.status}`,
+          errorBody.message || errorBody.error || `API returned ${response.status}`,
           response.status,
-          errorBody.data ?? errorBody.parsed,
+          errorBody.details ?? errorBody.data,
           { quota, retryAfterSeconds: retryAfterSeconds(response.headers) },
         );
       }
@@ -185,7 +185,7 @@ export class CatastroGPSClient {
   }
 
   private parcelPath(reference: string, suffix = ""): string {
-    return `/api/catastro/${encodeURIComponent(reference)}${suffix}`;
+    return `/v1/parcels/${encodeURIComponent(reference)}${suffix}`;
   }
 
   async getParcelByReference(reference: string, country?: string): Promise<ApiResponse<ParcelData>> {
@@ -193,11 +193,11 @@ export class CatastroGPSClient {
   }
 
   async getParcelByCoordinates(lat: number, lng: number, country?: string): Promise<ApiResponse<CoordinatesSearchData>> {
-    return this.send("GET", "/api/search/coordinates", { lat, lng, country });
+    return this.send("GET", "/v1/search/coordinates", { lat, lng, country });
   }
 
   async searchAddressCandidates(address: string, country?: string, limit?: number): Promise<ApiResponse<AddressCandidatesData>> {
-    return this.send("GET", "/api/search/address/candidates", { q: address, country, limit });
+    return this.send("GET", "/v1/search/address/candidates", { q: address, country, limit });
   }
 
   async getUnits(reference: string, country?: string, cursor?: string): Promise<ApiResponse<UnitsPageData>> {
@@ -205,7 +205,7 @@ export class CatastroGPSClient {
   }
 
   async resolve(text: string, hint?: string): Promise<ApiResponse<ResolveData>> {
-    return this.send("GET", "/api/resolve", { q: text, hint });
+    return this.send("GET", "/v1/resolve", { q: text, hint });
   }
 
   async getPolygon(reference: string, country?: string): Promise<ApiResponse<PolygonData>> {
@@ -225,7 +225,7 @@ export class CatastroGPSClient {
   }
 
   async getAgriculture(reference: string, country?: string): Promise<ApiResponse<AgroData>> {
-    return this.send("GET", this.parcelPath(reference, "/agro"), { country });
+    return this.send("GET", this.parcelPath(reference, "/agriculture"), { country });
   }
 
   async getMarketData(reference: string, country?: string): Promise<ApiResponse<MarketData>> {
@@ -241,8 +241,8 @@ export class CatastroGPSClient {
   }
 
   async compareParcels(parcels: Array<{ reference: string; country: string }>): Promise<ApiResponse<CompareData>> {
-    return this.send("POST", "/api/catastro/compare", undefined, {
-      parcelas: parcels.map((parcel) => ({ ref_catastral: parcel.reference, country: parcel.country })),
+    return this.send("POST", "/v1/parcels/compare", undefined, {
+      parcels: parcels.map((parcel) => ({ reference: parcel.reference, country: parcel.country })),
     });
   }
 }
