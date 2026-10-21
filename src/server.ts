@@ -13,6 +13,12 @@ import { registerGetValueHistory } from "./tools/get-value-history.js";
 import { registerCompareParcels } from "./tools/compare-parcels.js";
 import { registerGetUnits } from "./tools/get-units.js";
 import { registerResolveReference } from "./tools/resolve-reference.js";
+import { registerGetParcelSubparcels } from "./tools/get-parcel-subparcels.js";
+import { registerGetCropCatalog } from "./tools/get-crop-catalog.js";
+import { registerGetNeighbors } from "./tools/get-neighbors.js";
+import { registerListProvinces } from "./tools/list-provinces.js";
+import { registerListMunicipalities } from "./tools/list-municipalities.js";
+import { registerListStreets } from "./tools/list-streets.js";
 import { SERVER_VERSION } from "./version.js";
 import type { ServerConfig } from "./types/index.js";
 
@@ -40,6 +46,12 @@ export function createServer(config: ServerConfig): McpServer {
   registerCompareParcels(server, client);
   registerGetUnits(server, client);
   registerResolveReference(server, client);
+  registerGetParcelSubparcels(server, client);
+  registerGetCropCatalog(server, client);
+  registerGetNeighbors(server, client);
+  registerListProvinces(server, client);
+  registerListMunicipalities(server, client);
+  registerListStreets(server, client);
 
   return server;
 }

@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.1.0 (2026-10-21)
+
+- New `get_parcel_subparcels`: every crop or land-use subparcel (`crop_code`, `crop` in `lang`, `crop_original`, `area_m2`, `kind`, `use_class`, `intensity`, `land_type`, `land_class`, `source`, outline with `include_geometry`). Spain (foral territories included), Austria, Estonia and Greece. `SUB_001` (source down) is explained as retryable and not charged.
+- New `get_crop_catalog` (free, no quota): crop codes with names in 10 languages, filterable by `code` or `source`.
+- New `get_neighbors`: adjoining parcels with reference and centre point.
+- New `list_provinces`, `list_municipalities`, `list_streets`: the Spanish cadastre lists.
+- `get_parcel` takes `lang` and returns `subparcel_count` and `crop_summary` (the API no longer embeds subparcels in the parcel).
+- `get_market_data` returns `zone_prices` for Spanish parcels: official province prices for housing (€/m²) and farmland (€/ha).
+
 ## 2.0.0 (2026-10-20)
 
 - Every tool calls the English v1 API (`/v1/parcels/...`, `/v1/search/...`, `/v1/resolve`) instead of the legacy `/api/...` routes, which answer in Spanish field names and are now deprecated.
