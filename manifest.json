@@ -2,8 +2,8 @@
   "manifest_version": "0.3",
   "name": "catastro-gps-mcp",
   "display_name": "Catastro GPS",
-  "version": "2.0.0",
-  "description": "Cadastral parcels from 29 European countries (including the Basque Country and Navarre foral cadastres): reference, coordinates, address in 27 countries, Spanish dwellings, geometry, terrain, climate, ground motion, solar, agriculture, market, score and comparison.",
+  "version": "2.1.0",
+  "description": "Cadastral parcels from 29 European countries (including the Basque Country and Navarre foral cadastres): reference, coordinates, address in 27 countries, Spanish dwellings, geometry, terrain, climate, ground motion, solar, agriculture, crop subparcels, neighbours, market, score and comparison.",
   "long_description": "One API key for official cadastral data from 29 European countries, including the Basque Country and Navarre foral cadastres: by cadastral reference in 27 and by coordinates in all 29 (Germany: 15 of 16 Lander, not Bavaria; Portugal: not Lisbon, Porto or Coimbra; Croatia through ARKOD and Sweden through agricultural parcels; Scotland by coordinates). Look up parcels by reference or coordinates, turn a postal address into ranked parcels in Spain and 26 more countries, list every dwelling of a Spanish building, get parcel outlines as GeoJSON, read relief, protected areas, ERA5-Land climate normals and satellite ground motion (EGMS), estimate solar and agricultural potential, read aggregated market prices (France, Italy, Germany), score and compare parcels, and follow how a parcel changes over time. Every result carries your remaining monthly quota and prepaid balance. Free tier: 250 calls per month, and failed lookups are not charged.",
   "author": {
     "name": "The Hidden Panda",
@@ -94,6 +94,30 @@
     {
       "name": "compare_parcels",
       "description": "Two or three parcels side by side across ES, PT, FR, IT and DE"
+    },
+    {
+      "name": "get_parcel_subparcels",
+      "description": "Crop and land-use subparcels of a parcel with crop codes, translated names, area and outline (ES, AT, EE, GR)"
+    },
+    {
+      "name": "get_crop_catalog",
+      "description": "Free catalogue of every crop code with its name in 10 languages and a common land-use class"
+    },
+    {
+      "name": "get_neighbors",
+      "description": "Parcels that touch or surround a parcel, with reference and centre point"
+    },
+    {
+      "name": "list_provinces",
+      "description": "Provinces of the Spanish cadastre"
+    },
+    {
+      "name": "list_municipalities",
+      "description": "Municipalities of a Spanish province with cadastre and INE codes"
+    },
+    {
+      "name": "list_streets",
+      "description": "Streets of a Spanish municipality, filterable by name"
     }
   ],
   "user_config": {

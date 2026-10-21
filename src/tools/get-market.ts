@@ -2,7 +2,30 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CatastroGPSClient } from "../client/catastrogps-api.js";
 import { ENRICHMENT_COUNTRIES } from "../types/index.js";
-import { handleToolError, jsonResult } from "./shared.js";
+import type { OfficialZonePrice, ZonePrices } from "../types/index.js";
+import { compact, handleToolError, jsonResult } from "./shared.js";
+
+function zonePrice(price: OfficialZonePrice | undefined): Record<string, unknown> | null {
+  if (!price) return null;
+  return compact({
+    price_per_m2_eur: price.pricePerM2Eur,
+    price_per_ha_eur: price.pricePerHaEur,
+    statistic: price.statistic,
+    authority: price.authority,
+    period: price.period,
+  });
+}
+
+function zonePrices(prices: ZonePrices | undefined): Record<string, unknown> | null {
+  if (!prices) return null;
+  return {
+    zone: prices.zone,
+    zone_level: prices.zoneLevel,
+    municipality: prices.municipality ?? null,
+    urban: zonePrice(prices.urban),
+    rural: zonePrice(prices.rural),
+  };
+}
 
 export function registerGetMarket(server: McpServer, client: CatastroGPSClient): void {
   server.registerTool(
@@ -14,8 +37,10 @@ export function registerGetMarket(server: McpServer, client: CatastroGPSClient):
         "individual sales. Price figures exist only in France (DVF recorded sales: average EUR/m2, " +
         "number of sales, last sale date, estimated value), Italy (OMI zone values from Agenzia delle " +
         "Entrate) and Germany (official Bodenrichtwert land value per m2, North Rhine-Westphalia only; " +
-        "elsewhere in Germany it answers available=false). For Spain (ES, PV, NA) and Portugal it " +
-        "returns a reference note without figures: there is no per-parcel price source yet. " +
+        "elsewhere in Germany it answers available=false). For Spain (ES, PV, NA) it returns zone_prices: " +
+        "the official average prices of the parcel's province (housing per built m2 from MIVAU, farmland " +
+        "per hectare from MAPA), each with statistic, authority and period; no parcel-level sales. " +
+        "Portugal answers available=false. " +
         "One API call.",
       inputSchema: {
         reference: z.string().min(1).describe("Official cadastral reference"),
@@ -43,6 +68,7 @@ export function registerGetMarket(server: McpServer, client: CatastroGPSClient):
           updated: d.updatedAt || null,
           source: d.source ?? null,
           note: d.message || null,
+          zone_prices: zonePrices(d.zonePrices),
         }, quota);
       } catch (error) {
         return handleToolError(error);

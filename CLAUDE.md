@@ -35,6 +35,10 @@ mcp/
       get-score.ts             → Tool: score 0-100 + factores cualitativos
       get-value-history.ts     → Tool: instantáneas de superficie/uso (ES/PV/NA/PT/FR/IT/DE/AT)
       compare-parcels.ts       → Tool: 2-3 parcelas (ES/PT/FR/IT/DE)
+      get-parcel-subparcels.ts → Tool: subparcelas/cultivos (ES/forales/AT/EE/GR), de pago
+      get-crop-catalog.ts      → Tool: catálogo de códigos de cultivo, gratis
+      get-neighbors.ts         → Tool: parcelas colindantes
+      list-provinces.ts / list-municipalities.ts / list-streets.ts → Tools: callejero del Catastro común
       shared.ts                → Errores y utilidades compartidas
     version.ts                 → Versión única (package.json, server.json, manifest.json, smithery.yaml la repiten; un test lo vigila)
     types/
@@ -59,7 +63,7 @@ mcp/
 | Cliente HTTP | Fetch nativo |
 | Auth | API key en header `X-API-Key` |
 
-## Tools disponibles (2.0.0)
+## Tools disponibles (2.1.0)
 
 Desde 2.0.0 todo va contra la API v1 en inglés (`/v1/...`); las rutas `/api/...` siguen vivas para la web/app pero están deprecadas para clientes de API.
 
@@ -74,10 +78,14 @@ Desde 2.0.0 todo va contra la API v1 en inglés (`/v1/...`); las rutas `/api/...
 | `get_terrain` | `GET /v1/parcels/:ref/terrain?lat=&lng=` | Todos los de referencia menos HR; fuera de los 7, `lat`/`lng` obligatorios. Incluye `climate` (ERA5-Land) |
 | `get_ground_motion` | `GET /v1/parcels/:ref/ground-motion?lat=&lng=` | Igual que terrain (el backend usa `terrainLocation` en los dos) |
 | `get_agriculture` | `GET /v1/parcels/:ref/agriculture` | ES, PV, NA, PT, FR, IT, DE |
-| `get_market_data` | `GET /v1/parcels/:ref/market` | Cifras: FR (DVF), IT (OMI), DE (BORIS, solo NRW). ES/PV/NA/PT: nota sin cifras |
+| `get_market_data` | `GET /v1/parcels/:ref/market` | Ventas: FR (DVF), IT (OMI), DE (BORIS, solo NRW). ES/PV/NA: `zone_prices` (MIVAU/MAPA por provincia). PT: no |
 | `get_investment_score` | `GET /v1/parcels/:ref/score` | ES, PV, NA, PT, FR, IT, DE |
 | `get_value_history` | `GET /v1/parcels/:ref/value-history` | ES, PV, NA, PT, FR, IT, DE, AT (donde `GetByRefcat` graba) |
 | `compare_parcels` | `POST /v1/parcels/compare` `{parcels:[{reference,country}]}` | ES, PT, FR, IT, DE (PV/NA caen al Catastro común y fallan) |
+| `get_parcel_subparcels` | `GET /v1/parcels/:ref/subparcels?country=&lang=` | ES (con forales), AT, EE, GR. De pago (0 si no hay); `503 SUB_001` no cobra |
+| `get_crop_catalog` | `GET /v1/reference/crops?lang=` | Todos; gratis, sin cuota |
+| `get_neighbors` | `GET /v1/parcels/:ref/neighbors?country=` | ES (catastro); resto desde copia propia (`supported:false` gratis) |
+| `list_provinces` / `list_municipalities` / `list_streets` | `GET /v1/locations/{provinces,municipalities?region=,streets?region=&municipality=&name=}` | España común |
 
 Cuota: el cliente lee de cada respuesta `X-Quota-*` (mensual), `X-Quota-Overage`/`-Balance`/`-Overage-Unit-Price`/
 `-Overage-Remaining` (saldo prepagado), `X-RateLimit-*` (ráfaga por minuto) y `X-Quota-Finca-Cap*` (tope por finca en

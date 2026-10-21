@@ -16,6 +16,12 @@ import type {
   AddressCandidatesData,
   UnitsPageData,
   ResolveData,
+  SubparcelsData,
+  CropCatalogData,
+  NeighborsData,
+  ProvincesData,
+  MunicipalitiesData,
+  StreetsData,
   ApiErrorResponse,
 } from "../types/index.js";
 import { USER_AGENT } from "../version.js";
@@ -188,8 +194,32 @@ export class CatastroGPSClient {
     return `/v1/parcels/${encodeURIComponent(reference)}${suffix}`;
   }
 
-  async getParcelByReference(reference: string, country?: string): Promise<ApiResponse<ParcelData>> {
-    return this.send("GET", this.parcelPath(reference), { country });
+  async getParcelByReference(reference: string, country?: string, lang?: string): Promise<ApiResponse<ParcelData>> {
+    return this.send("GET", this.parcelPath(reference), { country, lang });
+  }
+
+  async getSubparcels(reference: string, country?: string, lang?: string): Promise<ApiResponse<SubparcelsData>> {
+    return this.send("GET", this.parcelPath(reference, "/subparcels"), { country, lang });
+  }
+
+  async getNeighbors(reference: string, country?: string): Promise<ApiResponse<NeighborsData>> {
+    return this.send("GET", this.parcelPath(reference, "/neighbors"), { country });
+  }
+
+  async getCropCatalog(lang?: string): Promise<ApiResponse<CropCatalogData>> {
+    return this.send("GET", "/v1/reference/crops", { lang });
+  }
+
+  async listProvinces(): Promise<ApiResponse<ProvincesData>> {
+    return this.send("GET", "/v1/locations/provinces");
+  }
+
+  async listMunicipalities(region: string): Promise<ApiResponse<MunicipalitiesData>> {
+    return this.send("GET", "/v1/locations/municipalities", { region });
+  }
+
+  async listStreets(region: string, municipality: string, name?: string): Promise<ApiResponse<StreetsData>> {
+    return this.send("GET", "/v1/locations/streets", { region, municipality, name });
   }
 
   async getParcelByCoordinates(lat: number, lng: number, country?: string): Promise<ApiResponse<CoordinatesSearchData>> {

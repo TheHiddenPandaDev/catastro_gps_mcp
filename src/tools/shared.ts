@@ -23,6 +23,7 @@ const FRIENDLY_MESSAGES: Record<string, string> = {
   CNV_AMBIGUOUS: "The reference matches several countries. Call again with one of the candidate country codes.",
   CNV_PLACE_NAME: "That looks like a place name, not a cadastral reference. Use coordinates or search_address instead.",
   SERVICE_UNAVAILABLE: "The official cadastre for this country is not responding. Try again in a few minutes.",
+  SUB_001: "The subparcels of this parcel could not be read right now. Nothing was charged; retry in a few seconds.",
   INTERNAL_ERROR: "Internal server error. Try again later.",
   MCP_TIMEOUT: "The request timed out. Official cadastres can be slow; try again or raise CATASTROGPS_TIMEOUT.",
   MCP_NETWORK: "Could not reach the CatastroGPS API. Check your connection or CATASTROGPS_API_URL.",

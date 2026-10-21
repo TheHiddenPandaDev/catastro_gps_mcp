@@ -41,6 +41,9 @@ export type UnitsCountryCode = (typeof UNITS_COUNTRIES)[number];
 export const COMPARE_COUNTRIES = ["ES", "PT", "FR", "IT", "DE"] as const;
 export type CompareCountryCode = (typeof COMPARE_COUNTRIES)[number];
 
+export const CROP_LANGUAGES = ["es", "ca", "en", "pt", "fr", "it", "de", "pl", "nl", "cs"] as const;
+export type CropLanguage = (typeof CROP_LANGUAGES)[number];
+
 export const COUNTRY_CODES_TEXT =
   "ES Spain, PV Basque Country, NA Navarre, PT Portugal, FR France, IT Italy, DE Germany, " +
   "AT Austria, CH Switzerland, LI Liechtenstein, BE Belgium, NL Netherlands, LU Luxembourg, " +
@@ -115,10 +118,91 @@ export interface ParcelData {
   source?: string;
   fromOwnCopy?: boolean;
   polygon?: number[][];
+  subparcelCount?: number;
+  cropSummary?: CropShare[];
   availableFields?: AvailableFields;
 }
 
 export type CoordinatesSearchData = ParcelData;
+
+export interface CropShare {
+  cropCode?: string;
+  crop?: string;
+  cropOriginal?: string;
+  useClass?: string;
+  area: number;
+  share: number;
+}
+
+export interface Subparcel {
+  id: string;
+  cropCode?: string;
+  crop?: string;
+  cropOriginal?: string;
+  intensity?: number;
+  area: number;
+  landType?: string;
+  landClass?: string;
+  kind: "cadastral" | "declaredCrop" | "landCover";
+  useClass?: string;
+  useClassName?: string;
+  source?: string;
+  geometry?: unknown;
+}
+
+export interface SubparcelsData {
+  reference: string;
+  country?: string;
+  parcelArea?: number;
+  count: number;
+  subparcels: Subparcel[];
+}
+
+export interface CropReference {
+  code: string;
+  source: string;
+  name: string;
+  original: string;
+  useClass?: string;
+  labels: Record<string, string>;
+}
+
+export interface UseClassReference {
+  code: string;
+  name: string;
+  labels: Record<string, string>;
+}
+
+export interface CropCatalogData {
+  locale: string;
+  locales: string[];
+  sources: string[];
+  count: number;
+  useClasses: UseClassReference[];
+  crops: CropReference[];
+}
+
+export interface NeighborsData {
+  country: string;
+  supported: boolean;
+  count: number;
+  neighbors: Array<{ reference: string; latitude: number; longitude: number }>;
+}
+
+export interface ProvincesData {
+  total: number;
+  provinces: Array<{ code: string; name: string }>;
+}
+
+export interface MunicipalitiesData {
+  total: number;
+  municipalities: Array<{ code: string; ineCode?: string; name: string }>;
+}
+
+export interface StreetsData {
+  total: number;
+  streets: Array<{ code: string; type: string; name: string; fullName: string }>;
+}
 
 export interface AddressCandidate {
   reference: string;
@@ -356,6 +440,23 @@ export interface MarketData {
   message?: string;
   dataQuality?: string;
   updatedAt?: string;
+  zonePrices?: ZonePrices;
+}
+
+export interface OfficialZonePrice {
+  pricePerM2Eur: number;
+  pricePerHaEur?: number;
+  statistic: string;
+  authority: string;
+  period: string;
+}
+
+export interface ZonePrices {
+  zone: string;
+  zoneLevel: string;
+  municipality?: string;
+  urban?: OfficialZonePrice;
+  rural?: OfficialZonePrice;
 }
 
 export interface ScoreData {

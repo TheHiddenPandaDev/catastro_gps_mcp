@@ -1,6 +1,6 @@
 {
   "name": "catastro-gps-mcp",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "mcpName": "com.parcelgps/catastro-gps",
   "description": "MCP server for cadastral parcels from 29 European countries (including the Basque Country and Navarre foral cadastres): reference, coordinates, address search in 27 countries, dwellings of Spanish buildings, geometry, terrain, climate, ground motion, solar, agriculture, market, score and comparison",
   "author": "The Hidden Panda <soporte@catastrogps.es>",
