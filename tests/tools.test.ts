@@ -30,6 +30,7 @@ describe("MCP tools", () => {
       "get_market_data",
       "get_neighbors",
       "get_parcel",
+      "get_parcel_sigpac",
       "get_parcel_subparcels",
       "get_solar_potential",
       "get_terrain",

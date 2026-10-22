@@ -15,7 +15,8 @@ export function registerGetParcelSubparcels(server: McpServer, client: CatastroG
         "(cadastral, declaredCrop, landCover), a common use_class (arable, vineyard, olive, forest...), " +
         "intensity, land type and class, source and, with include_geometry, its GeoJSON outline. " +
         "Spain (Catastro, including Bizkaia, Alava, Navarre; Gipuzkoa without outlines), Austria, " +
-        "Estonia and Greece. One API call; free when the parcel has none. If the source does not " +
+        "Germany, Czechia, the Netherlands, France, Portugal, Sweden, Switzerland, Finland, Belgium, " +
+        "Ireland, Slovenia, Estonia and Greece. One API call; free when the parcel has none. If the source does not " +
         "answer it returns SUB_001: nothing is charged, retry in a few seconds. Translate codes with " +
         "get_crop_catalog.",
       inputSchema: {

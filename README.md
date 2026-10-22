@@ -49,7 +49,8 @@ Use the same `npx -y catastro-gps-mcp` command with `CATASTROGPS_API_KEY` in the
 | `search_address` | Postal address in free text to ranked parcels, with confidence and whether the number and municipality match | ES (with PV and NA entrances) and FR, IT, DE, AT, NL, BE, PL, CH, CZ, DK, NO, FI, EE, LV, LT, SI, SK, BG, GR, CY, LU, LI, IS, IE, UK, PT |
 | `get_units` | Every unit (dwelling, shop, garage, storage) of a Spanish building: stair, floor, door, use, area, participation, year. Paginated, 200 per page | ES, PV, NA |
 | `resolve_reference` | Free, no quota: is this text a reference, coordinates or a place name, and of which country | All |
-| `get_parcel_subparcels` | Every crop or land-use part of the parcel: crop code, crop name in 10 languages, original label, area, land-use class, source and (optionally) outline. A source failure is `SUB_001`, not charged | ES (with Bizkaia, Álava, Navarre, Gipuzkoa), AT, EE, GR |
+| `get_parcel_subparcels` | Every crop or land-use part of the parcel: crop code, crop name in 10 languages, original label, area, land-use class, source and (optionally) outline. A source failure is `SUB_001`, not charged | ES (with Bizkaia, Álava, Navarre, Gipuzkoa), AT, DE, CZ, NL, FR, PT, SE, CH, FI, BE, IE, SI, EE, GR |
+| `get_parcel_sigpac` | Every SIGPAC enclosure (recinto) of a Spanish parcel: land-use code and name in 10 languages, area in ha, irrigation coefficient, slope, altitude, CAP pasture eligibility and region, incidents and (optionally) outline. Cite "Fuente: FEGA — SIGPAC". A SIGPAC failure is `SIG_001`, not charged | ES, PV, NA |
 | `get_crop_catalog` | Free, no quota: every crop code with its name in the chosen language and its land-use class | All crop catalogues |
 | `get_neighbors` | Parcels that touch or surround the parcel (up to 60) with reference and centre point | ES from the cadastre; elsewhere from our own copy (`supported: false` when not) |
 | `list_provinces`, `list_municipalities`, `list_streets` | Spanish cadastre provinces, municipalities (with INE code) and streets of a municipality | ES (common territory) |
@@ -65,7 +66,7 @@ Use the same `npx -y catastro-gps-mcp` command with `CATASTROGPS_API_KEY` in the
 
 ## Quota, prepaid balance and limits
 
-- Only successful answers with data spend quota: a not found, a validation error, `CNV_COVERAGE`, `CNV_AMBIGUOUS`, a 5xx and an answer without data (`available: false`) are free. `resolve_reference` and `get_crop_catalog` never spend; `get_parcel_subparcels` is free when the parcel has none.
+- Only successful answers with data spend quota: a not found, a validation error, `CNV_COVERAGE`, `CNV_AMBIGUOUS`, a 5xx and an answer without data (`available: false`) are free. `resolve_reference` and `get_crop_catalog` never spend; `get_parcel_subparcels` and `get_parcel_sigpac` are free when the parcel has none.
 - Each successful call costs 1 unit, except `get_units` (one unit per unit served in the page, minimum 1) and `compare_parcels` (one per parcel found).
 - Every result carries a `quota` object read from that same response: `remaining`, `limit`, `resets_at`, `plan`, and when they apply `prepaid_overage`, `prepaid_balance_eur`, `overage_units_left`, `per_minute_remaining`, and on `get_units` with a contract per-finca cap `finca_cap` / `finca_cap_used`.
 - When the monthly quota runs out the API does not cut you off if you have prepaid balance: each extra unit is paid from it (top up at [parcelgps.com/app/developer](https://parcelgps.com/app/developer)). With the quota used up and no balance the call fails with `KEY_AUTH_004` (HTTP 429, never 402) and the error says whether to top up or upgrade, and when the quota resets.

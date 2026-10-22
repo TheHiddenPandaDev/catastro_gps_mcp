@@ -1,5 +1,11 @@
 # Publicar el MCP y los SDKs — checklist para Dani
 
+## Versión 2.2.0 (23-oct-2026): recintos SIGPAC
+
+Preparada, sin publicar (espera el OK de Dani). Orden: `catastrogps@2.2.0` → `parcelgps@2.2.0` →
+`catastro-gps-mcp@2.2.0` (npm, con `--otp`) → `mcp-publisher publish`. PyPI `catastrogps==2.2.0` / `parcelgps==2.2.0`
+y el tag Go `go/v2.2.0` desde `main` de `catastro_gps_sdks` una vez fusionado su PR.
+
 ## Versión 2.1.0 (21-oct-2026): subparcelas, colindantes, callejero y catálogo de cultivos
 
 npm nunca recibió 2.0.0 (se quedó en 1.3.2): 2.1.0 es la primera del MCP sobre `/v1`. Orden: `catastrogps@2.1.0` →
@@ -21,7 +27,7 @@ porque estos dependen de `catastrogps ^2.0.0`. Tras publicar `catastrogps@2.0.0`
 | npm | `npm login --auth-type=web` y `npm publish` en este repo | Sí (Dani) |
 | Registro oficial MCP | `mcp-publisher login dns ...` (o github) y `mcp-publisher publish` DESPUÉS de npm | Sí (Dani) |
 | Smithery | Rehacer el bundle `catastro-gps-mcp-2.1.0.mcpb` y `smithery mcp publish` (§5) | Sí (Dani) |
-| Glama | Relee GitHub solo; si la ficha no muestra las 19 tools en unos días, "Sync" en la ficha reclamada | No |
+| Glama | Relee GitHub solo; si la ficha no muestra las 20 tools en unos días, "Sync" en la ficha reclamada | No |
 | PulseMCP | Se alimenta del registro oficial | No |
 | mcp.so | Lee GitHub; si la ficha sigue con 11 tools, editarla desde la cuenta | No (revisar) |
 

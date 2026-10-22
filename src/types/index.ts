@@ -158,6 +158,48 @@ export interface SubparcelsData {
   subparcels: Subparcel[];
 }
 
+export const SIGPAC_COUNTRIES = ["ES", "PV", "NA"] as const;
+
+export interface SIGPACParcelKey {
+  province: number;
+  municipality: number;
+  aggregate: number;
+  zone: number;
+  polygon: number;
+  parcel: number;
+}
+
+export interface SIGPACEnclosure extends SIGPACParcelKey {
+  id: string;
+  enclosure: number;
+  landUseCode: string;
+  landUse?: string;
+  cropCode?: string;
+  useClass?: string;
+  useClassName?: string;
+  areaHa: number;
+  irrigationPct: number | null;
+  meanSlopePct: number | null;
+  altitudeM: number | null;
+  pastureEligibilityPct: number | null;
+  capRegion: number | null;
+  incidents: Array<{ code: number; description?: string }> | null;
+  geometry: unknown;
+}
+
+export interface SIGPACData {
+  reference: string;
+  country: string;
+  sigpacParcel: SIGPACParcelKey | null;
+  match?: "reference" | "point";
+  count: number;
+  totalAreaHa: number;
+  crs: string;
+  retrievedAt?: string;
+  source?: { name?: string; provider?: string; license?: string; attribution?: string; url?: string };
+  enclosures: SIGPACEnclosure[] | null;
+}
+
 export interface CropReference {
   code: string;
   source: string;
