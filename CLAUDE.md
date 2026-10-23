@@ -78,9 +78,9 @@ Desde 2.0.0 todo va contra la API v1 en inglés (`/v1/...`); las rutas `/api/...
 | `get_terrain` | `GET /v1/parcels/:ref/terrain?lat=&lng=` | Todos los de referencia menos HR; fuera de los 7, `lat`/`lng` obligatorios. Incluye `climate` (ERA5-Land) |
 | `get_ground_motion` | `GET /v1/parcels/:ref/ground-motion?lat=&lng=` | Igual que terrain (el backend usa `terrainLocation` en los dos) |
 | `get_agriculture` | `GET /v1/parcels/:ref/agriculture` | ES, PV, NA, PT, FR, IT, DE |
-| `get_market_data` | `GET /v1/parcels/:ref/market` | Ventas: FR (DVF), IT (OMI), DE (BORIS, solo NRW). ES/PV/NA: `zone_prices` (MIVAU/MAPA por provincia). PT: no |
+| `get_market_data` | `GET /v1/parcels/:ref/market` | Solo planes de pago (free → `403 KEY_PLAN_001`, no cobra). FR, IT, DE (solo NRW); ES/PV/NA: `zone_prices` por provincia. PT: no. La descripción no nombra fuentes |
 | `get_investment_score` | `GET /v1/parcels/:ref/score` | ES, PV, NA, PT, FR, IT, DE |
-| `get_value_history` | `GET /v1/parcels/:ref/value-history` | ES, PV, NA, PT, FR, IT, DE, AT (donde `GetByRefcat` graba) |
+| `get_value_history` | `GET /v1/parcels/:ref/value-history` (solo planes de pago) | ES, PV, NA, PT, FR, IT, DE, AT (donde `GetByRefcat` graba) |
 | `compare_parcels` | `POST /v1/parcels/compare` `{parcels:[{reference,country}]}` | ES, PT, FR, IT, DE (PV/NA caen al Catastro común y fallan) |
 | `get_parcel_subparcels` | `GET /v1/parcels/:ref/subparcels?country=&lang=` | ES (con forales), AT, DE, CZ, NL, FR, PT, SE, CH, FI, BE, IE, SI, EE, GR. De pago (0 si no hay); `503 SUB_001` no cobra |
 | `get_parcel_sigpac` | `GET /v1/parcels/:ref/sigpac?country=&lang=` | ES, PV, NA. Recintos SIGPAC con geometría opcional. De pago (0 si no hay); `503 SIG_001` no cobra |

@@ -33,15 +33,13 @@ export function registerGetMarket(server: McpServer, client: CatastroGPSClient):
     {
       title: "Get Market Data",
       description:
-        "Aggregated land and property price reference for the area around a parcel. Never returns " +
-        "individual sales. Price figures exist only in France (DVF recorded sales: average EUR/m2, " +
-        "number of sales, last sale date, estimated value), Italy (OMI zone values from Agenzia delle " +
-        "Entrate) and Germany (official Bodenrichtwert land value per m2, North Rhine-Westphalia only; " +
-        "elsewhere in Germany it answers available=false). For Spain (ES, PV, NA) it returns zone_prices: " +
-        "the official average prices of the parcel's province (housing per built m2 from MIVAU, farmland " +
-        "per hectare from MAPA), each with statistic, authority and period; no parcel-level sales. " +
-        "Portugal answers available=false. " +
-        "One API call.",
+        "Paid API plans only (Developer, Startup, Growth, Enterprise): with a Free-plan key it answers " +
+        "KEY_PLAN_001 and nothing is charged. Land and property price data for the area around a parcel; " +
+        "never returns individual sales. France: recorded sales (average EUR/m2, number of sales, last sale " +
+        "date, estimated value). Italy and North Rhine-Westphalia (Germany): official zone values per m2; " +
+        "elsewhere in Germany it answers available=false. Spain (ES, PV, NA): zone_prices with the official " +
+        "average prices of the parcel's province (housing per built m2, farmland per hectare) and their " +
+        "period; no parcel-level sales. Portugal answers available=false. One API call.",
       inputSchema: {
         reference: z.string().min(1).describe("Official cadastral reference"),
         country: z

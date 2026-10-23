@@ -10,6 +10,7 @@ export function registerGetValueHistory(server: McpServer, client: CatastroGPSCl
     {
       title: "Get Parcel History",
       description:
+        "Paid API plans only: with a Free-plan key it answers KEY_PLAN_001 and nothing is charged. " +
         "Snapshots of a parcel as the official cadastre reported it over time: area and land use, " +
         "at most one snapshot every 30 days. History starts the first time anyone looks the parcel " +
         "up through CatastroGPS (get_parcel) and grows from there, so a parcel never queried before " +
