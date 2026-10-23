@@ -45,11 +45,13 @@ export function registerGetMarket(server: McpServer, client: CatastroGPSClient):
       title: "Get Market Data",
       description:
         "Paid API plans only (Developer, Startup, Growth, Enterprise): with a Free-plan key it answers " +
-        "KEY_PLAN_001 and nothing is charged. Rural land only: prices agricultural, unbuilt parcels in Spain " +
-        "(ES, PV, NA) with crop_prices (EUR per hectare for each crop group of the parcel, with the number of " +
-        "sales behind it) and zone_prices.rural (the province farmland price per hectare). Housing, industrial " +
-        "or any built property is not supported and answers MKT_001 with nothing charged; so does rural land " +
-        "without a price, and any other country. One API call, charged only when a price comes back.",
+        "KEY_PLAN_001 and nothing is charged. Rural land only: prices agricultural parcels in Spain (ES, PV, NA), " +
+        "small agricultural buildings allowed (sheds, farm stores, ponds, greenhouses), with crop_prices (EUR per " +
+        "hectare for each crop group of the parcel, with the number of sales behind it) and zone_prices.rural (the " +
+        "province farmland price per hectare). It is the price of the land; buildings are not valued (price_note). " +
+        "Housing, industrial or any other non-agricultural property is not supported and answers MKT_001 with " +
+        "nothing charged; so does rural land without a price, and any other country. One API call, charged only " +
+        "when a price comes back.",
       inputSchema: {
         reference: z.string().min(1).describe("Official cadastral reference"),
         country: z
@@ -68,6 +70,7 @@ export function registerGetMarket(server: McpServer, client: CatastroGPSClient):
           granularity: d.granularity || null,
           crop_prices: cropPrices(d.cropPrices),
           zone_prices: zonePrices(d.zonePrices),
+          price_note: d.priceNote ?? null,
         }, quota);
       } catch (error) {
         return handleToolError(error);

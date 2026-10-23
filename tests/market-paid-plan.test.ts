@@ -73,7 +73,8 @@ describe("price tools on paid API plans only", () => {
     const market = tools.find((t) => t.name === "get_market_data")!;
 
     expect(market.description).toContain("Rural land only");
-    expect(market.description).toMatch(/Housing, industrial\s+or any built property is not supported and answers MKT_001 with nothing charged/);
+    expect(market.description).toMatch(/small agricultural buildings allowed/);
+    expect(market.description).toMatch(/Housing, industrial or any other non-agricultural property is not supported and answers MKT_001 with\s+nothing charged/);
     expect(market.description).not.toMatch(/housing per built m2|Italy|France|Germany|Portugal/);
   });
 
@@ -98,6 +99,7 @@ describe("price tools on paid API plans only", () => {
           pricePerHaEur: 45000, salesCount: 30, level: "agricultural_zone", zone: "46-03", period: "2026",
           authority: "Official statistics", statistic: "Official price per hectare by crop",
         }],
+        priceNote: "Price of the land per hectare by crop; buildings on the parcel are not valued.",
       },
     }));
 
@@ -110,13 +112,14 @@ describe("price tools on paid API plans only", () => {
       granularity: "parcel",
       crop_prices: [{ crop_group: "CIT", price_per_ha_eur: 45000, sales_count: 30, level: "agricultural_zone" }],
       zone_prices: { zone: "Valencia", rural: { price_per_ha_eur: 20000 } },
+      price_note: "Price of the land per hectare by crop; buildings on the parcel are not valued.",
     });
     expect(body.zone_prices.urban).toBeUndefined();
     expect(JSON.stringify(body)).not.toMatch(/authority|statistic|1650/);
   });
 
   it.each([
-    ["built or urban parcel", "not_unbuilt_rural_land", "9872023VH5797S0001WX"],
+    ["housing, industrial or urban parcel", "not_rural_land", "9872023VH5797S0001WX"],
     ["rural land without a price", "no_rural_price", "46063A00100121"],
     ["country without rural land prices", "country_not_covered", "75056000AB0001"],
   ])("explains MKT_001 for a %s and says nothing was charged", async (_case, reason, reference) => {

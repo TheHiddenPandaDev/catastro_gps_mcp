@@ -484,6 +484,7 @@ export interface MarketData {
   updatedAt?: string;
   zonePrices?: ZonePrices;
   cropPrices?: CropLandPrice[];
+  priceNote?: string;
 }
 
 export interface CropLandPrice {
