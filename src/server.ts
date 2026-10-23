@@ -14,6 +14,7 @@ import { registerCompareParcels } from "./tools/compare-parcels.js";
 import { registerGetUnits } from "./tools/get-units.js";
 import { registerResolveReference } from "./tools/resolve-reference.js";
 import { registerGetParcelSubparcels } from "./tools/get-parcel-subparcels.js";
+import { registerGetParcelSIGPAC } from "./tools/get-parcel-sigpac.js";
 import { registerGetCropCatalog } from "./tools/get-crop-catalog.js";
 import { registerGetNeighbors } from "./tools/get-neighbors.js";
 import { registerListProvinces } from "./tools/list-provinces.js";
@@ -47,6 +48,7 @@ export function createServer(config: ServerConfig): McpServer {
   registerGetUnits(server, client);
   registerResolveReference(server, client);
   registerGetParcelSubparcels(server, client);
+  registerGetParcelSIGPAC(server, client);
   registerGetCropCatalog(server, client);
   registerGetNeighbors(server, client);
   registerListProvinces(server, client);

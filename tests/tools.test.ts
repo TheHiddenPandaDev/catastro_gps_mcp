@@ -30,6 +30,7 @@ describe("MCP tools", () => {
       "get_market_data",
       "get_neighbors",
       "get_parcel",
+      "get_parcel_sigpac",
       "get_parcel_subparcels",
       "get_solar_potential",
       "get_terrain",
@@ -419,7 +420,7 @@ describe("MCP tools", () => {
   });
 
   describe("get_market_data", () => {
-    it("returns aggregated figures and drops individual sales", async () => {
+    it("calls the market endpoint and never passes housing figures or sales through", async () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
         success: true,
         data: {
@@ -427,35 +428,26 @@ describe("MCP tools", () => {
           pricePerM2Eur: 3100,
           salesCount: 4,
           lastSaleDate: "2025-06-01",
-          granularity: "parcel",
-          source: "DVF",
+          source: "Somewhere",
           sales: [{ priceEur: 180000, address: "1 RUE X" }],
           available: true,
-          status: "ok",
-          dataQuality: "real",
+          status: "available",
+          granularity: "parcel",
+          cropPrices: [{ cropGroup: "TAS", pricePerHaEur: 12000 }],
         },
       }));
 
-      const result = await client.callTool({ name: "get_market_data", arguments: { reference: "75056000AB0001", country: "FR" } });
+      const result = await client.callTool({ name: "get_market_data", arguments: { reference: "46063A00100121", country: "ES" } });
       const body = toolJson(result);
       const req = lastRequest(fetchMock);
 
       expect(req.method).toBe("GET");
-      expect(req.url.pathname).toBe("/v1/parcels/75056000AB0001/market");
-      expect(req.url.searchParams.get("country")).toBe("FR");
-      expect(body).toMatchObject({ available: true, has_price_figures: true, price_per_m2_eur: 3100, sales_count: 4, source: "DVF" });
-      expect(toolText(result)).not.toContain("priceEur");
-      expect(toolText(result)).not.toContain("1 RUE X");
-    });
-
-    it("says plainly when a country has no price figures", async () => {
-      fetchMock.mockResolvedValueOnce(jsonResponse({
-        success: true,
-        data: { available: true, status: "reference_only", source: "Registradores de la Propiedad", message: "No official data." },
-      }));
-
-      const body = toolJson(await client.callTool({ name: "get_market_data", arguments: { reference: "9872023VH5797S", country: "ES" } }));
-      expect(body).toMatchObject({ has_price_figures: false, price_per_m2_eur: null, note: "No official data." });
+      expect(req.url.pathname).toBe("/v1/parcels/46063A00100121/market");
+      expect(req.url.searchParams.get("country")).toBe("ES");
+      expect(body).toMatchObject({ available: true, crop_prices: [{ crop_group: "TAS", price_per_ha_eur: 12000 }] });
+      for (const leaked of ["priceEur", "1 RUE X", "3100", "250000", "Somewhere"]) {
+        expect(toolText(result)).not.toContain(leaked);
+      }
     });
 
     it("rejects countries the market endpoint does not cover", async () => {

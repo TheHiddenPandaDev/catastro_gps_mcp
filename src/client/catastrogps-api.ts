@@ -17,6 +17,7 @@ import type {
   UnitsPageData,
   ResolveData,
   SubparcelsData,
+  SIGPACData,
   CropCatalogData,
   NeighborsData,
   ProvincesData,
@@ -200,6 +201,10 @@ export class CatastroGPSClient {
 
   async getSubparcels(reference: string, country?: string, lang?: string): Promise<ApiResponse<SubparcelsData>> {
     return this.send("GET", this.parcelPath(reference, "/subparcels"), { country, lang });
+  }
+
+  async getSIGPAC(reference: string, country?: string, lang?: string): Promise<ApiResponse<SIGPACData>> {
+    return this.send("GET", this.parcelPath(reference, "/sigpac"), { country, lang });
   }
 
   async getNeighbors(reference: string, country?: string): Promise<ApiResponse<NeighborsData>> {

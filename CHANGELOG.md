@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.2.0 (2026-10-23)
+
+- New `get_parcel_sigpac`: every SIGPAC enclosure of a Spanish parcel (ES, PV, NA) from `GET /v1/parcels/{ref}/sigpac`: SIGPAC parcel key, `match`, `land_use_code`, `land_use` in `lang`, `crop_code`, `use_class`, `area_ha`, `irrigation_pct`, `mean_slope_pct`, `altitude_m`, `pasture_eligibility_pct`, `cap_region` (null when SIGPAC does not apply them), `incidents`, attribution and licence, outline with `include_geometry`. `SIG_001` (SIGPAC down) is explained as retryable and not charged.
+- `get_parcel_subparcels` states its real coverage: Spain, Austria, Germany, Czechia, the Netherlands, France, Portugal, Sweden, Switzerland, Finland, Belgium, Ireland, Slovenia, Estonia and Greece.
+
 ## 2.1.0 (2026-10-21)
 
 - New `get_parcel_subparcels`: every crop or land-use subparcel (`crop_code`, `crop` in `lang`, `crop_original`, `area_m2`, `kind`, `use_class`, `intensity`, `land_type`, `land_class`, `source`, outline with `include_geometry`). Spain (foral territories included), Austria, Estonia and Greece. `SUB_001` (source down) is explained as retryable and not charged.
