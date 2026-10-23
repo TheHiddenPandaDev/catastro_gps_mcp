@@ -68,27 +68,72 @@ describe("price tools on paid API plans only", () => {
     expect(toolText(result)).not.toContain("paid API plans");
   });
 
-  it("still serves the zone prices to a paid key", async () => {
+  it("describes get_market_data as rural land only, with MKT_001 for anything else", async () => {
+    const { tools } = await client.listTools();
+    const market = tools.find((t) => t.name === "get_market_data")!;
+
+    expect(market.description).toContain("Rural land only");
+    expect(market.description).toMatch(/Housing, industrial\s+or any built property is not supported and answers MKT_001 with nothing charged/);
+    expect(market.description).not.toMatch(/housing per built m2|Italy|France|Germany|Portugal/);
+  });
+
+  it("serves crop and rural zone prices of rural land to a paid key, never urban figures", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({
       success: true,
       data: {
         available: true,
-        status: "zone_reference",
+        status: "available",
         estimatedPriceEur: 0,
         pricePerM2Eur: 0,
         salesCount: 0,
+        granularity: "parcel",
         zonePrices: {
-          zone: "Madrid",
+          zone: "Valencia",
           zoneLevel: "province",
-          urban: { pricePerM2Eur: 4000, statistic: "Official housing price", authority: "Official statistics", period: "2026-Q1" },
+          urban: { pricePerM2Eur: 1650, statistic: "Official housing price", authority: "Official statistics", period: "2026-Q1" },
+          rural: { pricePerM2Eur: 2, pricePerHaEur: 20000, statistic: "Official farmland price", authority: "Official statistics", period: "2024" },
         },
+        cropPrices: [{
+          cropGroup: "CIT", cropGroupName: "Citrus", landUseCodes: ["NR"], basis: "cadastral_subparcels", areaHa: 1.5,
+          pricePerHaEur: 45000, salesCount: 30, level: "agricultural_zone", zone: "46-03", period: "2026",
+          authority: "Official statistics", statistic: "Official price per hectare by crop",
+        }],
       },
     }));
 
-    const result = await client.callTool({ name: "get_market_data", arguments: { reference: "0847106VK4704F" } });
-    const body = toolJson(result);
+    const result = await client.callTool({ name: "get_market_data", arguments: { reference: "46063A00100121" } });
+    const body = toolJson(result) as Record<string, any>;
 
     expect(result.isError).toBeUndefined();
-    expect(body).toMatchObject({ available: true, zone_prices: { zone: "Madrid", urban: { price_per_m2_eur: 4000 } } });
+    expect(body).toMatchObject({
+      available: true,
+      granularity: "parcel",
+      crop_prices: [{ crop_group: "CIT", price_per_ha_eur: 45000, sales_count: 30, level: "agricultural_zone" }],
+      zone_prices: { zone: "Valencia", rural: { price_per_ha_eur: 20000 } },
+    });
+    expect(body.zone_prices.urban).toBeUndefined();
+    expect(JSON.stringify(body)).not.toMatch(/authority|statistic|1650/);
+  });
+
+  it.each([
+    ["built or urban parcel", "not_unbuilt_rural_land", "9872023VH5797S0001WX"],
+    ["rural land without a price", "no_rural_price", "46063A00100121"],
+    ["country without rural land prices", "country_not_covered", "75056000AB0001"],
+  ])("explains MKT_001 for a %s and says nothing was charged", async (_case, reason, reference) => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({
+      success: false,
+      code: "MKT_001",
+      message: "A price cannot be estimated for this parcel.",
+      details: { reference, feature: "market", reason },
+    }, 422));
+
+    const result = await client.callTool({ name: "get_market_data", arguments: { reference } });
+    const text = toolText(result);
+
+    expect(result.isError).toBe(true);
+    expect(text).toMatch(/^MKT_001: No price can be estimated for this parcel/);
+    expect(text).toContain("only covers rural land");
+    expect(text).toContain("Nothing was charged");
+    expect(text).toContain(reason);
   });
 });

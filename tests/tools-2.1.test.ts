@@ -245,41 +245,43 @@ describe("tools added in 2.1", () => {
       });
     });
 
-    it("get_market_data returns Spanish province prices", async () => {
+    it("get_market_data returns the rural province price without the urban one", async () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
         success: true,
         data: {
-          available: true, status: "complete", estimatedPriceEur: 0, pricePerM2Eur: 0, salesCount: 0,
+          available: true, status: "available", estimatedPriceEur: 0, pricePerM2Eur: 0, salesCount: 0, granularity: "province",
           zonePrices: {
             zone: "VALENCIA", zoneLevel: "province",
-            urban: { pricePerM2Eur: 1720, statistic: "mean", authority: "MIVAU", period: "2026-Q1" },
-            rural: { pricePerM2Eur: 2.1, pricePerHaEur: 21000, statistic: "mean", authority: "MAPA", period: "2024" },
+            urban: { pricePerM2Eur: 1720, statistic: "mean", authority: "Official statistics", period: "2026-Q1" },
+            rural: { pricePerM2Eur: 2.1, pricePerHaEur: 21000, statistic: "mean", authority: "Official statistics", period: "2024" },
           },
         },
       }));
       const body = toolJson(await client.callTool({ name: "get_market_data", arguments: { reference: "46063A00100121" } }));
       expect(body).toMatchObject({
-        has_price_figures: false,
+        granularity: "province",
+        crop_prices: [],
         zone_prices: {
           zone: "VALENCIA",
           zone_level: "province",
           municipality: null,
-          urban: { price_per_m2_eur: 1720, authority: "MIVAU" },
           rural: { price_per_ha_eur: 21000, period: "2024" },
         },
       });
+      expect(body.zone_prices.urban).toBeUndefined();
     });
 
     it("get_market_data copes with partial or missing zone prices", async () => {
       fetchMock.mockResolvedValueOnce(jsonResponse({
         success: true,
-        data: { available: true, status: "complete", estimatedPriceEur: 1, pricePerM2Eur: 2, salesCount: 1, zonePrices: { zone: "Z", zoneLevel: "province" } },
+        data: { available: true, status: "available", zonePrices: { zone: "Z", zoneLevel: "province" } },
       }));
-      const body = toolJson(await client.callTool({ name: "get_market_data", arguments: { reference: "750560000AB0001" } }));
-      expect(body).toMatchObject({ zone_prices: { zone: "Z", urban: null, rural: null } });
+      const body = toolJson(await client.callTool({ name: "get_market_data", arguments: { reference: "46063A00100121" } }));
+      expect(body).toMatchObject({ zone_prices: { zone: "Z", rural: null } });
       fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: { available: false } }));
       const none = toolJson(await client.callTool({ name: "get_market_data", arguments: { reference: "X" } }));
       expect(none.zone_prices).toBeNull();
+      expect(none.crop_prices).toEqual([]);
     });
   });
 });

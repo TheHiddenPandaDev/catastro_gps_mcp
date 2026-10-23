@@ -18,6 +18,7 @@ const FRIENDLY_MESSAGES: Record<string, string> = {
   UNAUTHORIZED: `Missing or invalid API key. Get one at ${PRICING_URL}`,
   PRO_REQUIRED: `This endpoint needs a developer API key. Get one at ${PRICING_URL}`,
   KEY_PLAN_001: `Price data (market and value history) is only available on paid API plans. Nothing was charged. Upgrade at ${PRICING_URL}`,
+  MKT_001: "No price can be estimated for this parcel: price data only covers rural land (agricultural, unbuilt parcels in Spain). Housing, industrial or any built property is not supported, and rural land without a price gives the same answer. Nothing was charged.",
   NOT_FOUND: "Nothing found. Check the reference (or address) and the country code.",
   VALIDATION_ERROR: "Invalid input. Check the reference format for this country.",
   CNV_COVERAGE: "That reference or point is in a country that is not covered yet.",

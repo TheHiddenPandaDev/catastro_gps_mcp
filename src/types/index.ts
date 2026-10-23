@@ -483,6 +483,20 @@ export interface MarketData {
   dataQuality?: string;
   updatedAt?: string;
   zonePrices?: ZonePrices;
+  cropPrices?: CropLandPrice[];
+}
+
+export interface CropLandPrice {
+  cropGroup: string;
+  cropGroupName?: string;
+  landUseCodes?: string[];
+  basis?: string;
+  areaHa?: number;
+  pricePerHaEur: number;
+  salesCount?: number;
+  level?: string;
+  zone?: string;
+  period?: string;
 }
 
 export interface OfficialZonePrice {
