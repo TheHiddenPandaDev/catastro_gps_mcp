@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } 
 import { createServer as createHttpServer, request, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { apiKeyFromRequest, createRemoteHandler, describeRpc, DEVELOPERS_URL, MAX_BODY_BYTES } from "../src/remote.js";
-import { SERVER_VERSION } from "../src/version.js";
+import { REMOTE_USER_AGENT, SERVER_VERSION } from "../src/version.js";
 import { installFetchMock, jsonResponse, lastRequest, TEST_CONFIG } from "./helpers.js";
 
 const ENDPOINT = { apiUrl: TEST_CONFIG.apiUrl, timeout: TEST_CONFIG.timeout };
@@ -203,6 +203,18 @@ describe("remote MCP over HTTP", () => {
     expect(res.status).toBe(200);
     expect(JSON.parse(res.body).result.isError).toBeFalsy();
     expect(lastRequest(fetchMock).headers["X-API-Key"]).toBe("pk_live_caller");
+  });
+
+  it("tells the API the call came through the remote server", async () => {
+    const fetchMock = installFetchMock();
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ success: true, data: { locale: "es", locales: [], sources: [], count: 0, useClasses: [], crops: [] } }),
+    );
+
+    await rpc("tools/call", { name: "get_crop_catalog", arguments: {} }, { Authorization: "Bearer pk_live_caller" });
+
+    expect(REMOTE_USER_AGENT).toBe(`catastro-gps-mcp-remote/${SERVER_VERSION}`);
+    expect(lastRequest(fetchMock).headers["User-Agent"]).toBe(REMOTE_USER_AGENT);
   });
 
   it("keeps two callers apart", async () => {

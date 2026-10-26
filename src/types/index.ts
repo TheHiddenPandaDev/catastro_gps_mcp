@@ -586,4 +586,5 @@ export interface ServerConfig {
   apiKey: string;
   apiUrl: string;
   timeout: number;
+  userAgent?: string;
 }
