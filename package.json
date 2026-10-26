@@ -21,7 +21,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node build/index.js",
-    "start:sse": "node build/sse.js",
+    "start:http": "node build/http.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "tsc --noEmit",

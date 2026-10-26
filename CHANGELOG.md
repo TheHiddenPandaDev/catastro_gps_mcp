@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Remote server at `https://mcp.parcelgps.com/mcp` (Streamable HTTP, stateless): nothing to install. Each request runs on the caller's own key, taken from `Authorization: Bearer`, `X-API-Key` or `?api_key=` for clients that only take a URL; never on a server key. `server.json` declares it under `remotes`.
+- `build/sse.js` is gone: the remote server replaces the SSE transport, which was never deployed.
+
 ## 2.2.0 (2026-10-23)
 
 - New `get_parcel_sigpac`: every SIGPAC enclosure of a Spanish parcel (ES, PV, NA) from `GET /v1/parcels/{ref}/sigpac`: SIGPAC parcel key, `match`, `land_use_code`, `land_use` in `lang`, `crop_code`, `use_class`, `area_ha`, `irrigation_pct`, `mean_slope_pct`, `altitude_m`, `pasture_eligibility_pct`, `cap_region` (null when SIGPAC does not apply them), `incidents`, attribution and licence, outline with `include_geometry`. `SIG_001` (SIGPAC down) is explained as retryable and not charged.

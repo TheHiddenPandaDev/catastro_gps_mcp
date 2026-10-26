@@ -17,6 +17,39 @@ Get a key at **[parcelgps.com/developers](https://www.parcelgps.com/developers)*
 
 ## Install
 
+### Remote server, nothing to install
+
+The server runs at **`https://mcp.parcelgps.com/mcp`** (Streamable HTTP). Every request runs on your own key, so it
+counts against your own quota.
+
+**Claude Code**
+
+```bash
+claude mcp add --transport http parcel-gps https://mcp.parcelgps.com/mcp --header "Authorization: Bearer pk_live_your_key_here"
+```
+
+**Cursor, VS Code, Windsurf** (`mcp.json`)
+
+```json
+{
+  "mcpServers": {
+    "parcel-gps": {
+      "url": "https://mcp.parcelgps.com/mcp",
+      "headers": { "Authorization": "Bearer pk_live_your_key_here" }
+    }
+  }
+}
+```
+
+**Claude.ai and ChatGPT custom connectors**, or any client that only takes a URL: put the key in the URL and keep
+that URL private.
+
+```
+https://mcp.parcelgps.com/mcp?api_key=pk_live_your_key_here
+```
+
+The key is also accepted in an `X-API-Key` header.
+
 ### Claude Desktop
 
 ```json
@@ -191,6 +224,7 @@ npm test
 npm run test:coverage
 npm run build
 CATASTROGPS_API_KEY=pk_live_xxx node build/index.js
+node build/http.js
 ```
 
 ## License

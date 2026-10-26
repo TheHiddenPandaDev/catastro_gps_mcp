@@ -20,7 +20,8 @@ mcp/
   src/
     index.ts                   → Entrypoint (stdio transport)
     server.ts                  → Setup del server MCP + registro de tools
-    sse.ts                     → Transporte SSE/HTTP
+    http.ts                    → Entrypoint remoto (Streamable HTTP, sin estado) — desplegado en Fly `parcelgps-mcp`
+    remote.ts                  → Handler HTTP: clave del cliente (Bearer / X-API-Key / ?api_key), log por tool sin clave
     client/
       catastrogps-api.ts       → Cliente HTTP hacia el backend Go
     tools/
@@ -59,9 +60,9 @@ mcp/
 |------|-----------|
 | Runtime | Node.js + TypeScript |
 | SDK | `@modelcontextprotocol/sdk` |
-| Transporte | stdio (publicado). `sse.ts` existe pero NO está desplegado y usa la key del servidor para todos |
+| Transporte | stdio (npm) + Streamable HTTP remoto en `https://mcp.parcelgps.com/mcp` (Fly `parcelgps-mcp`, ams). Cada petición usa la clave del cliente; nunca una del servidor. Deploy: `flyctl deploy --remote-only` |
 | Cliente HTTP | Fetch nativo |
-| Auth | API key en header `X-API-Key` |
+| Auth | Hacia el backend: `X-API-Key`. Remoto: `Authorization: Bearer`, `X-API-Key` o `?api_key=` |
 
 ## Tools disponibles (2.2.0)
 
