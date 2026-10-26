@@ -5,6 +5,8 @@
 - **Registro oficial**: `server.json` lleva `remotes` (`https://mcp.parcelgps.com/mcp`). Como npm sigue en 2.2.0, se publica
   una entrada `2.2.1` con el paquete npm `2.2.0` + el remoto: `server.json` con `"version": "2.2.1"` y
   `mcp-publisher login dns …` + `mcp-publisher publish` (§3a). Lo lanza Dani: el clasificador me bloquea `publish`.
+  **Publicada el 26-oct**: el registro va en 2.2.1, así que la próxima versión del MCP (npm + registro) tiene que ser
+  2.2.2 o superior.
   PulseMCP (altas en pausa desde 3-sep) y los conectores de Glama lo recogen del registro.
 - **Glama**: ficha `TheHiddenPandaDev/catastro_gps_mcp` corregida (29 países, URL online) y conector «Parcel GPS» enviado a
   revisión en glama.ai/mcp/connectors. Sin clave el servidor responde `initialize` y `tools/list`, que es lo que mira su
