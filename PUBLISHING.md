@@ -13,7 +13,7 @@
   comprobación de salud.
 - **Smithery**: no acepta altas ni cambios desde oct-2026 («Updating servers has been removed»); su pasarela cierra el
   31-oct. La ficha local `thehiddenpanda/catastro-gps` se queda como está.
-- **mcp.so**: solo alta de pago (39 $); pendiente de decisión de Dani.
+- **mcp.so**: solo alta de pago (39 $). Dani, 26-oct: no se paga.
 
 ## Versión 2.2.0 (23-oct-2026): recintos SIGPAC
 
