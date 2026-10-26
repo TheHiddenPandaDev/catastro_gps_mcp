@@ -29,6 +29,11 @@ export function apiKeyFromRequest(headers: IncomingHttpHeaders, url: URL): strin
   return url.searchParams.get("api_key")?.trim() || undefined;
 }
 
+export function callsATool(body: unknown): boolean {
+  const messages = (Array.isArray(body) ? body : [body]) as RpcMessage[];
+  return messages.some((m) => m?.method === "tools/call");
+}
+
 export function describeRpc(body: unknown): string {
   const messages = (Array.isArray(body) ? body : [body]) as RpcMessage[];
   return messages
@@ -73,6 +78,10 @@ function setCors(res: ServerResponse): void {
   res.setHeader("Access-Control-Expose-Headers", "Mcp-Session-Id");
 }
 
+function discoveryConfig(endpoint: EndpointConfig, body: unknown) {
+  return callsATool(body) ? null : { ...endpoint, apiKey: "" };
+}
+
 async function handleMcpPost(req: IncomingMessage, res: ServerResponse, endpoint: EndpointConfig, url: URL, log: Log) {
   const startedAt = Date.now();
   let body: unknown;
@@ -85,7 +94,7 @@ async function handleMcpPost(req: IncomingMessage, res: ServerResponse, endpoint
   }
   const rpc = describeRpc(body);
 
-  const config = sessionConfig(endpoint, apiKeyFromRequest(req.headers, url));
+  const config = sessionConfig(endpoint, apiKeyFromRequest(req.headers, url)) ?? discoveryConfig(endpoint, body);
   if (!config) {
     rpcError(
       res,

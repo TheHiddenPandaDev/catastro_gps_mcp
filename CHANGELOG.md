@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Remote server at `https://mcp.parcelgps.com/mcp` (Streamable HTTP, stateless): nothing to install. Each request runs on the caller's own key, taken from `Authorization: Bearer`, `X-API-Key` or `?api_key=` for clients that only take a URL; never on a server key. `server.json` declares it under `remotes`.
+- Without a key the remote server still answers `initialize` and `tools/list`, so directories and connector setups can show the tools; any tool call without a key gets 401 with the link to a free key.
 - The remote server calls the API as `catastro-gps-mcp-remote/<version>`, so its traffic is counted apart from the npm server.
 - `build/sse.js` is gone: the remote server replaces the SSE transport, which was never deployed.
 
