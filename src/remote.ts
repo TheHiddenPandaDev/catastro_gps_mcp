@@ -1,7 +1,7 @@
 import type { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "node:http";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createServer, sessionConfig, type EndpointConfig } from "./server.js";
-import { SERVER_NAME, SERVER_VERSION } from "./version.js";
+import { REMOTE_USER_AGENT, SERVER_NAME, SERVER_VERSION } from "./version.js";
 
 export const MCP_PATH = "/mcp";
 export const DEVELOPERS_URL = "https://www.parcelgps.com/developers";
@@ -98,7 +98,7 @@ async function handleMcpPost(req: IncomingMessage, res: ServerResponse, endpoint
     return;
   }
 
-  const server = createServer(config);
+  const server = createServer({ ...config, userAgent: REMOTE_USER_AGENT });
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
   res.on("close", () => {
     void transport.close();

@@ -119,12 +119,14 @@ export class CatastroGPSClient {
   private readonly apiKey: string;
   private readonly baseUrl: string;
   private readonly timeout: number;
+  private readonly userAgent: string;
   public lastQuota?: Quota;
 
   constructor(config: ServerConfig) {
     this.apiKey = config.apiKey;
     this.baseUrl = config.apiUrl.replace(/\/$/, "");
     this.timeout = config.timeout;
+    this.userAgent = config.userAgent ?? USER_AGENT;
   }
 
   private buildUrl(path: string, params?: QueryParams): string {
@@ -143,7 +145,7 @@ export class CatastroGPSClient {
     const headers: Record<string, string> = {
       "X-API-Key": this.apiKey,
       Accept: "application/json",
-      "User-Agent": USER_AGENT,
+      "User-Agent": this.userAgent,
     };
     if (body !== undefined) {
       headers["Content-Type"] = "application/json";
