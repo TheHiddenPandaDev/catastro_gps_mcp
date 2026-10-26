@@ -7,9 +7,9 @@ const PRICING_URL = "https://www.parcelgps.com/developers";
 const TOP_UP_URL = "https://parcelgps.com/app/developer";
 
 const FRIENDLY_MESSAGES: Record<string, string> = {
-  KEY_AUTH_001: "Invalid API key format. Check CATASTROGPS_API_KEY.",
-  KEY_AUTH_002: "Unknown API key. Check CATASTROGPS_API_KEY.",
-  KEY_AUTH_003: "Invalid API key. Check CATASTROGPS_API_KEY.",
+  KEY_AUTH_001: "Invalid API key format. Check CATASTROGPS_API_KEY or the key of your remote connector.",
+  KEY_AUTH_002: "Unknown API key. Check CATASTROGPS_API_KEY or the key of your remote connector.",
+  KEY_AUTH_003: "Invalid API key. Check CATASTROGPS_API_KEY or the key of your remote connector.",
   KEY_AUTH_004: `Monthly quota used up. Upgrade at ${PRICING_URL} or turn on prepaid overage and top up at ${TOP_UP_URL}`,
   KEY_AUTH_005: "The API could not verify your organization. Try again later.",
   KEY_RATE_001: "Too many requests. Slow down and retry.",

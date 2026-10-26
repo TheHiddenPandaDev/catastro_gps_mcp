@@ -10,3 +10,6 @@ PUBLISHING.md
 tsconfig.json
 build/**/*.map
 build/**/*.d.ts
+Dockerfile
+.dockerignore
+fly.toml
