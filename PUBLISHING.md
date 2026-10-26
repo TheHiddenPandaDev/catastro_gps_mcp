@@ -1,5 +1,18 @@
 # Publicar el MCP y los SDKs — checklist para Dani
 
+## Servidor online (26-oct-2026): directorios
+
+- **Registro oficial**: `server.json` lleva `remotes` (`https://mcp.parcelgps.com/mcp`). Como npm sigue en 2.2.0, se publica
+  una entrada `2.2.1` con el paquete npm `2.2.0` + el remoto: `server.json` con `"version": "2.2.1"` y
+  `mcp-publisher login dns …` + `mcp-publisher publish` (§3a). Lo lanza Dani: el clasificador me bloquea `publish`.
+  PulseMCP (altas en pausa desde 3-sep) y los conectores de Glama lo recogen del registro.
+- **Glama**: ficha `TheHiddenPandaDev/catastro_gps_mcp` corregida (29 países, URL online) y conector «Parcel GPS» enviado a
+  revisión en glama.ai/mcp/connectors. Sin clave el servidor responde `initialize` y `tools/list`, que es lo que mira su
+  comprobación de salud.
+- **Smithery**: no acepta altas ni cambios desde oct-2026 («Updating servers has been removed»); su pasarela cierra el
+  31-oct. La ficha local `thehiddenpanda/catastro-gps` se queda como está.
+- **mcp.so**: solo alta de pago (39 $); pendiente de decisión de Dani.
+
 ## Versión 2.2.0 (23-oct-2026): recintos SIGPAC
 
 Preparada, sin publicar (espera el OK de Dani). Orden: `catastrogps@2.2.0` → `parcelgps@2.2.0` →
