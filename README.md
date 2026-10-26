@@ -19,8 +19,8 @@ Get a key at **[parcelgps.com/developers](https://www.parcelgps.com/developers)*
 
 ### Remote server, nothing to install
 
-The server runs at **`https://mcp.parcelgps.com/mcp`** (Streamable HTTP). Every request runs on your own key, so it
-counts against your own quota.
+The server runs at **`https://mcp.parcelgps.com/mcp`** (Streamable HTTP). Every tool call runs on your own key, so it
+counts against your own quota. Listing the tools needs no key.
 
 **Claude Code**
 

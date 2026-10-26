@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from "vitest";
 import { createServer as createHttpServer, request, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
-import { apiKeyFromRequest, createRemoteHandler, describeRpc, DEVELOPERS_URL, MAX_BODY_BYTES } from "../src/remote.js";
+import { apiKeyFromRequest, callsATool, createRemoteHandler, describeRpc, DEVELOPERS_URL, MAX_BODY_BYTES } from "../src/remote.js";
 import { REMOTE_USER_AGENT, SERVER_VERSION } from "../src/version.js";
 import { installFetchMock, jsonResponse, lastRequest, TEST_CONFIG } from "./helpers.js";
 
@@ -96,6 +96,19 @@ describe("apiKeyFromRequest", () => {
   });
 });
 
+describe("callsATool", () => {
+  it("spots a tool call alone or inside a batch", () => {
+    expect(callsATool({ method: "tools/call" })).toBe(true);
+    expect(callsATool([{ method: "tools/list" }, { method: "tools/call" }])).toBe(true);
+  });
+
+  it("lets discovery and odd bodies through", () => {
+    expect(callsATool({ method: "initialize" })).toBe(false);
+    expect(callsATool([{ method: "tools/list" }, null])).toBe(false);
+    expect(callsATool(null)).toBe(false);
+  });
+});
+
 describe("describeRpc", () => {
   it("names the tool of a call", () => {
     expect(describeRpc({ method: "tools/call", params: { name: "get_parcel" } })).toBe("tools/call:get_parcel");
@@ -143,19 +156,41 @@ describe("remote MCP over HTTP", () => {
     }
   });
 
-  it("refuses a request without a key and points at the free tier", async () => {
+  it("refuses a tool call without a key and points at the free tier", async () => {
     const fetchMock = installFetchMock();
-    const res = await rpc("initialize", initializeParams, {});
+    const res = await rpc("tools/call", { name: "get_parcel", arguments: { reference: "9872023VH5797S0001WX" } }, {});
 
     expect(res.status).toBe(401);
     expect(JSON.parse(res.body).error.message).toContain(DEVELOPERS_URL);
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(logs).toEqual([expect.stringMatching(/^POST \/mcp initialize:claude-ai\/1\.0 401 \d+ms$/)]);
+    expect(logs).toEqual([expect.stringMatching(/^POST \/mcp tools\/call:get_parcel 401 \d+ms$/)]);
+  });
+
+  it("refuses a batch without a key when any message calls a tool", async () => {
+    const batch = JSON.stringify([
+      { jsonrpc: "2.0", id: 1, method: "tools/list" },
+      { jsonrpc: "2.0", id: 2, method: "tools/call", params: { name: "get_crop_catalog", arguments: {} } },
+    ]);
+    const res = await send("POST", "/mcp", MCP_HEADERS, batch);
+
+    expect(res.status).toBe(401);
+  });
+
+  it("lets a client without a key initialize and list the tools so directories and connectors can show them", async () => {
+    const fetchMock = installFetchMock();
+
+    const init = await rpc("initialize", initializeParams, {});
+    const list = await rpc("tools/list", {}, {});
+
+    expect(init.status).toBe(200);
+    expect(list.status).toBe(200);
+    expect(JSON.parse(list.body).result.tools.length).toBeGreaterThan(0);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("never falls back to a server key", async () => {
     process.env.CATASTROGPS_API_KEY = "pk_live_server_key";
-    const res = await rpc("initialize", initializeParams, {});
+    const res = await rpc("tools/call", { name: "get_crop_catalog", arguments: {} }, {});
     delete process.env.CATASTROGPS_API_KEY;
 
     expect(res.status).toBe(401);
