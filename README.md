@@ -11,7 +11,7 @@ Ask your agent for a parcel by its cadastral reference, by a point on the map or
 - **Address search in 27 countries.** `"Calle Gran Via 31, Madrid"`, `"8 boulevard du Port, Amiens"` or `"Damrak 1, 1012 LG Amsterdam"` become ranked parcels.
 - **Buildings, not only plots.** `get_units` lists every dwelling, shop and garage of a Spanish building with floor, door, area and participation coefficient.
 - **Your quota in every answer.** Each result carries the monthly quota left, the prepaid balance and the per-minute headroom.
-- **Free tier for good.** 250 calls a month at no cost, no card. Failed lookups are not charged.
+- **Free tier for good.** 25 calls a month at no cost, no card. Failed lookups are not charged.
 
 Get a key at **[parcelgps.com/developers](https://www.parcelgps.com/developers)**.
 
@@ -199,7 +199,7 @@ The same key works for this server, the REST API and the SDKs ([`catastrogps`](h
 
 | Plan | Price | Calls / month |
 |------|-------|---------------|
-| Free | €0, forever | 250 |
+| Free | €0, forever | 25 |
 | Developer | €19 / month | 5,000 |
 | Startup | €49 / month | 15,000 |
 | Growth | €99 / month | 50,000 |
