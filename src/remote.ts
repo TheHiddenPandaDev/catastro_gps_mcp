@@ -101,7 +101,7 @@ async function handleMcpPost(req: IncomingMessage, res: ServerResponse, endpoint
       401,
       JSONRPC_SERVER_ERROR,
       `Your own Parcel GPS API key is required: send "Authorization: Bearer <key>" or add ?api_key=<key> ` +
-        `to the URL. Free key (250 calls/month): ${DEVELOPERS_URL}`,
+        `to the URL. Free key (25 calls/month): ${DEVELOPERS_URL}`,
     );
     log(`POST ${MCP_PATH} ${rpc} 401 ${Date.now() - startedAt}ms`);
     return;

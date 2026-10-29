@@ -4,7 +4,7 @@
   "display_name": "Catastro GPS",
   "version": "2.2.0",
   "description": "Cadastral parcels from 29 European countries (including the Basque Country and Navarre foral cadastres): reference, coordinates, address in 27 countries, Spanish dwellings, geometry, terrain, climate, ground motion, solar, agriculture, crop subparcels, SIGPAC enclosures, neighbours, market, score and comparison.",
-  "long_description": "One API key for official cadastral data from 29 European countries, including the Basque Country and Navarre foral cadastres: by cadastral reference in 27 and by coordinates in all 29 (Germany: 15 of 16 Lander, not Bavaria; Portugal: not Lisbon, Porto or Coimbra; Croatia through ARKOD and Sweden through agricultural parcels; Scotland by coordinates). Look up parcels by reference or coordinates, turn a postal address into ranked parcels in Spain and 26 more countries, list every dwelling of a Spanish building, get parcel outlines as GeoJSON, read relief, protected areas, ERA5-Land climate normals and satellite ground motion (EGMS), estimate solar and agricultural potential, read aggregated market prices (France, Italy, Germany), score and compare parcels, and follow how a parcel changes over time. Every result carries your remaining monthly quota and prepaid balance. Free tier: 250 calls per month, and failed lookups are not charged.",
+  "long_description": "One API key for official cadastral data from 29 European countries, including the Basque Country and Navarre foral cadastres: by cadastral reference in 27 and by coordinates in all 29 (Germany: 15 of 16 Lander, not Bavaria; Portugal: not Lisbon, Porto or Coimbra; Croatia through ARKOD and Sweden through agricultural parcels; Scotland by coordinates). Look up parcels by reference or coordinates, turn a postal address into ranked parcels in Spain and 26 more countries, list every dwelling of a Spanish building, get parcel outlines as GeoJSON, read relief, protected areas, ERA5-Land climate normals and satellite ground motion (EGMS), estimate solar and agricultural potential, read aggregated market prices (France, Italy, Germany), score and compare parcels, and follow how a parcel changes over time. Every result carries your remaining monthly quota and prepaid balance. Free tier: 25 calls per month, and failed lookups are not charged.",
   "author": {
     "name": "The Hidden Panda",
     "email": "soporte@catastrogps.es",
@@ -128,7 +128,7 @@
     "api_key": {
       "type": "string",
       "title": "API key",
-      "description": "Get a free key (250 calls/month, failed lookups are free) at https://www.catastrogps.es/developers",
+      "description": "Get a free key (25 calls/month, failed lookups are free) at https://www.catastrogps.es/developers",
       "sensitive": true,
       "required": true
     },
