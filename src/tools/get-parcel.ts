@@ -1,7 +1,12 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CatastroGPSClient } from "../client/catastrogps-api.js";
-import { COUNTRY_CODES_TEXT, CROP_LANGUAGES, SUPPORTED_COUNTRIES } from "../types/index.js";
+import {
+  COORDINATES_ONLY_MESSAGES,
+  COUNTRY_CODES_TEXT,
+  CROP_LANGUAGES,
+  SUPPORTED_COUNTRIES,
+} from "../types/index.js";
 import { compact, errorResult, handleToolError, jsonResult } from "./shared.js";
 
 export function registerGetParcel(server: McpServer, client: CatastroGPSClient): void {
@@ -16,7 +21,8 @@ export function registerGetParcel(server: McpServer, client: CatastroGPSClient):
         "the official source provides them. The country is detected from the reference format or " +
         "the point when omitted. Where the parcel has crop or land-use parts it also returns their count " +
         "and a crop summary (crop and share of the area); the full list with outlines is " +
-        "get_parcel_subparcels. United Kingdom: coordinates only. Codes: " + COUNTRY_CODES_TEXT + ".",
+        "get_parcel_subparcels. United Kingdom (Scotland) and Croatia (ARKOD agricultural parcels only, no " +
+        "cadastral parcel numbers): coordinates only. Codes: " + COUNTRY_CODES_TEXT + ".",
       inputSchema: {
         reference: z
           .string()
@@ -35,8 +41,8 @@ export function registerGetParcel(server: McpServer, client: CatastroGPSClient):
     async ({ reference, latitude, longitude, country, lang }) => {
       try {
         if (reference) {
-          if (country === "UK") {
-            return errorResult("MCP_002", "United Kingdom parcels can only be looked up by coordinates.");
+          if (country === "UK" || country === "HR") {
+            return errorResult("MCP_002", COORDINATES_ONLY_MESSAGES[country]);
           }
           const { data: d, quota } = await client.getParcelByReference(reference, country, lang);
           return jsonResult(compact({

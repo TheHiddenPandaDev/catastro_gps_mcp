@@ -54,13 +54,14 @@ describe("MCP tools", () => {
     expect(getParcel.description).toContain("29 European countries");
   });
 
-  it("keeps the United Kingdom out of reference-based tools", async () => {
+  it("keeps the United Kingdom and Croatia out of reference-based tools", async () => {
     const { tools } = await client.listTools();
     const boundaries = tools.find((t) => t.name === "get_boundaries")!;
     const country = (boundaries.inputSchema.properties as Record<string, { enum: string[] }>).country;
 
-    expect(country.enum).toHaveLength(30);
+    expect(country.enum).toHaveLength(29);
     expect(country.enum).not.toContain("UK");
+    expect(country.enum).not.toContain("HR");
   });
 
   describe("get_parcel", () => {
