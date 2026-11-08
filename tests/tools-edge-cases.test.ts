@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { REFERENCE_COUNTRIES } from "../src/types/index.js";
+import { COORDINATES_ONLY_COUNTRIES, REFERENCE_COUNTRIES } from "../src/types/index.js";
 import { connectClient, installFetchMock, jsonResponse, lastRequest, toolText } from "./helpers.js";
 
 describe("tool edge cases", () => {
@@ -25,6 +25,21 @@ describe("tool edge cases", () => {
 
     expect(result.isError).toBeFalsy();
     expect(lastRequest(fetchMock).url.searchParams.get("country")).toBe(country);
+  });
+
+  it.each(COORDINATES_ONLY_COUNTRIES)("get_parcel refuses a reference in coordinates-only %s", async (country) => {
+    const result = await client.callTool({ name: "get_parcel", arguments: { reference: "5244/3", country } });
+
+    expect(result.isError).toBe(true);
+    expect(toolText(result)).toContain("coordinates");
+    expect(toolText(result)).not.toContain("Italy");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("explains that Croatia means ARKOD farmland", async () => {
+    const result = await client.callTool({ name: "get_parcel", arguments: { reference: "5244/3", country: "HR" } });
+
+    expect(toolText(result)).toContain("ARKOD");
   });
 
   it("prefers the reference when both reference and coordinates are given", async () => {

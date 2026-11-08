@@ -12,7 +12,7 @@ export function registerGetBoundaries(server: McpServer, client: CatastroGPSClie
       description:
         "Get the outline of a cadastral parcel as GeoJSON and/or a [lat, lng] ring, plus its " +
         "centroid and area, for mapping and GIS work. Accepts references from the same 30 " +
-        "codes as get_parcel (every covered country except the United Kingdom, which is coordinates only).",
+        "codes as get_parcel (every covered country except the United Kingdom and Croatia, which are coordinates only).",
       inputSchema: {
         reference: z.string().min(1).describe("Official cadastral reference"),
         country: z

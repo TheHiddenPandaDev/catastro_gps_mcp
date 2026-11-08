@@ -6,14 +6,20 @@ export const SUPPORTED_COUNTRIES = [
 ] as const;
 export type CountryCode = (typeof SUPPORTED_COUNTRIES)[number];
 
-export const COORDINATES_ONLY_COUNTRIES = ["UK"] as const;
+export const COORDINATES_ONLY_COUNTRIES = ["UK", "HR"] as const;
 
 export const REFERENCE_COUNTRIES = [
   "ES", "PV", "NA", "PT", "FR", "IT", "DE", "AT", "CH", "LI",
-  "BE", "NL", "LU", "PL", "CZ", "SK", "SI", "HR", "BG", "GR",
+  "BE", "NL", "LU", "PL", "CZ", "SK", "SI", "BG", "GR",
   "CY", "DK", "SE", "NO", "FI", "IS", "EE", "LV", "LT", "IE",
 ] as const;
 export type ReferenceCountryCode = (typeof REFERENCE_COUNTRIES)[number];
+
+export const COORDINATES_ONLY_MESSAGES: Record<(typeof COORDINATES_ONLY_COUNTRIES)[number], string> = {
+  UK: "United Kingdom parcels can only be looked up by coordinates, and only in Scotland.",
+  HR: "Croatia can only be looked up by coordinates, and only for agricultural parcels (ARKOD). " +
+    "Croatian cadastral parcel numbers such as 5244/3 are not supported; points on urban land return no parcel.",
+};
 
 export const ENRICHMENT_COUNTRIES = ["ES", "PV", "NA", "PT", "FR", "IT", "DE"] as const;
 export type EnrichmentCountryCode = (typeof ENRICHMENT_COUNTRIES)[number];
