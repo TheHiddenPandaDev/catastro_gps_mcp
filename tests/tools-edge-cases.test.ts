@@ -36,10 +36,13 @@ describe("tool edge cases", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("explains that Croatia means ARKOD farmland", async () => {
-    const result = await client.callTool({ name: "get_parcel", arguments: { reference: "5244/3", country: "HR" } });
+  it("sends a Croatian cadastral reference to the API", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ success: true, data: { reference: "334553-6250/3", latitude: 46.03, longitude: 15.91 } }));
 
-    expect(toolText(result)).toContain("ARKOD");
+    const result = await client.callTool({ name: "get_parcel", arguments: { reference: "334553-6250/3", country: "HR" } });
+
+    expect(result.isError).toBeFalsy();
+    expect(lastRequest(fetchMock).url.pathname).toBe("/v1/parcels/334553-6250%2F3");
   });
 
   it("prefers the reference when both reference and coordinates are given", async () => {

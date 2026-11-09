@@ -15,14 +15,16 @@ export function registerGetParcel(server: McpServer, client: CatastroGPSClient):
     {
       title: "Get Parcel",
       description:
-        "Look up a cadastral parcel in 29 European countries (including the Basque Country and Navarre " +
-        "foral cadastres) by its official cadastral reference or by WGS84 coordinates. Returns the " +
+        "Look up a parcel in the official cadastre of 27 European countries (including the Basque Country and " +
+        "Navarre foral cadastres), by its official cadastral reference or by WGS84 coordinates, plus partial " +
+        "coverage in the United Kingdom (Scotland, coordinates only) and Sweden (agricultural blocks). Returns the " +
         "reference, location, address, municipality, area, land use and the parcel outline when " +
         "the official source provides them. The country is detected from the reference format or " +
         "the point when omitted. Where the parcel has crop or land-use parts it also returns their count " +
         "and a crop summary (crop and share of the area); the full list with outlines is " +
-        "get_parcel_subparcels. United Kingdom (Scotland) and Croatia (ARKOD agricultural parcels only, no " +
-        "cadastral parcel numbers): coordinates only. Codes: " + COUNTRY_CODES_TEXT + ".",
+        "get_parcel_subparcels. Croatia: cadastral municipality code + parcel number (334553-6250/3) or " +
+        "'6250/3 k.o. Zabok'. Ireland: registered land only. Every result names its official source and licence " +
+        "in the source field. Codes: " + COUNTRY_CODES_TEXT + ".",
       inputSchema: {
         reference: z
           .string()
@@ -41,7 +43,7 @@ export function registerGetParcel(server: McpServer, client: CatastroGPSClient):
     async ({ reference, latitude, longitude, country, lang }) => {
       try {
         if (reference) {
-          if (country === "UK" || country === "HR") {
+          if (country === "UK") {
             return errorResult("MCP_002", COORDINATES_ONLY_MESSAGES[country]);
           }
           const { data: d, quota } = await client.getParcelByReference(reference, country, lang);
