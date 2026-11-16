@@ -1,5 +1,11 @@
 # Publicar el MCP y los SDKs — checklist para Dani
 
+## Versión 2.2.2 (16-nov-2026): una sola versión
+
+El registro iba en 2.2.1 (apuntando a npm 2.2.0) y el servidor decía 2.2.0 en `tools/list`. 2.2.2 iguala npm, registro
+y servidor remoto. El remoto ya está desplegado en Fly. Falta (Dani): `npm publish --access public --otp=…` y después
+`mcp-publisher login dns …` + `mcp-publisher publish`.
+
 ## Servidor online (26-oct-2026): directorios
 
 - **Registro oficial**: `server.json` lleva `remotes` (`https://mcp.parcelgps.com/mcp`). Como npm sigue en 2.2.0, se publica

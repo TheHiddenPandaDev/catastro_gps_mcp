@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 2.2.2 (2026-11-16)
+
+- One version everywhere: npm, the official registry and `serverInfo.version` of the remote server all report 2.2.2. The registry entry 2.2.1 pointed at npm 2.2.0, so `tools/list` and the registry disagreed.
 
 - Remote server at `https://mcp.parcelgps.com/mcp` (Streamable HTTP, stateless): nothing to install. Each request runs on the caller's own key, taken from `Authorization: Bearer`, `X-API-Key` or `?api_key=` for clients that only take a URL; never on a server key. `server.json` declares it under `remotes`.
 - Without a key the remote server still answers `initialize` and `tools/list`, so directories and connector setups can show the tools; any tool call without a key gets 401 with the link to a free key.

@@ -64,7 +64,7 @@ mcp/
 | Cliente HTTP | Fetch nativo |
 | Auth | Hacia el backend: `X-API-Key`. Remoto: `Authorization: Bearer`, `X-API-Key` o `?api_key=` |
 
-## Tools disponibles (2.2.0)
+## Tools disponibles (2.2.2)
 
 Desde 2.0.0 todo va contra la API v1 en inglés (`/v1/...`); las rutas `/api/...` siguen vivas para la web/app pero están deprecadas para clientes de API.
 
