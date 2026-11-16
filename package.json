@@ -7,7 +7,7 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "catastro-gps-mcp": "./build/index.js"
+    "catastro-gps-mcp": "build/index.js"
   },
   "files": [
     "build/**/*.js",
@@ -18,7 +18,7 @@
     "server.json"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf build && tsc",
     "dev": "tsc --watch",
     "start": "node build/index.js",
     "start:http": "node build/http.js",
