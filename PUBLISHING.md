@@ -3,8 +3,9 @@
 ## Versión 2.2.2 (16-nov-2026): una sola versión
 
 El registro iba en 2.2.1 (apuntando a npm 2.2.0) y el servidor decía 2.2.0 en `tools/list`. 2.2.2 iguala npm, registro
-y servidor remoto. El remoto ya está desplegado en Fly. Falta (Dani): `npm publish --access public --otp=…` y después
-`mcp-publisher login dns …` + `mcp-publisher publish`.
+y servidor remoto. **Publicada el 16-nov** en npm, en el registro oficial y en el remoto de Fly. La próxima versión
+tiene que ser 2.2.3 o superior. El npm de 2.2.2 lleva un `build/sse.js` viejo e inofensivo; desde 5d13484 el build
+borra `build/` antes de compilar. npm pidió confirmación en el navegador (`--auth-type=web`), no código.
 
 ## Servidor online (26-oct-2026): directorios
 
