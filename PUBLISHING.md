@@ -1,5 +1,11 @@
 # Publicar el MCP y los SDKs — checklist para Dani
 
+## Versión 2.2.3 (18-nov-2026): Suecia completa, cifra pública 28
+
+Suecia pasa a catastro completo (Lantmäteriet). Textos: «28 European countries», parcial solo Escocia. Remoto desplegado
+en Fly. Falta (Dani): `npm publish --access public --auth-type=web` y después `mcp-publisher login dns …` +
+`mcp-publisher publish`.
+
 ## Versión 2.2.2 (16-nov-2026): una sola versión
 
 El registro iba en 2.2.1 (apuntando a npm 2.2.0) y el servidor decía 2.2.0 en `tools/list`. 2.2.2 iguala npm, registro

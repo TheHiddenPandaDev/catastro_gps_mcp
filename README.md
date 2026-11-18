@@ -2,11 +2,11 @@
 
 <!-- mcp-name: com.parcelgps/catastro-gps -->
 
-Official cadastral parcels for AI agents from the **full cadastre of 27 European countries (including the Basque Country and Navarre foral cadastres)**, with one API key, by cadastral reference and by coordinates. Partial coverage in 2 more: the United Kingdom (Scotland only, by coordinates) and Sweden (agricultural blocks). Every parcel names its official source and licence in `source`.
+Official cadastral parcels for AI agents from the **full cadastre of 28 European countries (including the Basque Country and Navarre foral cadastres)**, with one API key, by cadastral reference and by coordinates. Partial coverage in the United Kingdom (Scotland only, by coordinates). Every parcel names its official source and licence in `source`.
 
 Ask your agent for a parcel by its cadastral reference, by a point on the map or by a postal address. It gets back the reference, location, area, land use and the parcel outline; it can list every dwelling of a Spanish building, read relief, protected areas, climate normals and satellite ground motion, estimate solar and agricultural potential, read aggregated market prices, and score and compare parcels.
 
-- **27 full cadastres plus 2 partial countries, one call shape.** `ES`, `PT`, `FR`, `IT`, `DE`, `PL`, `NL`, `CH`... and the two Spanish foral cadastres (`PV`, `NA`) that the central Catastro does not serve.
+- **28 full cadastres plus Scotland, one call shape.** `ES`, `PT`, `FR`, `IT`, `DE`, `PL`, `NL`, `CH`... and the two Spanish foral cadastres (`PV`, `NA`) that the central Catastro does not serve.
 - **The country is optional.** It is detected from the reference format or from the point. When bare digits fit several countries the API says so (`CNV_AMBIGUOUS`) and `resolve_reference` tells you which ones, for free.
 - **Address search in 27 countries.** `"Calle Gran Via 31, Madrid"`, `"8 boulevard du Port, Amiens"` or `"Damrak 1, 1012 LG Amsterdam"` become ranked parcels.
 - **Buildings, not only plots.** `get_units` lists every dwelling, shop and garage of a Spanish building with floor, door, area and participation coefficient.
@@ -139,7 +139,7 @@ What each code answers today (measured against production on 1 October 2026). "P
 | `IE` | Ireland | with `country: IE` (SP_ID) | registered land | partial | Unregistered land answers `CNV_COVERAGE` (Tailte Éireann, CC BY 4.0) |
 | `UK` | United Kingdom | no | Scotland only | Scotland only | England, Wales and Northern Ireland not yet |
 | `HR` | Croatia | yes (`334553-6250/3` or `6250/3 k.o. Zabok`) | yes | no | Full DGU cadastre (Otvorena dozvola); a bare parcel number lists its cadastral municipalities |
-| `SE` | Sweden | agricultural blocks | agricultural blocks | no | Not property units |
+| `SE` | Sweden | yes (`Uppsala Dragarbrunn 1:2`) | yes | no | Lantmäteriet, Fastighetsindelning Direkt; agricultural blocks as fallback |
 
 Hungary, Romania and the rest of Europe are not covered: a reference or point there answers `CNV_COVERAGE`. Data comes from each country's official cadastre or INSPIRE service (Spain from our copy of the Catastro), so availability follows theirs; when one is down the server answers `SERVICE_UNAVAILABLE`, which is free.
 

@@ -51,7 +51,7 @@ describe("MCP tools", () => {
 
     expect(SUPPORTED_COUNTRIES).toHaveLength(31);
     expect(country.enum).toEqual([...SUPPORTED_COUNTRIES]);
-    expect(getParcel.description).toContain("27 European countries");
+    expect(getParcel.description).toContain("28 European countries");
     expect(getParcel.description).toContain("334553-6250/3");
   });
 
