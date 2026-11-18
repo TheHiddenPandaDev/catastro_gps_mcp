@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "com.parcelgps/catastro-gps",
   "title": "Catastro GPS",
-  "description": "Official cadastral parcels of 27 European countries by reference and coordinates, partial in UK, SE",
+  "description": "Official cadastral parcels of 28 European countries by reference and coordinates, partial in UK",
   "websiteUrl": "https://www.catastrogps.es/developers",
   "repository": {
     "url": "https://github.com/TheHiddenPandaDev/catastro_gps_mcp",
@@ -24,13 +24,13 @@
       ]
     }
   ],
-  "version": "2.2.2",
+  "version": "2.2.3",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "catastro-gps-mcp",
-      "version": "2.2.2",
+      "version": "2.2.3",
       "transport": {
         "type": "stdio"
       },

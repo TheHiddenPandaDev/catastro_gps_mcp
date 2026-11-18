@@ -15,9 +15,9 @@ export function registerGetParcel(server: McpServer, client: CatastroGPSClient):
     {
       title: "Get Parcel",
       description:
-        "Look up a parcel in the official cadastre of 27 European countries (including the Basque Country and " +
+        "Look up a parcel in the official cadastre of 28 European countries (including the Basque Country and " +
         "Navarre foral cadastres), by its official cadastral reference or by WGS84 coordinates, plus partial " +
-        "coverage in the United Kingdom (Scotland, coordinates only) and Sweden (agricultural blocks). Returns the " +
+        "coverage in the United Kingdom (Scotland, coordinates only). Returns the " +
         "reference, location, address, municipality, area, land use and the parcel outline when " +
         "the official source provides them. The country is detected from the reference format or " +
         "the point when omitted. Where the parcel has crop or land-use parts it also returns their count " +
